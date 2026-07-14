@@ -7,6 +7,7 @@ const scene = await readJson("examples/feature-showcase.scene.json");
 const schema = await readJson("schema/broadcast-scene-0.2.schema.json");
 const renderer = await readFile(new URL("src/ofxOGrafRendererShapes.cpp", root), "utf8");
 const exporter = await readFile(new URL("after-effects/export_broadcast_scene_v2.jsx", root), "utf8");
+const mogrtImporter = await readFile(new URL("after-effects/import_mogrt_to_broadcast_scene.jsx", root), "utf8");
 
 assert.equal(scene.format, "broadcast-scene");
 assert.match(scene.version, /^0\.2/);
@@ -34,6 +35,14 @@ for (const token of [
     "trackMatteType",
     "threeDLayer"
 ]) assert.ok(exporter.includes(token), `exporter lacks ${token}`);
+assert.match(exporter, /ofxOGrafRootComp/);
+for (const token of [
+    "File.openDialog",
+    "app.open(mogrt)",
+    "Choose MOGRT root composition",
+    "ofxOGrafRootComp",
+    "export_broadcast_scene_v2.jsx"
+]) assert.ok(mogrtImporter.includes(token), "MOGRT importer lacks " + token);
 
 assert.ok(schema.$defs.fallback);
 assert.ok(schema.$defs.property.properties.samples);

@@ -17,6 +17,7 @@ The existing AE path is not a binary `.mogrt` converter: it imports AE's scripta
 ## What is included
 
 - `after-effects/export_broadcast_scene_v2.jsx`: recursive exporter for compositions, fonts, images, controls, sampled expressions, masks, mattes, effects, 3D transforms, and shape operators. The original MVP exporter remains available as `export_selected_comp.jsx`.
+- `after-effects/import_mogrt_to_broadcast_scene.jsx`: AE-assisted MOGRT opener, extracted-composition picker, and handoff to the neutral exporter.
 - `after-effects/bake_unsupported_layers.jsx`: alpha-PNG fallback renderer for AE-only layers and effects.
 - `src/ofxOGrafAuthoring.*` and `schema/broadcast-scene-0.3.schema.json`: typed, tool-neutral C++ scene authoring with stable IDs, controls, assets, provenance, validation, and deterministic JSON.
 - `src/ofxOGrafCodeTemplate.*`: procedural OF template contract with typed descriptors, explicit time, deterministic random streams, and a lifecycle host.
@@ -56,6 +57,8 @@ Fidelity boundaries:
 See `docs/renderer-support.md` for the feature matrix and fallback strategy.
 
 ## Export from After Effects
+
+For an existing After Effects-authored MOGRT, run `import_mogrt_to_broadcast_scene.jsx` instead. After Effects extracts the project, the wrapper asks for its root composition, and then invokes the normal exporter. See `docs/mogrt-import.md`; Premiere-authored MOGRTs are outside this path.
 
 1. Open an AE project and make the desired composition active.
 2. Run `after-effects/export_broadcast_scene_v2.jsx` using **File → Scripts → Run Script File**.

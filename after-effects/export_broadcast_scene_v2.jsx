@@ -13,7 +13,7 @@
 
     function abort(message) { alert("ofxOGraf Exporter\n\n" + message); throw new Error(message); }
     if (!app.project) abort("No project is open.");
-    var rootComp = app.project.activeItem;
+    var rootComp = $.global.ofxOGrafRootComp || app.project.activeItem;
     if (!(rootComp instanceof CompItem)) abort("Open or select a composition first.");
 
     function pushUnique(list, value) {
