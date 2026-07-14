@@ -29,9 +29,11 @@ This is the more portable option. Native and WASM use the same scene evaluation 
 
 ```cpp
 ofxOGraf::SceneBuilder scene("scene:lower-third");
+scene.fontAsset("font:inter-bold", "fonts/Inter-Bold.ttf", "Inter", "Bold");
 auto main = scene.composition("composition:main", "Lower third", 1920, 1080, 5.0, {50, 1});
 auto headline = main.textLayer("layer:headline", "Headline", "News");
-headline.position({240, 860, 0}).font("Inter", 54);
+headline.position({240, 740, 0});
+headline.font("Inter", 54).fontAsset("font:inter-bold");
 scene.control("control:headline", "Headline", "string", "News")
      .bind(headline.textPropertyId());
 graphic.loadJson(scene.build());

@@ -216,7 +216,7 @@ TextLayerBuilder CompositionBuilder::textLayer(const std::string& id, const std:
                 {"type", "text"},
                 {"source", SceneBuilder::property(propertyId(id, "content.text"), "string", text)},
                 {"style", {
-                    {"fontFamily", "sans-serif"},
+                    {"fontFamily", ""},
                     {"fontSize", SceneBuilder::property(propertyId(id, "style.fontSize"), "scalar", 32.0)},
                     {"fill", SceneBuilder::property(propertyId(id, "style.fill"), "color", ofJson::array({1.0, 1.0, 1.0, 1.0}))},
                     {"alignment", "left"}
