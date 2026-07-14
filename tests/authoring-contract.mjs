@@ -2,12 +2,13 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const root = new URL("../", import.meta.url);
-const [header, implementation, loader, example, imguiExample, schemaText, wrapper] = await Promise.all([
+const [header, implementation, loader, example, imguiExample, imguiMain, schemaText, wrapper] = await Promise.all([
     readFile(new URL("src/ofxOGrafAuthoring.h", root), "utf8"),
     readFile(new URL("src/ofxOGrafAuthoring.cpp", root), "utf8"),
     readFile(new URL("src/ofxOGrafSceneLoader.cpp", root), "utf8"),
     readFile(new URL("example-basic/src/ofApp.cpp", root), "utf8"),
     readFile(new URL("example-imgui/src/ofApp.cpp", root), "utf8"),
+    readFile(new URL("example-imgui/src/main.cpp", root), "utf8"),
     readFile(new URL("schema/broadcast-scene-0.3.schema.json", root), "utf8"),
     readFile(new URL("ograf/OfBroadcastGraphic.js", root), "utf8")
 ]);
@@ -36,6 +37,11 @@ assert.match(example, /loadJson\(scene\.build\(\)\)/);
 assert.match(wrapper, /compositionInfo\(scene/);
 assert.match(imguiExample, /SceneBuilder/);
 assert.match(imguiExample, /controls\.draw\(graphic\)/);
+assert.match(imguiExample, /ofFbo::Settings/);
+assert.match(imguiExample, /internalformat = GL_RGBA/);
+assert.match(imguiExample, /ofClear\(0, 0, 0, 0\)/);
+assert.match(imguiExample, /renderTarget\.draw/);
+assert.doesNotMatch(imguiMain, /GLFW/);
 assert.match(wrapper, /this\.canvas\.width = resolution[\s\S]*this\.module = await createOfxOGrafModule/,
     "canvas must be sized before WebGL module creation");
 
