@@ -33,7 +33,21 @@ void ofApp::update() {
 }
 
 void ofApp::draw() {
+    const auto& scene = graphic.getScene();
+    const float compositionWidth = std::max(1, scene.width);
+    const float compositionHeight = std::max(1, scene.height);
+    const float previewScale = std::min(
+        static_cast<float>(ofGetWidth()) / compositionWidth,
+        static_cast<float>(ofGetHeight()) / compositionHeight);
+    const float previewX = (ofGetWidth() - compositionWidth * previewScale) * 0.5f;
+    const float previewY = (ofGetHeight() - compositionHeight * previewScale) * 0.5f;
+
+    ofPushMatrix();
+    ofTranslate(previewX, previewY);
+    ofScale(previewScale, previewScale);
     graphic.draw();
+    ofPopMatrix();
+
     gui.begin();
     controls.draw(graphic);
     gui.end();
