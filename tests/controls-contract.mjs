@@ -32,9 +32,13 @@ const imgui = await readFile(new URL("src/ofxOGrafImGuiControls.cpp", root), "ut
 const wrapper = await readFile(new URL("ograf/OfBroadcastGraphic.js", root), "utf8");
 assert.match(imgui, /ofxAddons_ENABLE_IMGUI/);
 assert.match(imgui, /Controls::defaultData/);
+assert.match(imgui, /ImGuiColorEditFlags_AlphaBar/);
 const renderer = await readFile(new URL("src/ofxOGrafRenderer.cpp", root), "utf8");
 assert.ok(renderer.includes('property.value("controlId"'));
 assert.match(renderer, /return controlled/);
+assert.match(renderer, /value\.size\(\) > 3 && value\[3\]\.is_number\(\)/);
+assert.match(renderer, /colorAlpha \* alpha/);
+assert.match(renderer, /glBlendFuncSeparate\(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA\)/);
 assert.match(wrapper, /ograf-ready/);
 assert.match(wrapper, /ograf-data-change/);
 console.log("Validated shared HTML/ofxImGui Essential Graphics controls contract.");

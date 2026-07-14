@@ -15,14 +15,14 @@ void ofApp::setup() {
     auto panel = composition.shapeLayer(
         "layer:panel", "Panel", ofxOGraf::ShapeGeometry::rectangle(1100.0, 130.0, 18.0));
     panel.position({720.0, 700.0, 0.0});
-    panel.fill({0.04, 0.10, 0.22, 0.96});
+    panel.fill({0.04, 0.10, 0.22, 0.72});
 
     scene.control("control:headline", "Headline", "string", "Editable in ofxImGui")
         .bind(headline.textPropertyId()).ui("Content", 0);
     scene.control("control:size", "Font size", "number", 54.0)
         .bind(headline.fontSizePropertyId()).range(24.0, 96.0, 1.0).ui("Style", 0);
     scene.control("control:panel-color", "Panel color", "color",
-                  ofJson::array({0.04, 0.10, 0.22, 0.96}))
+                  ofJson::array({0.04, 0.10, 0.22, 0.72}))
         .bind(panel.fillPropertyId()).ui("Style", 1);
 
     graphic.loadJson(scene.build());
@@ -63,8 +63,11 @@ void ofApp::draw() {
     const float previewHeight = compositionHeight * previewScale;
     drawTransparencyGrid(previewX, previewY, previewWidth, previewHeight);
     ofSetColor(255);
+    ofEnableAlphaBlending();
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     renderTarget.draw(previewX, previewY, previewWidth, previewHeight);
 
+    ofEnableAlphaBlending();
     gui.begin();
     controls.draw(graphic);
     gui.end();

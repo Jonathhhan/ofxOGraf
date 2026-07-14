@@ -44,6 +44,8 @@ void Renderer::cacheCompositions() {
 
 void Renderer::draw(double time) {
     if (!ready) return;
+    ofEnableAlphaBlending();
+    glBlendFuncSeparate(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     drawComposition(rootScene, time);
 }
 
@@ -346,7 +348,11 @@ glm::vec3 Renderer::vector3(const ofJson& value, glm::vec3 fallback) {
 
 ofFloatColor Renderer::color(const ofJson& value, float alpha) {
     if (!value.is_array() || value.size() < 3) return ofFloatColor(1, 1, 1, alpha);
-    return ofFloatColor(value[0].get<float>(), value[1].get<float>(), value[2].get<float>(), alpha);
+    const float colorAlpha = value.size() > 3 && value[3].is_number()
+        ? value[3].get<float>()
+        : 1.0f;
+    return ofFloatColor(value[0].get<float>(), value[1].get<float>(), value[2].get<float>(),
+                        ofClamp(colorAlpha * alpha, 0.0f, 1.0f));
 }
 
 } // namespace ofxOGraf

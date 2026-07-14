@@ -112,7 +112,7 @@ bool ImGuiControls::draw(Graphic& graphic, const std::string& title, bool* open)
             if (value.is_array()) {
                 for (std::size_t i = 0; i < std::min<std::size_t>(4, value.size()); ++i) edited[i] = value[i].get<float>();
             }
-            controlChanged = ImGui::ColorEdit4(label.c_str(), edited.data());
+            controlChanged = ImGui::ColorEdit4(label.c_str(), edited.data(), ImGuiColorEditFlags_AlphaBar);
             if (controlChanged) patch[id] = {edited[0], edited[1], edited[2], edited[3]};
         } else if (type == "vector" || type == "vector2" || type == "vector3" || type == "vector4") {
             std::array<float, 4> edited{0, 0, 0, 0};
