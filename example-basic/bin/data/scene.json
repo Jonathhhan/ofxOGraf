@@ -1,0 +1,29 @@
+{
+  "format": "broadcast-scene",
+  "version": "0.1.0",
+  "composition": { "width": 1920, "height": 1080, "duration": 5, "frameRate": 50 },
+  "layers": [
+    {
+      "index": 1,
+      "name": "Headline",
+      "type": "text",
+      "enabled": true,
+      "inPoint": 0,
+      "outPoint": 5,
+      "text": {
+        "name": "Source Text",
+        "matchName": "ADBE Text Document",
+        "value": { "text": "ofxOGraf", "fillColor": [1, 1, 1] },
+        "keyframes": []
+      },
+      "transform": {
+        "name": "Transform",
+        "matchName": "ADBE Transform Group",
+        "children": [
+          { "name": "Position", "matchName": "ADBE Position", "value": [300, 850], "keyframes": [] },
+          { "name": "Opacity", "matchName": "ADBE Opacity", "value": 100, "keyframes": [] }
+        ]
+      }
+    }
+  ]
+}

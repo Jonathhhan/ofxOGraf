@@ -1,0 +1,32 @@
+{
+  "$schema": "https://ograf.ebu.io/v1/specification/json-schemas/graphics/schema.json",
+  "id": "com.jonathan-frank.ofx-ograf-broadcast-graphic",
+  "version": "0.1.0",
+  "name": "openFrameworks Broadcast Graphic",
+  "description": "An After Effects scene reconstructed by openFrameworks/WebAssembly",
+  "author": { "name": "Jonathan Frank" },
+  "main": "./OfBroadcastGraphic.js",
+  "supportsRealTime": true,
+  "supportsNonRealTime": true,
+  "stepCount": 1,
+  "actionDurations": [
+    { "type": "playAction", "duration": -1 },
+    { "type": "updateAction", "duration": 0 },
+    { "type": "stopAction", "duration": -1 }
+  ],
+  "schema": {
+    "type": "object",
+    "properties": {
+      "headline": { "type": "string", "title": "Headline", "default": "Headline" },
+      "subtitle": { "type": "string", "title": "Subtitle", "default": "Subtitle" },
+      "accentColor": { "type": "string", "title": "Accent color", "default": "#ffcc00" }
+    }
+  },
+  "renderRequirements": [
+    {
+      "resolution": { "width": { "ideal": 1920 }, "height": { "ideal": 1080 } },
+      "frameRate": { "ideal": 50 },
+      "accessToPublicInternet": { "exact": false }
+    }
+  ]
+}

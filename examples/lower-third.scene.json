@@ -1,0 +1,52 @@
+{
+  "format": "broadcast-scene",
+  "version": "0.1.0",
+  "source": { "application": "example", "compName": "Lower Third" },
+  "composition": {
+    "width": 1920,
+    "height": 1080,
+    "pixelAspect": 1,
+    "duration": 5,
+    "frameRate": 50,
+    "displayStartTime": 0,
+    "backgroundColor": [0, 0, 0]
+  },
+  "layers": [
+    {
+      "index": 1,
+      "name": "Headline",
+      "type": "text",
+      "enabled": true,
+      "inPoint": 0,
+      "outPoint": 5,
+      "parentIndex": null,
+      "text": {
+        "name": "Source Text",
+        "matchName": "ADBE Text Document",
+        "value": {
+          "text": "Headline",
+          "font": "ArialMT",
+          "fontSize": 80,
+          "fillColor": [1, 1, 1],
+          "applyFill": true
+        },
+        "keyframes": []
+      },
+      "transform": {
+        "name": "Transform",
+        "matchName": "ADBE Transform Group",
+        "children": [
+          { "name": "Anchor Point", "matchName": "ADBE Anchor Point", "value": [0, 0], "keyframes": [] },
+          { "name": "Position", "matchName": "ADBE Position", "value": [300, 850], "keyframes": [] },
+          { "name": "Scale", "matchName": "ADBE Scale", "value": [100, 100], "keyframes": [] },
+          { "name": "Rotation", "matchName": "ADBE Rotate Z", "value": 0, "keyframes": [] },
+          { "name": "Opacity", "matchName": "ADBE Opacity", "value": 100, "keyframes": [] }
+        ]
+      }
+    }
+  ],
+  "controls": [
+    { "id": "headline", "type": "string", "default": "Headline" }
+  ],
+  "report": { "unsupported": [], "warnings": [] }
+}

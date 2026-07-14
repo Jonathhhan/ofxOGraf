@@ -1,0 +1,85 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ofxograf.dev/schema/broadcast-scene.schema.json",
+  "title": "Broadcast Scene",
+  "type": "object",
+  "required": ["format", "version", "composition", "layers"],
+  "properties": {
+    "format": { "const": "broadcast-scene" },
+    "version": { "type": "string" },
+    "source": { "type": "object" },
+    "composition": {
+      "type": "object",
+      "required": ["width", "height", "duration", "frameRate"],
+      "properties": {
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "duration": { "type": "number", "minimum": 0 },
+        "frameRate": { "type": "number", "exclusiveMinimum": 0 },
+        "pixelAspect": { "type": "number", "exclusiveMinimum": 0 },
+        "displayStartTime": { "type": "number" },
+        "backgroundColor": { "$ref": "#/$defs/vector" }
+      },
+      "additionalProperties": true
+    },
+    "layers": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/layer" }
+    },
+    "controls": { "type": "array", "items": { "type": "object" } },
+    "report": { "type": "object" }
+  },
+  "$defs": {
+    "vector": {
+      "type": "array",
+      "items": { "type": "number" },
+      "minItems": 2,
+      "maxItems": 4
+    },
+    "keyframe": {
+      "type": "object",
+      "required": ["time", "value"],
+      "properties": {
+        "time": { "type": "number" },
+        "value": {},
+        "inInterpolation": { "enum": ["linear", "hold", "bezier"] },
+        "outInterpolation": { "enum": ["linear", "hold", "bezier"] },
+        "inEase": { "type": "array" },
+        "outEase": { "type": "array" },
+        "inSpatialTangent": { "$ref": "#/$defs/vector" },
+        "outSpatialTangent": { "$ref": "#/$defs/vector" }
+      },
+      "additionalProperties": true
+    },
+    "property": {
+      "type": "object",
+      "required": ["name", "matchName"],
+      "properties": {
+        "name": { "type": "string" },
+        "matchName": { "type": "string" },
+        "value": {},
+        "expression": { "type": "string" },
+        "keyframes": { "type": "array", "items": { "$ref": "#/$defs/keyframe" } },
+        "children": { "type": "array", "items": { "$ref": "#/$defs/property" } }
+      },
+      "additionalProperties": true
+    },
+    "layer": {
+      "type": "object",
+      "required": ["index", "name", "type", "inPoint", "outPoint"],
+      "properties": {
+        "index": { "type": "integer", "minimum": 1 },
+        "name": { "type": "string" },
+        "type": { "enum": ["text", "shape", "image", "solid", "precomp", "camera", "light", "null", "unknown"] },
+        "enabled": { "type": "boolean" },
+        "inPoint": { "type": "number" },
+        "outPoint": { "type": "number" },
+        "parentIndex": { "type": ["integer", "null"] },
+        "transform": { "$ref": "#/$defs/property" },
+        "text": { "$ref": "#/$defs/property" },
+        "contents": { "$ref": "#/$defs/property" }
+      },
+      "additionalProperties": true
+    }
+  }
+}

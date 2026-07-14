@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>ofxOGraf preview</title>
+  <style>
+    html, body { margin: 0; overflow: hidden; background: #1b1d22; }
+    of-broadcast-graphic { display: block; width: 100vw; height: 100vh; }
+  </style>
+</head>
+<body>
+  <of-broadcast-graphic scene="./scene.json"></of-broadcast-graphic>
+  <script type="module">
+    import OfBroadcastGraphic from "./OfBroadcastGraphic.js";
+    // OGraf renderers perform this registration using the manifest id.
+    customElements.define("of-broadcast-graphic", OfBroadcastGraphic);
+    const graphic = document.querySelector("of-broadcast-graphic");
+    await graphic.load({
+      data: { headline: "ofxOGraf", subtitle: "Broadcast graphics" },
+      renderType: "realtime",
+      renderCharacteristics: { resolution: { width: 1920, height: 1080 }, frameRate: 50 }
+    });
+    await graphic.playAction({ goto: 0 });
+  </script>
+</body>
+</html>

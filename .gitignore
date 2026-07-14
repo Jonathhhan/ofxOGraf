@@ -1,0 +1,16 @@
+build/
+bin/
+obj/
+.DS_Store
+ograf/dist/*.data
+ograf/dist/*.js
+ograf/dist/*.wasm
+!ograf/dist/.gitkeep
+
+!example-basic/bin/
+example-basic/bin/*
+!example-basic/bin/data/
+example-basic/bin/data/*
+!example-basic/bin/data/scene.json
+*.vcxproj.user
+example-basic/dll/

@@ -1,0 +1,133 @@
+{
+  "format": "broadcast-scene",
+  "version": "0.2.0",
+  "source": { "application": "test", "compName": "Feature Showcase" },
+  "composition": { "width": 1920, "height": 1080, "duration": 4, "frameRate": 50 },
+  "assets": {
+    "fonts": [
+      { "postScriptName": "Inter-Bold", "family": "Inter", "style": "Bold", "file": "fonts/inter-bold.ttf" }
+    ],
+    "images": []
+  },
+  "controls": [
+    { "id": "headline", "name": "Headline", "type": "string", "default": "Feature Showcase", "source": "essential-graphics" }
+  ],
+  "layers": [
+    {
+      "index": 1,
+      "name": "Headline",
+      "type": "text",
+      "enabled": true,
+      "inPoint": 0,
+      "outPoint": 4,
+      "parentIndex": 2,
+      "controlId": "headline",
+      "text": {
+        "name": "Source Text",
+        "matchName": "ADBE Text Document",
+        "value": {
+          "text": "Feature Showcase",
+          "font": "Inter-Bold",
+          "fontSize": 72,
+          "tracking": 20,
+          "leading": 86,
+          "autoLeading": false,
+          "justification": "CENTER_JUSTIFY",
+          "applyFill": true,
+          "fillColor": [1, 1, 1],
+          "applyStroke": true,
+          "strokeColor": [0.05, 0.05, 0.08],
+          "strokeWidth": 2
+        },
+        "samples": [
+          { "time": 0, "value": { "text": "Feature Showcase", "font": "Inter-Bold", "fontSize": 72, "fillColor": [1, 1, 1] } },
+          { "time": 4, "value": { "text": "Feature Showcase", "font": "Inter-Bold", "fontSize": 72, "fillColor": [1, 1, 1] } }
+        ]
+      },
+      "transform": {
+        "name": "Transform",
+        "matchName": "ADBE Transform Group",
+        "children": [
+          { "name": "Position", "matchName": "ADBE Position", "value": [500, 80, 0], "keyframes": [] }
+        ]
+      }
+    },
+    {
+      "index": 2,
+      "name": "Parent",
+      "type": "null",
+      "enabled": true,
+      "inPoint": 0,
+      "outPoint": 4,
+      "threeDLayer": true,
+      "transform": {
+        "name": "Transform",
+        "matchName": "ADBE Transform Group",
+        "children": [
+          { "name": "Position", "matchName": "ADBE Position", "value": [460, 430, 20], "keyframes": [] },
+          { "name": "Y Rotation", "matchName": "ADBE Rotate Y", "value": -8, "keyframes": [] }
+        ]
+      }
+    },
+    {
+      "index": 3,
+      "name": "Repeated Trimmed Shape",
+      "type": "shape",
+      "enabled": true,
+      "inPoint": 0,
+      "outPoint": 4,
+      "transform": {
+        "name": "Transform", "matchName": "ADBE Transform Group",
+        "children": [{ "name": "Position", "matchName": "ADBE Position", "value": [320, 720], "keyframes": [] }]
+      },
+      "contents": {
+        "name": "Contents",
+        "matchName": "ADBE Root Vectors Group",
+        "children": [
+          {
+            "name": "Rectangle",
+            "matchName": "ADBE Vector Shape - Rect",
+            "children": [
+              { "name": "Size", "matchName": "ADBE Vector Rect Size", "value": [520, 110], "keyframes": [] },
+              { "name": "Position", "matchName": "ADBE Vector Rect Position", "value": [0, 0], "keyframes": [] }
+            ]
+          },
+          { "name": "Fill Color", "matchName": "ADBE Vector Fill Color", "value": [0.1, 0.55, 1], "keyframes": [] },
+          { "name": "Fill Opacity", "matchName": "ADBE Vector Fill Opacity", "value": 75, "keyframes": [] },
+          { "name": "Stroke Color", "matchName": "ADBE Vector Stroke Color", "value": [1, 1, 1], "keyframes": [] },
+          { "name": "Stroke Width", "matchName": "ADBE Vector Stroke Width", "value": 6, "keyframes": [] },
+          { "name": "Trim Start", "matchName": "ADBE Vector Trim Start", "value": 0, "keyframes": [] },
+          { "name": "Trim End", "matchName": "ADBE Vector Trim End", "keyframes": [
+            { "time": 0, "value": 0, "outInterpolation": "bezier", "outEase": [{ "influence": 33.3, "speed": 0 }] },
+            { "time": 1, "value": 100, "inInterpolation": "bezier", "inEase": [{ "influence": 33.3, "speed": 0 }] }
+          ] },
+          {
+            "name": "Repeater",
+            "matchName": "ADBE Vector Filter - Repeater",
+            "children": [
+              { "name": "Copies", "matchName": "ADBE Vector Repeater Copies", "value": 3, "keyframes": [] },
+              { "name": "Offset", "matchName": "ADBE Vector Repeater Offset", "value": 0, "keyframes": [] },
+              {
+                "name": "Transform", "matchName": "ADBE Vector Repeater Transform",
+                "children": [
+                  { "name": "Position", "matchName": "ADBE Vector Repeater Position", "value": [35, -35], "keyframes": [] },
+                  { "name": "Scale", "matchName": "ADBE Vector Repeater Scale", "value": [92, 92], "keyframes": [] },
+                  { "name": "Rotation", "matchName": "ADBE Vector Repeater Rotation", "value": 2, "keyframes": [] }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "fallback": {
+        "enabled": false,
+        "reasons": ["plugin-effect-example"],
+        "filePattern": "baked/feature-showcase/repeated-trimmed-shape_####.png",
+        "frameRate": 50,
+        "startFrame": 0
+      }
+    }
+  ],
+  "compositions": [],
+  "report": { "unsupported": [], "warnings": [], "fallbacks": [] }
+}
