@@ -103,6 +103,7 @@ node tests/feature-contract.mjs
 node tests/controls-contract.mjs
 node tests/authoring-contract.mjs
 node tests/code-template-contract.mjs
+node tests/golden-frame-contract.mjs
 node scripts/validate-template-definition.mjs
 node --check ograf/OfBroadcastGraphic.js
 node --check ograf/EssentialControls.js

@@ -90,6 +90,20 @@ public:
         return target.getTexture();
     }
 
+    ofPixels readPixels(bool flipVertically = true) const {
+        ofPixels pixels;
+        if (!isAllocated()) return pixels;
+        target.readToPixels(pixels);
+        if (flipVertically) pixels.mirror(true, false);
+        return pixels;
+    }
+
+    bool savePng(const std::string& path, bool flipVertically = true) const {
+        if (path.empty()) return false;
+        const ofPixels pixels = readPixels(flipVertically);
+        return pixels.isAllocated() && ofSaveImage(pixels, path);
+    }
+
 private:
     static void drawTransparencyGrid(const ofRectangle& bounds, float tileSize) {
         tileSize = std::max(1.0f, tileSize);

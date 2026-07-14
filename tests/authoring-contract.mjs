@@ -64,3 +64,6 @@ assert.match(wrapper, /this\.canvas\.width = resolution[\s\S]*this\.module = awa
     "canvas must be sized before WebGL module creation");
 
 console.log("Validated tool-neutral SceneBuilder, 0.3 schema, loader compiler, and native OF example.");
+assert.match(renderSurface, /ofPixels readPixels/);
+assert.match(renderSurface, /savePng/);
+assert.match(basicMain, /--frame/);

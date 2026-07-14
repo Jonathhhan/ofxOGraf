@@ -1,10 +1,27 @@
 #include "ofMain.h"
 #include "ofApp.h"
+#include <string>
 
 #ifdef __EMSCRIPTEN__
 #include <emscripten/bind.h>
 #endif
 
+#ifndef __EMSCRIPTEN__
+void parseFrameExportArguments(int argc, char* argv[], std::string& outputPath, double& timeSeconds) {
+    for (int index = 1; index < argc; ++index) {
+        const std::string argument = argv[index];
+        if (argument == "--frame" && index + 1 < argc) {
+            outputPath = argv[++index];
+        } else if (argument == "--time" && index + 1 < argc) {
+            try {
+                timeSeconds = std::stod(argv[++index]);
+            } catch (...) {
+                timeSeconds = 0.0;
+            }
+        }
+    }
+}
+#endif
 static std::shared_ptr<ofApp> appInstance;
 
 static ofxOGraf::Graphic* graphic() {
@@ -57,7 +74,7 @@ EMSCRIPTEN_BINDINGS(ofx_ograf_bridge) {
 }
 #endif
 
-int main() {
+int main(int argc, char* argv[]) {
 #ifdef __EMSCRIPTEN__
     ofGLESWindowSettings settings;
 #else
@@ -67,8 +84,14 @@ int main() {
     settings.setSize(1280, 720);
     settings.windowMode = OF_WINDOW;
 
+    std::string frameOutputPath;
+    double frameTime = 0.0;
+#ifndef __EMSCRIPTEN__
+    parseFrameExportArguments(argc, argv, frameOutputPath, frameTime);
+#endif
+
     auto window = ofCreateWindow(settings);
-    appInstance = std::make_shared<ofApp>();
+    appInstance = std::make_shared<ofApp>(frameOutputPath, frameTime);
     ofRunApp(window, appInstance);
     ofRunMainLoop();
 }

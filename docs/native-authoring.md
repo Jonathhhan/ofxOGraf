@@ -140,6 +140,22 @@ void ofApp::draw() {
 The final `true` enables the checkerboard for native preview only. Delivery code
 can consume `preview.texture()` or `preview.fbo()` without drawing that grid.
 
+### Deterministic RGBA frame export
+
+`example-basic` can emit one transparent frame without advancing real time:
+
+```powershell
+example-basic\bin\example-basic.exe `
+  --frame tests\out\lower-third-0.5.png `
+  --time 0.5
+```
+
+Compare that frame to the committed golden image with a small GPU tolerance:
+
+```powershell
+node scripts\verify-golden-frame.mjs tests\out\lower-third-0.5.png tests\golden\lower-third-0.5.png --tolerance 2 --max-different 2500 --require-alpha
+```
+
 Asset and descriptor changes can reload in place. Portable C++ hot swapping is not an initial requirement: a code change should trigger an incremental rebuild and relaunch of the native preview.
 
 For browser preview, use a development server that watches descriptor, asset, JS, and WASM outputs. After a successful C++ rebuild it should dispose the old module and load the new build in a fresh iframe. The iframe avoids stale custom-element registrations, WebGL contexts, event handlers, and WASM memory. Preserve control values only when the id and type are compatible, and keep the last successful iframe visible when compilation fails.

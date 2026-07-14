@@ -1,4 +1,9 @@
 #include "ofApp.h"
+#include <utility>
+
+ofApp::ofApp(std::string outputPath, double outputTime)
+    : frameOutputPath(std::move(outputPath))
+    , frameTime(outputTime) {}
 
 void ofApp::setup() {
     ofSetFrameRate(50);
@@ -44,7 +49,11 @@ void ofApp::setup() {
     }
     broadcastGraphic.loadJson(scene.build());
     preview.allocate(broadcastGraphic.getScene());
-    broadcastGraphic.play();
+    if (frameOutputPath.empty()) {
+        broadcastGraphic.play();
+    } else {
+        broadcastGraphic.setTime(frameTime);
+    }
 }
 
 void ofApp::update() {
@@ -53,6 +62,15 @@ void ofApp::update() {
 
 void ofApp::draw() {
     preview.render(broadcastGraphic);
+    if (!frameOutputPath.empty() && !frameExported) {
+        frameExported = true;
+        const bool saved = preview.savePng(frameOutputPath);
+        if (saved) ofLogNotice("ofxOGraf") << "Exported RGBA frame: " << frameOutputPath;
+        else ofLogError("ofxOGraf") << "Could not export RGBA frame: " << frameOutputPath;
+        ofExit(saved ? 0 : 1);
+        return;
+    }
+
     ofClear(24, 24, 24, 255);
     preview.drawFit(0.0f, 0.0f, ofGetWidth(), ofGetHeight(), true);
 }
