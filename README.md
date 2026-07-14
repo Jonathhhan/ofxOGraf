@@ -94,6 +94,16 @@ scripts\package-ograf.ps1
 
 The packager validates the manifest and referenced runtime files and places the manifest at the archive root. For integration steps and the renderer conventions discovered in SuperFlyTV's implementation, see `docs/testing-with-ograf-server.md`.
 
+For a `CodeTemplate`, pass its serialized descriptor and asset root explicitly:
+
+```powershell
+scripts\package-ograf.ps1 `
+  -TemplateDefinition build\template-definition.json `
+  -AssetRoot build\data
+```
+
+The packager validates the descriptor before staging, copies only its declared `data/` assets, validates that staged filesystem again, then creates the ZIP.
+
 The manifest declares both real-time and non-real-time support. In non-real-time mode, `setActionsSchedule()` stores the action timeline and `goToTime()` rebuilds scheduled state when seeking backward before positioning the WASM timeline at the requested millisecond.
 
 ## Validation
@@ -108,6 +118,7 @@ node tests/authoring-contract.mjs
 node tests/code-template-contract.mjs
 node tests/golden-frame-contract.mjs
 node scripts/validate-template-definition.mjs
+node tests/package-contract.mjs
 node --check ograf/OfBroadcastGraphic.js
 node --check ograf/EssentialControls.js
 ```

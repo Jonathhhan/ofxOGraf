@@ -35,10 +35,19 @@ if ($TemplateDefinition) {
     } else {
         Join-Path $source 'data'
     }
-    & node (Join-Path $PSScriptRoot 'validate-template-definition.mjs') `
-        --strict --check-assets --asset-root $definitionAssetRoot $definitionPath
+    # The JSON result is also the package allowlist. Keep the descriptor as
+    # the authority for template-owned files instead of archiving every file
+    # that happens to be in data/ on the authoring workstation.
+    $definitionValidationJson = & node (Join-Path $PSScriptRoot 'validate-template-definition.mjs') `
+        --json --strict --check-assets --asset-root $definitionAssetRoot $definitionPath
     if ($LASTEXITCODE -ne 0) {
         throw 'TemplateDefinition validation failed.'
+    }
+    try {
+        $definitionValidation = ($definitionValidationJson | Out-String | ConvertFrom-Json)
+        $declaredAssets = @($definitionValidation.results[0].assets)
+    } catch {
+        throw "Could not read TemplateDefinition validation result: $($_.Exception.Message)"
     }
 }
 
@@ -55,12 +64,49 @@ foreach ($relative in $required) {
 
 $outputDirectory = Split-Path -Parent $output
 New-Item -ItemType Directory -Force -Path $outputDirectory | Out-Null
-if (Test-Path -LiteralPath $output) {
-    Remove-Item -LiteralPath $output
-}
+$stage = Join-Path $outputDirectory ('.ofxOGraf-stage-' + [Guid]::NewGuid().ToString('N'))
 
-# Archive the folder contents so the manifest is at the ZIP root. The
-# SuperFlyTV server also accepts nested manifests, but a root manifest is the
-# most portable package layout.
-Compress-Archive -Path (Join-Path $source '*') -DestinationPath $output -CompressionLevel Optimal
-Write-Output $output
+try {
+    New-Item -ItemType Directory -Force -Path $stage | Out-Null
+
+    if ($TemplateDefinition) {
+        # Preserve the renderer/runtime layout but deliberately exclude its
+        # untracked data directory. Only assets declared in the descriptor
+        # are copied below, at their portable data-relative paths.
+        Get-ChildItem -LiteralPath $source -Force |
+            Where-Object { $_.Name -ne 'data' } |
+            ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $stage -Recurse -Force }
+
+        Copy-Item -LiteralPath $definitionPath -Destination (Join-Path $stage 'template-definition.json') -Force
+        foreach ($asset in $declaredAssets) {
+            $relativePath = [string]$asset.path
+            $destination = Join-Path (Join-Path $stage 'data') ($relativePath -replace '/', '\\')
+            $destinationDirectory = Split-Path -Parent $destination
+            New-Item -ItemType Directory -Force -Path $destinationDirectory | Out-Null
+            Copy-Item -LiteralPath ([string]$asset.absolutePath) -Destination $destination -Force
+        }
+
+        # Validate the final filesystem layout, not merely the source tree.
+        & node (Join-Path $PSScriptRoot 'validate-template-definition.mjs') `
+            --strict --check-assets --asset-root (Join-Path $stage 'data') (Join-Path $stage 'template-definition.json')
+        if ($LASTEXITCODE -ne 0) {
+            throw 'Staged TemplateDefinition validation failed.'
+        }
+    } else {
+        Copy-Item -Path (Join-Path $source '*') -Destination $stage -Recurse -Force
+    }
+
+    if (Test-Path -LiteralPath $output) {
+        Remove-Item -LiteralPath $output
+    }
+
+    # Archive the staged folder contents so the manifest is at the ZIP root.
+    # The SuperFlyTV server also accepts nested manifests, but a root manifest
+    # is the most portable package layout.
+    Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $output -CompressionLevel Optimal
+    Write-Output $output
+} finally {
+    if (Test-Path -LiteralPath $stage) {
+        Remove-Item -LiteralPath $stage -Recurse -Force
+    }
+}
