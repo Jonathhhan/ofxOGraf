@@ -39,7 +39,7 @@
 	<PropertyGroup Label="Globals">
 		<ProjectGuid>{7FD42DF7-442E-479A-BA76-D0022F99702A}</ProjectGuid>
 		<Keyword>Win32Proj</Keyword>
-		<RootNamespace>example-basic</RootNamespace>
+		<RootNamespace>example-imgui</RootNamespace>
 	</PropertyGroup>
 	<Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
 	<PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64' or '$(Configuration)|$(Platform)'=='Debug|ARM64' or '$(Configuration)|$(Platform)'=='Debug|ARM64EC'" Label="Configuration">
@@ -82,12 +82,12 @@
 			<PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			<RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
 			<WarningLevel>Level3</WarningLevel>
-			<AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);src;..\src</AdditionalIncludeDirectories>
+			<AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);src;..\src;..\..\ofxImGui\libs;..\..\ofxImGui\libs\imgui;..\..\ofxImGui\libs\imgui\backends;..\..\ofxImGui\libs\imgui\docs;..\..\ofxImGui\libs\imgui\extras;..\..\ofxImGui\libs\imgui\src;..\..\ofxImGui\src</AdditionalIncludeDirectories>
 			<CompileAs>CompileAsCpp</CompileAs>
 			<MultiProcessorCompilation>true</MultiProcessorCompilation>
 			<ObjectFileName>$(IntDir)\Build\%(RelativeDir)\$(Configuration)\</ObjectFileName>
 			<LanguageStandard>stdcpp23</LanguageStandard>
-			<AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions) -DofxAddons_ENABLE_IMGUI -DOFXIMGUI_GLFW_EVENTS_REPLACE_OF_CALLBACKS=1 -DOFXIMGUI_GLFW_FIX_MULTICONTEXT_PRIMARY_VP=0 -DOFXIMGUI_GLFW_FIX_MULTICONTEXT_SECONDARY_VP=1</AdditionalOptions>
 		</ClCompile>
 		<PostBuildEvent />
 	</ItemDefinitionGroup>
@@ -127,11 +127,11 @@
 			<PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
 			<WarningLevel>Level3</WarningLevel>
-			<AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);src;..\src</AdditionalIncludeDirectories>
+			<AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);src;..\src;..\..\ofxImGui\libs;..\..\ofxImGui\libs\imgui;..\..\ofxImGui\libs\imgui\backends;..\..\ofxImGui\libs\imgui\docs;..\..\ofxImGui\libs\imgui\extras;..\..\ofxImGui\libs\imgui\src;..\..\ofxImGui\src</AdditionalIncludeDirectories>
 			<CompileAs>CompileAsCpp</CompileAs>
 			<ObjectFileName>$(IntDir)\Build\%(RelativeDir)\$(Configuration)\</ObjectFileName>
 			<LanguageStandard>stdcpplatest</LanguageStandard>
-			<AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions)</AdditionalOptions>
+			<AdditionalOptions>/Zc:__cplusplus %(AdditionalOptions) -DofxAddons_ENABLE_IMGUI -DOFXIMGUI_GLFW_EVENTS_REPLACE_OF_CALLBACKS=1 -DOFXIMGUI_GLFW_FIX_MULTICONTEXT_PRIMARY_VP=0 -DOFXIMGUI_GLFW_FIX_MULTICONTEXT_SECONDARY_VP=1</AdditionalOptions>
 		</ClCompile>
 		<PostBuildEvent />
 	</ItemDefinitionGroup>
@@ -238,6 +238,25 @@
 		<ClCompile Include="..\src\ofxOGrafScene.cpp" />
 		<ClCompile Include="..\src\ofxOGrafSceneLoader.cpp" />
 		<ClCompile Include="..\src\ofxOGrafTimeline.cpp" />
+		<ClCompile Include="..\..\ofxImGui\src\BaseEngine.cpp" />
+		<ClCompile Include="..\..\ofxImGui\src\DefaultTheme.cpp" />
+		<ClCompile Include="..\..\ofxImGui\src\EngineGLFW.cpp" />
+		<ClCompile Include="..\..\ofxImGui\src\EngineOpenFrameworks.cpp" />
+		<ClCompile Include="..\..\ofxImGui\src\EngineOpenGLES.cpp" />
+		<ClCompile Include="..\..\ofxImGui\src\Gui.cpp" />
+		<ClCompile Include="..\..\ofxImGui\src\GuiEventHelper.cpp" />
+		<ClCompile Include="..\..\ofxImGui\src\ImHelpers.cpp" />
+		<ClCompile Include="..\..\ofxImGui\src\ofxImGuiLoggerChannel.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\backends\imgui_impl_glfw.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\backends\imgui_impl_glfw_context_support.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\backends\imgui_impl_opengl2.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\backends\imgui_impl_opengl3.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\extras\imgui_stdlib.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\src\imgui.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\src\imgui_demo.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\src\imgui_draw.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\src\imgui_tables.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\src\imgui_widgets.cpp" />
 	</ItemGroup>
 	<ItemGroup>
 		<ClInclude Include="src\ofApp.h" />
@@ -251,6 +270,35 @@
 		<ClInclude Include="..\src\ofxOGrafScene.h" />
 		<ClInclude Include="..\src\ofxOGrafSceneLoader.h" />
 		<ClInclude Include="..\src\ofxOGrafTimeline.h" />
+		<ClInclude Include="..\..\ofxImGui\src\BaseEngine.h" />
+		<ClInclude Include="..\..\ofxImGui\src\BaseTheme.h" />
+		<ClInclude Include="..\..\ofxImGui\src\DefaultTheme.h" />
+		<ClInclude Include="..\..\ofxImGui\src\EngineGLFW.h" />
+		<ClInclude Include="..\..\ofxImGui\src\EngineOpenFrameworks.h" />
+		<ClInclude Include="..\..\ofxImGui\src\EngineOpenGLES.h" />
+		<ClInclude Include="..\..\ofxImGui\src\EngineVk.h" />
+		<ClInclude Include="..\..\ofxImGui\src\gles1CompatibilityHacks.h" />
+		<ClInclude Include="..\..\ofxImGui\src\glfwCompatibilityHacks.h" />
+		<ClInclude Include="..\..\ofxImGui\src\Gui.h" />
+		<ClInclude Include="..\..\ofxImGui\src\GuiEventHelper.h" />
+		<ClInclude Include="..\..\ofxImGui\src\imconfig.h" />
+		<ClInclude Include="..\..\ofxImGui\src\ImHelpers.h" />
+		<ClInclude Include="..\..\ofxImGui\src\LinkedList.hpp" />
+		<ClInclude Include="..\..\ofxImGui\src\ofxImGui.h" />
+		<ClInclude Include="..\..\ofxImGui\src\ofxImGuiConstants.h" />
+		<ClInclude Include="..\..\ofxImGui\src\ofxImGuiLoggerChannel.h" />
+		<ClInclude Include="..\..\ofxImGui\libs\imgui\backends\imgui_impl_glfw.h" />
+		<ClInclude Include="..\..\ofxImGui\libs\imgui\backends\imgui_impl_glfw_arc_support.h" />
+		<ClInclude Include="..\..\ofxImGui\libs\imgui\backends\imgui_impl_glfw_context_support.h" />
+		<ClInclude Include="..\..\ofxImGui\libs\imgui\backends\imgui_impl_opengl2.h" />
+		<ClInclude Include="..\..\ofxImGui\libs\imgui\backends\imgui_impl_opengl3.h" />
+		<ClInclude Include="..\..\ofxImGui\libs\imgui\backends\imgui_impl_opengl3_loader.h" />
+		<ClInclude Include="..\..\ofxImGui\libs\imgui\extras\imgui_stdlib.h" />
+		<ClInclude Include="..\..\ofxImGui\libs\imgui\src\imgui.h" />
+		<ClInclude Include="..\..\ofxImGui\libs\imgui\src\imgui_internal.h" />
+		<ClInclude Include="..\..\ofxImGui\libs\imgui\src\imstb_rectpack.h" />
+		<ClInclude Include="..\..\ofxImGui\libs\imgui\src\imstb_textedit.h" />
+		<ClInclude Include="..\..\ofxImGui\libs\imgui\src\imstb_truetype.h" />
 	</ItemGroup>
 	<ItemGroup>
 		<ProjectReference Include="$(OF_ROOT)\libs\openFrameworksCompiled\project\vs\openframeworksLib.vcxproj">

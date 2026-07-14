@@ -19,8 +19,10 @@ This is not a binary `.mogrt` converter. It exports AE's scriptable scene model 
 - `after-effects/export_broadcast_scene_v2.jsx`: recursive exporter for compositions, fonts, images, controls, sampled expressions, masks, mattes, effects, 3D transforms, and shape operators. The original MVP exporter remains available as `export_selected_comp.jsx`.
 - `after-effects/bake_unsupported_layers.jsx`: alpha-PNG fallback renderer for AE-only layers and effects.
 - `schema/broadcast-scene-0.2.schema.json`: expanded neutral interchange format; the original 0.1 schema remains for compatibility.
-- `src/`: openFrameworks addon with deterministic timeline evaluation, asset caching, recursive scene rendering, renderer-extension hooks, and AE-style 2D/3D transforms.
-- `example-basic/`: native/Emscripten example and embind lifecycle bridge.
+- `src/`: openFrameworks addon with deterministic timeline evaluation, asset caching, recursive scene rendering, renderer-extension hooks, AE-style 2D/3D transforms, a neutral controls API, and an optional ofxImGui adapter.
+- `example-basic/`: dependency-free native/Emscripten example and embind lifecycle bridge.
+- `example-imgui/`: native inspector example that opts into ofxImGui through its own `addons.make`.
+- `ograf/EssentialControls.js`: reusable HTML control panel generated from the same neutral `scene.controls` model.
 - `ograf/`: OGraf v1 Web Component, manifest, real-time lifecycle, deterministic seeking, and scheduled non-real-time actions.
 - `examples/lower-third.scene.json` and `examples/feature-showcase.scene.json`: hand-authored baseline and expanded-feature scenes.
 
@@ -58,7 +60,7 @@ See `docs/renderer-support.md` for the feature matrix and fallback strategy.
 
 ## Native openFrameworks build
 
-Use openFrameworks Project Generator on `example-basic`, then build it normally for your platform. The example expects this addon to live at `addons/ofxOGraf`.
+Use openFrameworks Project Generator on `example-basic`, then build it normally for your platform. The example expects this addon to live at `addons/ofxOGraf`. For a native Essential Graphics inspector, generate/build `example-imgui`; that example adds `ofxImGui` without making it a core dependency. See `docs/essential-controls.md`.
 
 ## Emscripten build
 
@@ -93,7 +95,9 @@ With Node.js available:
 ```powershell
 node scripts/validate.mjs
 node tests/feature-contract.mjs
+node tests/controls-contract.mjs
 node --check ograf/OfBroadcastGraphic.js
+node --check ograf/EssentialControls.js
 ```
 
 The committed `ograf/dist/.gitkeep` is intentional; generated WASM artifacts are ignored.

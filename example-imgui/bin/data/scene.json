@@ -1,0 +1,35 @@
+{
+  "format": "broadcast-scene",
+  "version": "0.2.0",
+  "composition": { "width": 1280, "height": 720, "duration": 10, "frameRate": 50 },
+  "controls": [
+    { "id": "headline", "name": "Headline", "type": "string", "default": "ofxOGraf + ofxImGui" },
+    { "id": "accentColor", "name": "Accent", "type": "color", "default": [0.2, 0.65, 1, 1] },
+    { "id": "opacity", "name": "Panel opacity", "type": "number", "default": 90, "min": 0, "max": 100, "step": 1 }
+  ],
+  "layers": [
+    {
+      "index": 1, "name": "Headline", "type": "text", "enabled": true, "inPoint": 0, "outPoint": 10,
+      "controlId": "headline",
+      "text": { "name": "Source Text", "matchName": "ADBE Text Document", "value": { "text": "ofxOGraf + ofxImGui", "fontSize": 72, "fillColor": [1, 1, 1], "justification": "CENTER_JUSTIFY" } },
+      "transform": { "name": "Transform", "matchName": "ADBE Transform Group", "children": [{ "name": "Position", "matchName": "ADBE Position", "value": [640, 360], "keyframes": [] }] }
+    },
+    {
+      "index": 2, "name": "Panel", "type": "shape", "enabled": true, "inPoint": 0, "outPoint": 10,
+      "transform": { "name": "Transform", "matchName": "ADBE Transform Group", "children": [
+        { "name": "Position", "matchName": "ADBE Position", "value": [640, 360], "keyframes": [] },
+        { "name": "Opacity", "matchName": "ADBE Opacity", "value": 90, "controlId": "opacity", "keyframes": [] }
+      ] },
+      "contents": { "name": "Contents", "matchName": "ADBE Root Vectors Group", "children": [
+        { "name": "Rectangle", "matchName": "ADBE Vector Shape - Rect", "children": [
+          { "name": "Size", "matchName": "ADBE Vector Rect Size", "value": [900, 180], "keyframes": [] },
+          { "name": "Position", "matchName": "ADBE Vector Rect Position", "value": [0, 0], "keyframes": [] }
+        ] },
+        { "name": "Fill Color", "matchName": "ADBE Vector Fill Color", "value": [0.2, 0.65, 1, 1], "controlId": "accentColor", "keyframes": [] },
+        { "name": "Fill Opacity", "matchName": "ADBE Vector Fill Opacity", "value": 100, "keyframes": [] }
+      ] }
+    }
+  ],
+  "compositions": [],
+  "assets": { "fonts": [], "images": [] }
+}

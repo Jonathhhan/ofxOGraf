@@ -7,27 +7,27 @@ namespace ofxOGraf {
 
 Renderer::Style Renderer::styleFor(const ofJson& group, double time) const {
     Style style;
-    if (const auto* property = findProperty(group, "ADBE Vector Fill Color")) style.fill = color(Timeline::evaluate(*property, time));
-    if (const auto* property = findProperty(group, "ADBE Vector Fill Opacity")) style.fill.a *= Timeline::evaluate(*property, time).get<float>() / 100.0f;
+    if (const auto* property = findProperty(group, "ADBE Vector Fill Color")) style.fill = color(evaluate(*property, time));
+    if (const auto* property = findProperty(group, "ADBE Vector Fill Opacity")) style.fill.a *= evaluate(*property, time).get<float>() / 100.0f;
     if (const auto* property = findProperty(group, "ADBE Vector Stroke Color")) {
         style.stroked = true;
-        style.stroke = color(Timeline::evaluate(*property, time));
+        style.stroke = color(evaluate(*property, time));
     }
-    if (const auto* property = findProperty(group, "ADBE Vector Stroke Opacity")) style.stroke.a *= Timeline::evaluate(*property, time).get<float>() / 100.0f;
+    if (const auto* property = findProperty(group, "ADBE Vector Stroke Opacity")) style.stroke.a *= evaluate(*property, time).get<float>() / 100.0f;
     if (const auto* property = findProperty(group, "ADBE Vector Stroke Width")) {
         style.stroked = true;
-        style.strokeWidth = Timeline::evaluate(*property, time).get<float>();
+        style.strokeWidth = evaluate(*property, time).get<float>();
     }
     if (const auto* gradientGroup = findProperty(group, "ADBE Vector Graphic - G-Fill")) {
         style.gradient = true;
         if (const auto* property = findProperty(*gradientGroup, "ADBE Vector Grad Type")) {
-            const ofJson value = Timeline::evaluate(*property, time);
+            const ofJson value = evaluate(*property, time);
             style.radialGradient = value.is_number() && value.get<int>() == 2;
         }
-        if (const auto* property = findProperty(*gradientGroup, "ADBE Vector Grad Start Pt")) style.gradientStart = vector2(Timeline::evaluate(*property, time));
-        if (const auto* property = findProperty(*gradientGroup, "ADBE Vector Grad End Pt")) style.gradientEnd = vector2(Timeline::evaluate(*property, time), glm::vec2(1, 0));
+        if (const auto* property = findProperty(*gradientGroup, "ADBE Vector Grad Start Pt")) style.gradientStart = vector2(evaluate(*property, time));
+        if (const auto* property = findProperty(*gradientGroup, "ADBE Vector Grad End Pt")) style.gradientEnd = vector2(evaluate(*property, time), glm::vec2(1, 0));
         if (const auto* property = findProperty(group, "ADBE Vector Grad Colors")) {
-            const ofJson value = Timeline::evaluate(*property, time);
+            const ofJson value = evaluate(*property, time);
             if (value.is_object() && value.contains("stops") && value["stops"].is_array()) {
                 for (const auto& stop : value["stops"]) {
                     style.stops.emplace_back(stop.value("offset", 0.0f), color(stop.value("color", ofJson::array({1, 1, 1})), stop.value("opacity", 1.0f)));
@@ -55,16 +55,16 @@ ofPath Renderer::pathFromProperty(const ofJson& property, double time) const {
     if (match == "ADBE Vector Shape - Rect") {
         const auto* sizeProperty = findProperty(property, "ADBE Vector Rect Size");
         const auto* positionProperty = findProperty(property, "ADBE Vector Rect Position");
-        const glm::vec2 size = sizeProperty ? vector2(Timeline::evaluate(*sizeProperty, time)) : glm::vec2(0);
-        const glm::vec2 position = positionProperty ? vector2(Timeline::evaluate(*positionProperty, time)) : glm::vec2(0);
+        const glm::vec2 size = sizeProperty ? vector2(evaluate(*sizeProperty, time)) : glm::vec2(0);
+        const glm::vec2 position = positionProperty ? vector2(evaluate(*positionProperty, time)) : glm::vec2(0);
         path.rectangle(position.x - size.x * 0.5f, position.y - size.y * 0.5f, size.x, size.y);
         return path;
     }
     if (match == "ADBE Vector Shape - Ellipse") {
         const auto* sizeProperty = findProperty(property, "ADBE Vector Ellipse Size");
         const auto* positionProperty = findProperty(property, "ADBE Vector Ellipse Position");
-        const glm::vec2 size = sizeProperty ? vector2(Timeline::evaluate(*sizeProperty, time)) : glm::vec2(0);
-        const glm::vec2 position = positionProperty ? vector2(Timeline::evaluate(*positionProperty, time)) : glm::vec2(0);
+        const glm::vec2 size = sizeProperty ? vector2(evaluate(*sizeProperty, time)) : glm::vec2(0);
+        const glm::vec2 position = positionProperty ? vector2(evaluate(*positionProperty, time)) : glm::vec2(0);
         path.ellipse(position, size.x, size.y);
         return path;
     }
@@ -73,7 +73,7 @@ ofPath Renderer::pathFromProperty(const ofJson& property, double time) const {
     if (!property.contains("value") && !property.contains("keyframes") && !property.contains("samples")) {
         shapeProperty = findProperty(property, "ADBE Vector Shape");
     }
-    ofJson value = shapeProperty ? Timeline::evaluate(*shapeProperty, time) : ofJson();
+    ofJson value = shapeProperty ? evaluate(*shapeProperty, time) : ofJson();
     if (!value.is_object() || !value.contains("vertices") || value["vertices"].empty()) return path;
     const auto& vertices = value["vertices"];
     const auto& ins = value.value("inTangents", ofJson::array());
@@ -198,12 +198,12 @@ void Renderer::drawShapeGeometry(const ofJson& group, double time, const Style& 
     const auto* trimEnd = findProperty(group, "ADBE Vector Trim End");
     const auto* trimOffset = findProperty(group, "ADBE Vector Trim Offset");
     const bool trimmed = trimStart || trimEnd;
-    const float start = trimStart ? Timeline::evaluate(*trimStart, time).get<float>() : 0.0f;
-    const float end = trimEnd ? Timeline::evaluate(*trimEnd, time).get<float>() : 100.0f;
-    const float offset = trimOffset ? Timeline::evaluate(*trimOffset, time).get<float>() / 3.6f : 0.0f;
+    const float start = trimStart ? evaluate(*trimStart, time).get<float>() : 0.0f;
+    const float end = trimEnd ? evaluate(*trimEnd, time).get<float>() : 100.0f;
+    const float offset = trimOffset ? evaluate(*trimOffset, time).get<float>() / 3.6f : 0.0f;
     if (const auto* merge = findProperty(group, "ADBE Vector Filter - Merge")) {
         const auto* modeProperty = findProperty(*merge, "ADBE Vector Merge Type");
-        const int mode = modeProperty ? Timeline::evaluate(*modeProperty, time).get<int>() : 1;
+        const int mode = modeProperty ? evaluate(*modeProperty, time).get<int>() : 1;
         ofPath combined;
         for (const auto& path : paths) combined.append(path);
         if (mode == 3) combined.setPolyWindingMode(OF_POLY_WINDING_NEGATIVE);
@@ -231,14 +231,14 @@ void Renderer::drawRepeater(const ofJson& group, const ofJson& repeater, double 
     const auto* copiesProperty = findProperty(repeater, "ADBE Vector Repeater Copies");
     const auto* offsetProperty = findProperty(repeater, "ADBE Vector Repeater Offset");
     const auto* transform = findProperty(repeater, "ADBE Vector Repeater Transform");
-    const int copies = std::max(0, copiesProperty ? static_cast<int>(std::round(Timeline::evaluate(*copiesProperty, time).get<float>())) : 1);
-    const float offset = offsetProperty ? Timeline::evaluate(*offsetProperty, time).get<float>() : 0.0f;
+    const int copies = std::max(0, copiesProperty ? static_cast<int>(std::round(evaluate(*copiesProperty, time).get<float>())) : 1);
+    const float offset = offsetProperty ? evaluate(*offsetProperty, time).get<float>() : 0.0f;
     const glm::vec2 position = transform && findProperty(*transform, "ADBE Vector Repeater Position")
-        ? vector2(Timeline::evaluate(*findProperty(*transform, "ADBE Vector Repeater Position"), time)) : glm::vec2(0);
+        ? vector2(evaluate(*findProperty(*transform, "ADBE Vector Repeater Position"), time)) : glm::vec2(0);
     const glm::vec2 scale = transform && findProperty(*transform, "ADBE Vector Repeater Scale")
-        ? vector2(Timeline::evaluate(*findProperty(*transform, "ADBE Vector Repeater Scale"), time), glm::vec2(100)) : glm::vec2(100);
+        ? vector2(evaluate(*findProperty(*transform, "ADBE Vector Repeater Scale"), time), glm::vec2(100)) : glm::vec2(100);
     const float rotation = transform && findProperty(*transform, "ADBE Vector Repeater Rotation")
-        ? Timeline::evaluate(*findProperty(*transform, "ADBE Vector Repeater Rotation"), time).get<float>() : 0.0f;
+        ? evaluate(*findProperty(*transform, "ADBE Vector Repeater Rotation"), time).get<float>() : 0.0f;
     for (int i = 0; i < copies; ++i) {
         const float amount = static_cast<float>(i) + offset;
         ofPushMatrix();

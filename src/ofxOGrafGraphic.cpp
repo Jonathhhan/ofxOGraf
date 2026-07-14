@@ -12,6 +12,7 @@ void Graphic::setup() {
 bool Graphic::loadFile(const std::string& path) {
     try {
         scene = SceneLoader::loadFile(path);
+        data = Controls::withDefaults(scene, data);
         renderer.setScene(scene);
         renderer.setData(data);
         loaded = true;
@@ -29,6 +30,7 @@ bool Graphic::loadFile(const std::string& path) {
 bool Graphic::loadJson(const std::string& jsonText) {
     try {
         scene = SceneLoader::loadString(jsonText);
+        data = Controls::withDefaults(scene, data);
         renderer.setScene(scene);
         renderer.setData(data);
         loaded = true;
@@ -44,7 +46,7 @@ bool Graphic::loadJson(const std::string& jsonText) {
 }
 
 void Graphic::setData(const ofJson& value) {
-    data = value.is_object() ? value : ofJson::object();
+    data = loaded ? Controls::withDefaults(scene, value) : (value.is_object() ? value : ofJson::object());
     renderer.setData(data);
 }
 
@@ -99,7 +101,11 @@ void Graphic::draw() {
     if (loaded) renderer.draw(timeline.getTime());
 }
 
+bool Graphic::isLoaded() const { return loaded; }
 const Scene& Graphic::getScene() const { return scene; }
+const ofJson& Graphic::getData() const { return data; }
+const ofJson& Graphic::getControls() const { return Controls::definitions(scene); }
+ofJson Graphic::getControlDefaults() const { return Controls::defaultData(scene); }
 const std::string& Graphic::getLastError() const { return lastError; }
 Extensions& Graphic::extensions() { return renderer.extensions(); }
 

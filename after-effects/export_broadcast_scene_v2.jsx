@@ -83,6 +83,19 @@
         if (value instanceof Array && (value.length === 3 || value.length === 4)) return "color-or-vector";
         return "unknown";
     }
+    function propertyControlType(property, value) {
+        var matchName = String(property.matchName || "");
+        if (matchName.indexOf("Checkbox") >= 0) return "boolean";
+        if (matchName.indexOf("Color") >= 0) return "color";
+        try {
+            if (property.propertyValueType === PropertyValueType.COLOR) return "color";
+            if (property.propertyValueType === PropertyValueType.TwoD ||
+                property.propertyValueType === PropertyValueType.TwoD_SPATIAL ||
+                property.propertyValueType === PropertyValueType.ThreeD ||
+                property.propertyValueType === PropertyValueType.ThreeD_SPATIAL) return "vector";
+        } catch (_) {}
+        return controlType(value);
+    }
     function exportKeyframe(property, index) {
         var out = {
             time: property.keyTime(index), value: serializableValue(property.keyValue(index)),
@@ -277,8 +290,14 @@
             property = inferControlProperty(comp, name);
             if (property) {
                 try {
-                    value = serializableValue(property.value);
-                    control.type = controlType(value); control.default = value; control.matchName = property.matchName;
+                    var rawValue = property.value;
+                    value = rawValue instanceof TextDocument ? rawValue.text : serializableValue(rawValue);
+                    control.type = propertyControlType(property, value);
+                    control.default = value;
+                    control.matchName = property.matchName;
+                    try { if (property.hasMin) control.min = property.minValue; } catch (_) {}
+                    try { if (property.hasMax) control.max = property.maxValue; } catch (_) {}
+                    if (control.type === "string" && String(value).indexOf("\r") >= 0) control.multiline = true;
                 } catch (_) {}
             }
             controls.push(control);

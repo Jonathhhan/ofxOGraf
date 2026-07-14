@@ -90,13 +90,13 @@ void Renderer::applyTransform(const ofJson& transform, double time) const {
     const auto* yRotationProperty = findProperty(transform, "ADBE Rotate Y");
     const auto* zRotationProperty = findProperty(transform, "ADBE Rotate Z");
 
-    glm::vec3 anchor = anchorProperty ? vector3(Timeline::evaluate(*anchorProperty, time)) : glm::vec3(0);
-    glm::vec3 position = positionProperty ? vector3(Timeline::evaluate(*positionProperty, time)) : glm::vec3(0);
-    glm::vec3 scale = scaleProperty ? vector3(Timeline::evaluate(*scaleProperty, time), glm::vec3(100)) : glm::vec3(100);
-    glm::vec3 orientation = orientationProperty ? vector3(Timeline::evaluate(*orientationProperty, time)) : glm::vec3(0);
-    const float rx = xRotationProperty ? Timeline::evaluate(*xRotationProperty, time).get<float>() : 0.0f;
-    const float ry = yRotationProperty ? Timeline::evaluate(*yRotationProperty, time).get<float>() : 0.0f;
-    const float rz = zRotationProperty ? Timeline::evaluate(*zRotationProperty, time).get<float>() : 0.0f;
+    glm::vec3 anchor = anchorProperty ? vector3(evaluate(*anchorProperty, time)) : glm::vec3(0);
+    glm::vec3 position = positionProperty ? vector3(evaluate(*positionProperty, time)) : glm::vec3(0);
+    glm::vec3 scale = scaleProperty ? vector3(evaluate(*scaleProperty, time), glm::vec3(100)) : glm::vec3(100);
+    glm::vec3 orientation = orientationProperty ? vector3(evaluate(*orientationProperty, time)) : glm::vec3(0);
+    const float rx = xRotationProperty ? evaluate(*xRotationProperty, time).get<float>() : 0.0f;
+    const float ry = yRotationProperty ? evaluate(*yRotationProperty, time).get<float>() : 0.0f;
+    const float rz = zRotationProperty ? evaluate(*zRotationProperty, time).get<float>() : 0.0f;
 
     ofTranslate(position);
     ofRotateXDeg(orientation.x + rx);
@@ -116,7 +116,7 @@ void Renderer::applyEffectState(const Layer& layer, double time) {
         const std::string match = node.value("matchName", "");
         if (match.find("ADBE Fill") != std::string::npos || match.find("ADBE Tint") != std::string::npos) {
             if (const auto* property = findFirstValue(node, "Color")) {
-                const ofJson value = Timeline::evaluate(*property, time);
+                const ofJson value = evaluate(*property, time);
                 if (value.is_array() && value.size() >= 3) {
                     colorOverride = color(value);
                     hasColorOverride = true;
@@ -142,7 +142,7 @@ void Renderer::drawLayer(const Scene& scene, const Layer& layer, double time, bo
     applyEffectState(layer, time);
     if (layer.source.contains("transform")) {
         if (const auto* opacity = findProperty(layer.source["transform"], "ADBE Opacity")) {
-            const ofJson value = Timeline::evaluate(*opacity, time);
+            const ofJson value = evaluate(*opacity, time);
             if (value.is_number()) opacityMultiplier *= ofClamp(value.get<float>() / 100.0f, 0.0f, 1.0f);
         }
     }
@@ -176,7 +176,7 @@ void Renderer::drawLayerContent(const Scene&, const Layer& layer, double time) {
 
 void Renderer::drawText(const Layer& layer, double time) {
     if (!layer.source.contains("text")) return;
-    ofJson value = Timeline::evaluate(layer.source["text"], time);
+    ofJson value = evaluate(layer.source["text"], time);
     if (!value.is_object()) return;
     std::string text = value.value("text", layer.name);
     const std::string controlId = layer.source.value("controlId", "");
@@ -281,6 +281,18 @@ void Renderer::drawFallback(const Layer& layer, double time) {
         ofSetColor(ofFloatColor(1, 1, 1, opacityMultiplier));
         frame->draw(0, 0);
     }
+}
+
+ofJson Renderer::evaluate(const ofJson& property, double time) const {
+    ofJson value = Timeline::evaluate(property, time);
+    const std::string controlId = property.value("controlId", "");
+    if (controlId.empty() || !data.contains(controlId) || data[controlId].is_null()) return value;
+    const ofJson& controlled = data[controlId];
+    if (value.is_object() && value.contains("text") && controlled.is_string()) {
+        value["text"] = controlled;
+        return value;
+    }
+    return controlled;
 }
 
 const ofJson* Renderer::findProperty(const ofJson& group, const std::string& matchName) {

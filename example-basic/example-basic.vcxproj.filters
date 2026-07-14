@@ -10,10 +10,16 @@
 		<ClCompile Include="..\src\ofxOGrafAssets.cpp">
 			<Filter>addons\ofxOGraf\src</Filter>
 		</ClCompile>
+		<ClCompile Include="..\src\ofxOGrafControls.cpp">
+			<Filter>addons\ofxOGraf\src</Filter>
+		</ClCompile>
 		<ClCompile Include="..\src\ofxOGrafExtensions.cpp">
 			<Filter>addons\ofxOGraf\src</Filter>
 		</ClCompile>
 		<ClCompile Include="..\src\ofxOGrafGraphic.cpp">
+			<Filter>addons\ofxOGraf\src</Filter>
+		</ClCompile>
+		<ClCompile Include="..\src\ofxOGrafImGuiControls.cpp">
 			<Filter>addons\ofxOGraf\src</Filter>
 		</ClCompile>
 		<ClCompile Include="..\src\ofxOGrafRenderer.cpp">
@@ -37,13 +43,13 @@
 			<UniqueIdentifier>{d8376475-7454-4a24-b08a-aac121d3ad6f}</UniqueIdentifier>
 		</Filter>
 		<Filter Include="addons">
-			<UniqueIdentifier>{E064F36F--1D9-8-44-5E-9-398-B438DB398E8A}</UniqueIdentifier>
+			<UniqueIdentifier>{842AD194--37A-6-44-D8-8-A67-1B3CDFF31058}</UniqueIdentifier>
 		</Filter>
 		<Filter Include="addons\ofxOGraf">
-			<UniqueIdentifier>{68CD3125--B53-D-44-AB-B-2F3-3C2EC6606291}</UniqueIdentifier>
+			<UniqueIdentifier>{35E98E5A--F82-6-46-F1-A-77C-6662AAF3CFCE}</UniqueIdentifier>
 		</Filter>
 		<Filter Include="addons\ofxOGraf\src">
-			<UniqueIdentifier>{0A6638BF--267-F-4B-DB-A-A8D-7EFDDBC19577}</UniqueIdentifier>
+			<UniqueIdentifier>{A6F70743--4A2-1-4E-4D-9-9B3-4CE4FA1E5168}</UniqueIdentifier>
 		</Filter>
 	</ItemGroup>
 	<ItemGroup>
@@ -56,10 +62,16 @@
 		<ClInclude Include="..\src\ofxOGrafAssets.h">
 			<Filter>addons\ofxOGraf\src</Filter>
 		</ClInclude>
+		<ClInclude Include="..\src\ofxOGrafControls.h">
+			<Filter>addons\ofxOGraf\src</Filter>
+		</ClInclude>
 		<ClInclude Include="..\src\ofxOGrafExtensions.h">
 			<Filter>addons\ofxOGraf\src</Filter>
 		</ClInclude>
 		<ClInclude Include="..\src\ofxOGrafGraphic.h">
+			<Filter>addons\ofxOGraf\src</Filter>
+		</ClInclude>
+		<ClInclude Include="..\src\ofxOGrafImGuiControls.h">
 			<Filter>addons\ofxOGraf\src</Filter>
 		</ClInclude>
 		<ClInclude Include="..\src\ofxOGrafRenderer.h">

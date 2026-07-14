@@ -4,12 +4,13 @@ export default class OfBroadcastGraphic extends HTMLElement {
     constructor() {
         super();
         this.module = null;
+        this.scene = null;
+        this.data = {};
+        this.initialData = {};
         this.currentStep = undefined;
         this.stepCount = 1;
         this.schedule = [];
         this.appliedScheduleIndex = 0;
-        this.initialData = {};
-        this.data = {};
         const shadow = this.attachShadow({ mode: "open" });
         this.canvas = document.createElement("canvas");
         this.canvas.width = 1920;
@@ -25,16 +26,19 @@ export default class OfBroadcastGraphic extends HTMLElement {
         const response = await fetch(sceneUrl);
         if (!response.ok) return { statusCode: response.status, statusMessage: `Could not load ${sceneUrl}` };
         const scene = await response.json();
+        this.scene = scene;
         if (!this.module.loadGraphic(JSON.stringify(scene))) {
             return { statusCode: 422, statusMessage: this.module.getLastError?.() || "Invalid scene" };
         }
-        this.initialData = structuredClone(data);
-        this.data = structuredClone(data);
-        this.module.updateGraphic(JSON.stringify(data), true);
+        const resolvedData = this.mergePatch(this.sceneDefaults(scene), data);
+        this.initialData = structuredClone(resolvedData);
+        this.data = structuredClone(resolvedData);
+        this.module.updateGraphic(JSON.stringify(this.data), true);
         this.renderType = renderType;
         const resolution = renderCharacteristics.resolution || scene.composition;
         this.canvas.width = resolution.width || scene.composition.width;
         this.canvas.height = resolution.height || scene.composition.height;
+        this.dispatchState("ograf-ready");
         return { statusCode: 200, statusMessage: "OK" };
     }
 
@@ -59,6 +63,7 @@ export default class OfBroadcastGraphic extends HTMLElement {
             return { statusCode: 400, statusMessage: "Invalid update data" };
         }
         await this.waitForAction("update");
+        this.dispatchState("ograf-data-change");
         return { statusCode: 200, statusMessage: "OK" };
     }
 
@@ -98,12 +103,16 @@ export default class OfBroadcastGraphic extends HTMLElement {
         }
         this.module.goToTime(timestamp);
         this.lastTimestamp = timestamp;
+        this.dispatchState("ograf-data-change");
         return { statusCode: 200, statusMessage: "OK" };
     }
 
     async dispose() {
         this.module?.exit?.();
         this.module = null;
+        this.scene = null;
+        this.data = {};
+        this.initialData = {};
         this.currentStep = undefined;
         this.schedule = [];
         this.appliedScheduleIndex = 0;
@@ -132,6 +141,24 @@ export default class OfBroadcastGraphic extends HTMLElement {
 
     ensureLoaded() {
         if (!this.module) throw new Error("Graphic has not been loaded");
+    }
+
+    getControls() {
+        return Array.isArray(this.scene?.controls) ? structuredClone(this.scene.controls) : [];
+    }
+
+    sceneDefaults(scene = this.scene) {
+        const result = {};
+        for (const control of scene?.controls || []) {
+            if (control?.id && Object.hasOwn(control, "default")) result[control.id] = structuredClone(control.default);
+        }
+        return result;
+    }
+
+    dispatchState(type) {
+        this.dispatchEvent(new CustomEvent(type, {
+            detail: { scene: this.scene, controls: this.getControls(), data: structuredClone(this.data) }
+        }));
     }
 
     mergePatch(target, patch) {

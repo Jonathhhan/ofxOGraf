@@ -7,3 +7,5 @@ meta:
 
 common:
     ADDON_INCLUDES = src
+    # ofxImGui is intentionally optional. Adding it to an application's
+    # addons.make defines ofxAddons_ENABLE_IMGUI and activates the adapter.

@@ -136,7 +136,9 @@
       "properties": {
         "id": { "type": "string" }, "name": { "type": "string" }, "type": { "type": "string" },
         "default": {}, "source": { "type": "string" }, "controllerIndex": { "type": "integer" },
-        "matchName": { "type": "string" }
+        "matchName": { "type": "string" }, "min": { "type": "number" }, "max": { "type": "number" },
+        "step": { "type": "number" }, "multiline": { "type": "boolean" },
+        "options": { "type": "array" }
       }
     }
   }

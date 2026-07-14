@@ -48,6 +48,16 @@ try {
 if (!wrapper.includes("export default class")) errors.push("wrapper: expected a default-exported class");
 if (wrapper.includes("customElements.define(")) errors.push("wrapper: renderer must register the default export");
 
+let controlsModule = "";
+try {
+    controlsModule = await readFile(new URL("ograf/EssentialControls.js", root), "utf8");
+} catch (error) {
+    errors.push(`controls: module could not be read (${error.message})`);
+}
+for (const token of ["of-essential-controls", "updateAction", "normalizeControls", "controlDefaults"]) {
+    if (!controlsModule.includes(token)) errors.push(`controls: missing ${token}`);
+}
+
 if (manifest?.supportsNonRealTime) {
     for (const method of ["goToTime", "setActionsSchedule"]) {
         if (!wrapper.includes(`async ${method}(`)) errors.push(`wrapper: missing ${method}`);
@@ -58,11 +68,12 @@ validateScene(await json("examples/lower-third.scene.json"), "example scene");
 validateScene(await json("ograf/scene.json"), "OGraf scene");
 validateScene(await json("example-basic/bin/data/scene.json"), "native example scene");
 validateScene(await json("examples/feature-showcase.scene.json"), "feature showcase scene");
+validateScene(await json("example-imgui/bin/data/scene.json"), "ofxImGui example scene");
 await json("schema/broadcast-scene-0.2.schema.json");
 
 if (errors.length) {
     console.error(errors.join("\n"));
     process.exitCode = 1;
 } else {
-    console.log("Validated OGraf manifest, wrapper contract, schemas, and 4 Broadcast Scene files.");
+    console.log("Validated OGraf manifest, wrapper/control contracts, schemas, and 5 Broadcast Scene files.");
 }

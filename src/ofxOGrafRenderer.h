@@ -67,6 +67,7 @@ private:
     void beginMatte(const Scene& scene, const Layer& matte, double time, bool inverted);
     void endMatte();
 
+    ofJson evaluate(const ofJson& property, double time) const;
     static const ofJson* findProperty(const ofJson& group, const std::string& matchName);
     static const ofJson* findFirstValue(const ofJson& group, const std::string& nameFragment);
     static glm::vec2 vector2(const ofJson& value, glm::vec2 fallback = glm::vec2(0));

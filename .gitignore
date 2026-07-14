@@ -12,5 +12,11 @@ example-basic/bin/*
 !example-basic/bin/data/
 example-basic/bin/data/*
 !example-basic/bin/data/scene.json
+
+!example-imgui/bin/
+example-imgui/bin/*
+!example-imgui/bin/data/
+example-imgui/bin/data/*
+!example-imgui/bin/data/scene.json
 *.vcxproj.user
 example-basic/dll/

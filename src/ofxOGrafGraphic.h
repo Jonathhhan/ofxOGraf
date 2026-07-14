@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
+#include "ofxOGrafControls.h"
 #include "ofxOGrafRenderer.h"
 #include "ofxOGrafScene.h"
 #include "ofxOGrafTimeline.h"
@@ -26,7 +27,11 @@ public:
     void update(double deltaSeconds);
     void draw();
 
+    bool isLoaded() const;
     const Scene& getScene() const;
+    const ofJson& getData() const;
+    const ofJson& getControls() const;
+    ofJson getControlDefaults() const;
     const std::string& getLastError() const;
     Extensions& extensions();
 

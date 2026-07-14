@@ -1,6 +1,35 @@
 {
   "format": "broadcast-scene",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "composition": { "width": 1920, "height": 1080, "duration": 5, "frameRate": 50 },
-  "layers": []
+  "controls": [
+    { "id": "headline", "name": "Headline", "type": "string", "default": "ofxOGraf" },
+    { "id": "subtitle", "name": "Subtitle", "type": "string", "default": "Essential Graphics controls" },
+    { "id": "accentColor", "name": "Accent", "type": "color", "matchName": "ADBE Color Control", "default": [1, 0.8, 0, 1] }
+  ],
+  "layers": [
+    {
+      "index": 1, "name": "Headline", "type": "text", "enabled": true, "inPoint": 0, "outPoint": 5, "controlId": "headline",
+      "text": { "name": "Source Text", "matchName": "ADBE Text Document", "value": { "text": "ofxOGraf", "fontSize": 72, "fillColor": [1, 1, 1] } },
+      "transform": { "name": "Transform", "matchName": "ADBE Transform Group", "children": [{ "name": "Position", "matchName": "ADBE Position", "value": [360, 780], "keyframes": [] }] }
+    },
+    {
+      "index": 2, "name": "Subtitle", "type": "text", "enabled": true, "inPoint": 0, "outPoint": 5, "controlId": "subtitle",
+      "text": { "name": "Source Text", "matchName": "ADBE Text Document", "value": { "text": "Essential Graphics controls", "fontSize": 36, "fillColor": [1, 1, 1] } },
+      "transform": { "name": "Transform", "matchName": "ADBE Transform Group", "children": [{ "name": "Position", "matchName": "ADBE Position", "value": [360, 850], "keyframes": [] }] }
+    },
+    {
+      "index": 3, "name": "Accent", "type": "shape", "enabled": true, "inPoint": 0, "outPoint": 5,
+      "transform": { "name": "Transform", "matchName": "ADBE Transform Group", "children": [{ "name": "Position", "matchName": "ADBE Position", "value": [220, 900], "keyframes": [] }] },
+      "contents": { "name": "Contents", "matchName": "ADBE Root Vectors Group", "children": [
+        { "name": "Rectangle", "matchName": "ADBE Vector Shape - Rect", "children": [
+          { "name": "Size", "matchName": "ADBE Vector Rect Size", "value": [280, 14], "keyframes": [] },
+          { "name": "Position", "matchName": "ADBE Vector Rect Position", "value": [0, 0], "keyframes": [] }
+        ] },
+        { "name": "Fill Color", "matchName": "ADBE Vector Fill Color", "value": [1, 0.8, 0, 1], "controlId": "accentColor", "keyframes": [] }
+      ] }
+    }
+  ],
+  "compositions": [],
+  "assets": { "fonts": [], "images": [] }
 }
