@@ -1,4 +1,5 @@
 #include "ofApp.h"
+#include "../../examples/native-authoring/NativeLowerThird.h"
 #include <utility>
 
 ofApp::ofApp(std::string outputPath, double outputTime)
@@ -9,6 +10,7 @@ void ofApp::setup() {
     ofSetFrameRate(50);
     ofSetWindowShape(WindowWidth, WindowHeight);
     broadcastGraphic.setup();
+    ofxOGraf::examples::registerNativeLowerThird(codeTemplateRegistry);
 
     ofxOGraf::SceneBuilder scene("scene:of-lower-third");
     scene.provenance("create", "cc.openframeworks.ofxograf.example-basic", "0.3.0");
@@ -56,11 +58,65 @@ void ofApp::setup() {
     }
 }
 
+bool ofApp::loadCodeTemplate(const std::string& factoryId, const ofJson& initialData) {
+    std::string error;
+    auto instance = codeTemplateRegistry.create(factoryId, &error);
+    if (!instance) {
+        ofLogError("ofxOGraf") << error;
+        return false;
+    }
+    if (!codeTemplate.load(std::move(instance), {}, initialData)) {
+        ofLogError("ofxOGraf") << codeTemplate.lastError();
+        return false;
+    }
+    usingCodeTemplate = true;
+    return true;
+}
+
+bool ofApp::updateCodeTemplate(const ofJson& patch) {
+    return usingCodeTemplate && codeTemplate.updateData(patch);
+}
+
+bool ofApp::playCodeTemplate() {
+    return usingCodeTemplate && codeTemplate.play();
+}
+
+bool ofApp::stopCodeTemplate() {
+    return usingCodeTemplate && codeTemplate.stop();
+}
+
+bool ofApp::seekCodeTemplate(double timeSeconds) {
+    return usingCodeTemplate && codeTemplate.seek(timeSeconds);
+}
+
+bool ofApp::isCodeTemplateActionComplete() const {
+    return !usingCodeTemplate || codeTemplate.state() != ofxOGraf::CodeTemplateState::Playing;
+}
+
+std::string ofApp::codeTemplateLastError() const {
+    return codeTemplate.lastError();
+}
+
+void ofApp::useSceneGraphic() {
+    usingCodeTemplate = false;
+    codeTemplate.dispose();
+}
+
 void ofApp::update() {
+    if (usingCodeTemplate) {
+        codeTemplate.update(ofGetLastFrameTime());
+        return;
+    }
     broadcastGraphic.update(ofGetLastFrameTime());
 }
 
 void ofApp::draw() {
+    if (usingCodeTemplate) {
+        ofClear(0, 0, 0, 0);
+        if (!codeTemplate.draw()) ofLogError("ofxOGraf") << codeTemplate.lastError();
+        return;
+    }
+
     preview.render(broadcastGraphic);
     if (!frameOutputPath.empty() && !frameExported) {
         frameExported = true;

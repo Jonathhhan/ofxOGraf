@@ -11,6 +11,15 @@ public:
     void update() override;
     void draw() override;
     void windowResized(int width, int height) override;
+    bool loadCodeTemplate(const std::string& factoryId, const ofJson& initialData = ofJson::object());
+    bool updateCodeTemplate(const ofJson& patch);
+    bool playCodeTemplate();
+    bool stopCodeTemplate();
+    bool seekCodeTemplate(double timeSeconds);
+    bool isCodeTemplateActionComplete() const;
+    std::string codeTemplateLastError() const;
+    void useSceneGraphic();
+
 
     ofxOGraf::Graphic& graphic();
 
@@ -21,6 +30,9 @@ private:
     static constexpr int CompositionHeight = 1080;
 
     ofxOGraf::Graphic broadcastGraphic;
+    ofxOGraf::CodeTemplateRegistry codeTemplateRegistry;
+    ofxOGraf::CodeTemplateHost codeTemplate;
+    bool usingCodeTemplate = false;
     ofxOGraf::RenderSurface preview;
     std::string frameOutputPath;
     double frameTime = 0.0;

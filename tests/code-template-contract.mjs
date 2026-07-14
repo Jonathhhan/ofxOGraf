@@ -3,6 +3,7 @@ import { readFile } from "node:fs/promises";
 
 const root = new URL("../", import.meta.url);
 const header = await readFile(new URL("src/ofxOGrafCodeTemplate.h", root), "utf8");
+const registry = await readFile(new URL("src/ofxOGrafCodeTemplateRegistry.cpp", root), "utf8");
 const implementation = await readFile(new URL("src/ofxOGrafCodeTemplate.cpp", root), "utf8");
 
 for (const token of [
@@ -16,6 +17,12 @@ for (const token of [
     "CodeTemplate",
     "CodeTemplateHost"
 ]) assert.ok(header.includes(token), `missing code-template contract: ${token}`);
+for (const token of ["registerFactory", "unregisterFactory", "contains", "ids", "create"])
+    assert.ok(registry.includes(token), `missing template registry operation: ${token}`);
+assert.match(registry, /Unknown code template factory/);
+assert.match(registry, /Code template factory returned null/);
+assert.doesNotMatch(registry, /static\s+CodeTemplateRegistry/);
+
 
 for (const method of ["load", "play", "update", "updateData", "stop", "seek", "draw", "dispose"])
     assert.match(header, new RegExp(`\\b${method}\\(`), `missing lifecycle method: ${method}`);

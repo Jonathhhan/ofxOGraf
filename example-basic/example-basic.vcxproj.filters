@@ -17,6 +17,12 @@
 			<Filter>addons\ofxOGraf\src</Filter>
 		</ClCompile>
 		<ClCompile Include="..\src\ofxOGrafCodeTemplate.cpp">
+		<ClCompile Include="..\src\ofxOGrafCodeTemplateRegistry.cpp">
+			<Filter>addons\ofxOGraf\src</Filter>
+		</ClCompile>
+		<ClCompile Include="..\examples\native-authoring\NativeLowerThird.cpp">
+			<Filter>src</Filter>
+		</ClCompile>
 			<Filter>addons\ofxOGraf\src</Filter>
 		</ClCompile>
 		<ClCompile Include="..\src\ofxOGrafExtensions.cpp">
@@ -72,6 +78,9 @@
 			<Filter>addons\ofxOGraf\src</Filter>
 		</ClInclude>
 		<ClInclude Include="..\src\ofxOGrafCodeTemplate.h">
+		<ClInclude Include="..\src\ofxOGrafCodeTemplateRegistry.h">
+			<Filter>addons\ofxOGraf\src</Filter>
+		</ClInclude>
 			<Filter>addons\ofxOGraf\src</Filter>
 		</ClInclude>
 		<ClInclude Include="..\src\ofxOGrafControls.h">

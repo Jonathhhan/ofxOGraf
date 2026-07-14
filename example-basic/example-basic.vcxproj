@@ -232,6 +232,8 @@
 		<ClCompile Include="..\src\ofxOGrafControls.cpp" />
 		<ClCompile Include="..\src\ofxOGrafAuthoring.cpp" />
 		<ClCompile Include="..\src\ofxOGrafCodeTemplate.cpp" />
+		<ClCompile Include="..\src\ofxOGrafCodeTemplateRegistry.cpp" />
+		<ClCompile Include="..\examples\native-authoring\NativeLowerThird.cpp" />
 		<ClCompile Include="..\src\ofxOGrafExtensions.cpp" />
 		<ClCompile Include="..\src\ofxOGrafGraphic.cpp" />
 		<ClCompile Include="..\src\ofxOGrafImGuiControls.cpp" />
@@ -247,6 +249,7 @@
 		<ClInclude Include="..\src\ofxOGrafAssets.h" />
 		<ClInclude Include="..\src\ofxOGrafAuthoring.h" />
 		<ClInclude Include="..\src\ofxOGrafCodeTemplate.h" />
+		<ClInclude Include="..\src\ofxOGrafCodeTemplateRegistry.h" />
 		<ClInclude Include="..\src\ofxOGrafControls.h" />
 		<ClInclude Include="..\src\ofxOGrafExtensions.h" />
 		<ClInclude Include="..\src\ofxOGrafGraphic.h" />

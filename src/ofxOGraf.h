@@ -2,6 +2,7 @@
 
 #include "ofxOGrafGraphic.h"
 #include "ofxOGrafRenderSurface.h"
+#include "ofxOGrafCodeTemplateRegistry.h"
 #include "ofxOGrafAuthoring.h"
 #include "ofxOGrafCodeTemplate.h"
 #include "ofxOGrafControls.h"

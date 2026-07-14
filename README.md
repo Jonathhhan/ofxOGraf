@@ -70,6 +70,8 @@ For an existing After Effects-authored MOGRT, run `import_mogrt_to_broadcast_sce
 
 Use openFrameworks Project Generator on `example-basic`, then build it normally for your platform. It constructs and renders a neutral lower third directly in C++ with `SceneBuilder`. For procedural drawing, implement `CodeTemplate` and host it with `CodeTemplateHost`. The optional `example-imgui` inspector remains independent of the core addon. See `docs/native-authoring.md` and `docs/essential-controls.md`.
 
+`example-basic` also registers the compiled `native-lower-third` sample and exposes it to Emscripten. In OGraf, select it with `code-template="native-lower-third"` plus `template-definition="./template-definition.json"`; the normal `scene` attribute remains the declarative path.
+
 ## Emscripten build
 
 Install the current openFrameworks Emscripten platform/toolchain, generate the Emscripten project, and build `example-basic`. Its `config.make` enables embind, ES-module output, memory growth, and WebGL 2. Copy/rename the generated artifacts into:
@@ -118,6 +120,7 @@ node tests/authoring-contract.mjs
 node tests/code-template-contract.mjs
 node tests/golden-frame-contract.mjs
 node scripts/validate-template-definition.mjs
+node tests/code-template-delivery-contract.mjs
 node tests/package-contract.mjs
 node --check ograf/OfBroadcastGraphic.js
 node --check ograf/EssentialControls.js

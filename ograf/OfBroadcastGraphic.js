@@ -4,6 +4,7 @@ export default class OfBroadcastGraphic extends HTMLElement {
     constructor() {
         super();
         this.module = null;
+        this.backend = "scene";
         this.scene = null;
         this.data = {};
         this.initialData = {};
@@ -21,7 +22,9 @@ export default class OfBroadcastGraphic extends HTMLElement {
 
     async load({ data = {}, renderType = "realtime", renderCharacteristics = {} } = {}) {
         if (this.module) await this.dispose({});
-        const sceneUrl = this.getAttribute("scene") || "./scene.json";
+        const templateId = this.getAttribute("code-template");
+        const sceneUrl = templateId ? (this.getAttribute("template-definition") || "./template-definition.json") :
+            (this.getAttribute("scene") || "./scene.json");
         const response = await fetch(sceneUrl);
         if (!response.ok) return { statusCode: response.status, statusMessage: `Could not load ${sceneUrl}` };
         const scene = await response.json();
@@ -34,7 +37,10 @@ export default class OfBroadcastGraphic extends HTMLElement {
         this.canvas.height = resolution.height || composition.height;
         this.module = await createOfxOGrafModule({ canvas: this.canvas });
         this.scene = scene;
-        if (!this.module.loadGraphic(JSON.stringify(scene))) {
+        this.backend = templateId ? "code-template" : "scene";
+        const loaded = templateId ? this.module.loadCodeTemplate(templateId, JSON.stringify(data)) :
+            this.module.loadGraphic(JSON.stringify(scene));
+        if (!loaded) {
             const message = this.module.getLastError?.() || "Invalid scene";
             this.module.exit?.();
             this.module = null;
@@ -43,7 +49,7 @@ export default class OfBroadcastGraphic extends HTMLElement {
         const resolvedData = this.mergePatch(this.sceneDefaults(scene), data);
         this.initialData = structuredClone(resolvedData);
         this.data = structuredClone(resolvedData);
-        this.module.updateGraphic(JSON.stringify(this.data), true);
+        this.updateRuntime(this.data, true);
         this.renderType = renderType;
         this.dispatchState("ograf-ready");
         return { statusCode: 200, statusMessage: "OK" };
@@ -57,7 +63,7 @@ export default class OfBroadcastGraphic extends HTMLElement {
             await this.stopAction({ skipAnimation });
             return { statusCode: 200, statusMessage: "OK", currentStep: undefined };
         }
-        this.module.playGraphic(target, skipAnimation);
+        this.playRuntime(target, skipAnimation);
         this.currentStep = target;
         await this.waitForAction("play");
         return { statusCode: 200, statusMessage: "OK", currentStep: this.currentStep };
@@ -66,7 +72,7 @@ export default class OfBroadcastGraphic extends HTMLElement {
     async updateAction({ data = {}, skipAnimation = false } = {}) {
         this.ensureLoaded();
         this.data = this.mergePatch(this.data, data);
-        if (!this.module.updateGraphic(JSON.stringify(data), skipAnimation)) {
+        if (!this.updateRuntime(data, skipAnimation)) {
             return { statusCode: 400, statusMessage: "Invalid update data" };
         }
         await this.waitForAction("update");
@@ -76,7 +82,7 @@ export default class OfBroadcastGraphic extends HTMLElement {
 
     async stopAction({ skipAnimation = false } = {}) {
         this.ensureLoaded();
-        this.module.stopGraphic(skipAnimation);
+        this.stopRuntime(skipAnimation);
         await this.waitForAction("stop");
         this.currentStep = undefined;
         return { statusCode: 200, statusMessage: "OK" };
@@ -100,7 +106,7 @@ export default class OfBroadcastGraphic extends HTMLElement {
         if (!Number.isFinite(timestamp) || timestamp < 0) return { statusCode: 400, statusMessage: "Invalid timestamp" };
         if (this.lastTimestamp !== undefined && timestamp < this.lastTimestamp) {
             this.data = structuredClone(this.initialData);
-            this.module.updateGraphic(JSON.stringify(this.data), true);
+            this.updateRuntime(this.data, true);
             this.currentStep = undefined;
             this.appliedScheduleIndex = 0;
         }
@@ -108,7 +114,7 @@ export default class OfBroadcastGraphic extends HTMLElement {
             const item = this.schedule[this.appliedScheduleIndex++];
             await this.applyScheduledAction(item.action);
         }
-        this.module.goToTime(timestamp);
+        this.seekRuntime(timestamp);
         this.lastTimestamp = timestamp;
         this.dispatchState("ograf-data-change");
         return { statusCode: 200, statusMessage: "OK" };
@@ -117,6 +123,7 @@ export default class OfBroadcastGraphic extends HTMLElement {
     async dispose() {
         this.module?.exit?.();
         this.module = null;
+        this.backend = "scene";
         this.scene = null;
         this.data = {};
         this.initialData = {};
@@ -139,12 +146,37 @@ export default class OfBroadcastGraphic extends HTMLElement {
     waitForAction(name) {
         return new Promise(resolve => {
             const poll = () => {
-                if (!this.module || this.module.isActionComplete(name)) resolve();
+                if (!this.module || this.isRuntimeActionComplete(name)) resolve();
                 else requestAnimationFrame(poll);
             };
             poll();
         });
     }
+    playRuntime(step, skipAnimation) {
+        if (this.backend === "code-template") return this.module.playCodeTemplate(skipAnimation);
+        return this.module.playGraphic(step, skipAnimation);
+    }
+
+    updateRuntime(data, skipAnimation) {
+        if (this.backend === "code-template") return this.module.updateCodeTemplate(JSON.stringify(data), skipAnimation);
+        return this.module.updateGraphic(JSON.stringify(data), skipAnimation);
+    }
+
+    stopRuntime(skipAnimation) {
+        if (this.backend === "code-template") return this.module.stopCodeTemplate(skipAnimation);
+        return this.module.stopGraphic(skipAnimation);
+    }
+
+    seekRuntime(timestamp) {
+        if (this.backend === "code-template") return this.module.goToCodeTemplateTime(timestamp);
+        return this.module.goToTime(timestamp);
+    }
+
+    isRuntimeActionComplete(name) {
+        if (this.backend === "code-template") return this.module.isCodeTemplateActionComplete(name);
+        return this.module.isActionComplete(name);
+    }
+
 
     ensureLoaded() {
         if (!this.module) throw new Error("Graphic has not been loaded");

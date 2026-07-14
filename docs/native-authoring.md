@@ -64,6 +64,27 @@ Direct drawing trades automatic portability for flexibility. Every dependency, s
 
 Both models should implement the same load, play, update, stop, seek, draw, and dispose behavior. An operator should not need to know which backend produced the graphic.
 
+### Compiled factory delivery
+
+`examples/native-authoring/NativeLowerThird.*` is a complete small factory. Register only the compiled templates intended for the package:
+
+```cpp
+ofxOGraf::CodeTemplateRegistry registry;
+std::string error;
+if (!ofxOGraf::examples::registerNativeLowerThird(registry, &error)) {
+    throw std::runtime_error(error);
+}
+```
+
+The Emscripten bridge in `example-basic` exposes the same lifecycle. An OGraf component selects this backend with a factory id and its serialized `TemplateDefinition`:
+
+```html
+<of-broadcast-graphic
+  code-template="native-lower-third"
+  template-definition="./template-definition.json"></of-broadcast-graphic>
+```
+
+
 ## TemplateDefinition
 
 `TemplateDefinition` is metadata, not a render scene. Its base contract (`ofxograf-code-template`, version 1) serializes the template id and name, composition, deterministic random seed, controls, asset URIs, and timeline actions. Delivery-specific fields stay in its open `metadata` object so the renderer-neutral C++ host is not coupled to OGraf packaging.

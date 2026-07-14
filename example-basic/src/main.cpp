@@ -23,13 +23,17 @@ void parseFrameExportArguments(int argc, char* argv[], std::string& outputPath, 
 }
 #endif
 static std::shared_ptr<ofApp> appInstance;
+static bool codeTemplateActive = false;
 
 static ofxOGraf::Graphic* graphic() {
     return appInstance ? &appInstance->graphic() : nullptr;
 }
 
 bool loadGraphic(const std::string& json) {
-    return graphic() && graphic()->loadJson(json);
+    if (!appInstance) return false;
+    codeTemplateActive = false;
+    appInstance->useSceneGraphic();
+    return appInstance->graphic().loadJson(json);
 }
 
 bool updateGraphic(const std::string& json, bool) {
@@ -59,7 +63,42 @@ bool isActionComplete(const std::string& action) {
 }
 
 std::string getLastError() {
-    return graphic() ? graphic()->getLastError() : "Application is not ready.";
+    return !appInstance ? "Application is not ready." : (codeTemplateActive ? appInstance->codeTemplateLastError() : appInstance->graphic().getLastError());
+}
+
+bool loadCodeTemplate(const std::string& factoryId, const std::string& json) {
+    if (!appInstance) return false;
+    codeTemplateActive = true;
+    try {
+        return appInstance->loadCodeTemplate(factoryId, ofJson::parse(json));
+    } catch (...) {
+        return false;
+    }
+}
+
+bool updateCodeTemplate(const std::string& json, bool) {
+    if (!appInstance) return false;
+    try {
+        return appInstance->updateCodeTemplate(ofJson::parse(json));
+    } catch (...) {
+        return false;
+    }
+}
+
+void playCodeTemplate(bool) {
+    if (appInstance) appInstance->playCodeTemplate();
+}
+
+void stopCodeTemplate(bool) {
+    if (appInstance) appInstance->stopCodeTemplate();
+}
+
+void goToCodeTemplateTime(double milliseconds) {
+    if (appInstance) appInstance->seekCodeTemplate(milliseconds / 1000.0);
+}
+
+bool isCodeTemplateActionComplete(const std::string&) {
+    return !appInstance || appInstance->isCodeTemplateActionComplete();
 }
 
 #ifdef __EMSCRIPTEN__
@@ -71,6 +110,12 @@ EMSCRIPTEN_BINDINGS(ofx_ograf_bridge) {
     emscripten::function("goToTime", &goToTime);
     emscripten::function("isActionComplete", &isActionComplete);
     emscripten::function("getLastError", &getLastError);
+    emscripten::function("loadCodeTemplate", &loadCodeTemplate);
+    emscripten::function("updateCodeTemplate", &updateCodeTemplate);
+    emscripten::function("playCodeTemplate", &playCodeTemplate);
+    emscripten::function("stopCodeTemplate", &stopCodeTemplate);
+    emscripten::function("goToCodeTemplateTime", &goToCodeTemplateTime);
+    emscripten::function("isCodeTemplateActionComplete", &isCodeTemplateActionComplete);
 }
 #endif
 
