@@ -2,6 +2,7 @@
 
 void ofApp::setup() {
     ofSetFrameRate(50);
+    ofSetWindowShape(WindowWidth, WindowHeight);
     broadcastGraphic.setup();
 
     ofxOGraf::SceneBuilder scene("scene:of-lower-third");
@@ -9,7 +10,7 @@ void ofApp::setup() {
     scene.fontAsset("font:verdana", "fonts/verdana.ttf", "Verdana");
 
     auto composition = scene.composition(
-        "composition:main", "Native lower third", 1920, 1080, 5.0, {50, 1});
+        "composition:main", "Native lower third", CompositionWidth, CompositionHeight, 5.0, {50, 1});
 
     // Layers use stable IDs. Top-most layers are authored first, matching the
     // Broadcast Scene render-order convention.
@@ -42,6 +43,16 @@ void ofApp::setup() {
                                 << ": " << diagnostic.message;
     }
     broadcastGraphic.loadJson(scene.build());
+
+    ofFbo::Settings targetSettings;
+    targetSettings.width = CompositionWidth;
+    targetSettings.height = CompositionHeight;
+    targetSettings.internalformat = GL_RGBA;
+    targetSettings.useDepth = false;
+    targetSettings.useStencil = false;
+    targetSettings.textureTarget = GL_TEXTURE_2D;
+    renderTarget.allocate(targetSettings);
+    broadcastGraphic.play();
 }
 
 void ofApp::update() {
@@ -49,7 +60,51 @@ void ofApp::update() {
 }
 
 void ofApp::draw() {
+    renderTarget.begin();
+    ofClear(0, 0, 0, 0);
     broadcastGraphic.draw();
+    renderTarget.end();
+
+    ofClear(24, 24, 24, 255);
+
+    const float compositionWidth = static_cast<float>(CompositionWidth);
+    const float compositionHeight = static_cast<float>(CompositionHeight);
+    const float previewScale = std::min(
+        static_cast<float>(ofGetWidth()) / compositionWidth,
+        static_cast<float>(ofGetHeight()) / compositionHeight);
+    const float previewX = (ofGetWidth() - compositionWidth * previewScale) * 0.5f;
+    const float previewY = (ofGetHeight() - compositionHeight * previewScale) * 0.5f;
+    const float previewWidth = compositionWidth * previewScale;
+    const float previewHeight = compositionHeight * previewScale;
+
+    drawTransparencyGrid(previewX, previewY, previewWidth, previewHeight);
+    ofSetColor(255);
+    ofEnableAlphaBlending();
+    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    renderTarget.draw(previewX, previewY, previewWidth, previewHeight);
+    ofEnableAlphaBlending();
+}
+
+void ofApp::windowResized(int width, int height) {
+    if (width != WindowWidth || height != WindowHeight) {
+        ofSetWindowShape(WindowWidth, WindowHeight);
+    }
+}
+
+void ofApp::drawTransparencyGrid(float x, float y, float width, float height) const {
+    constexpr float TileSize = 24.0f;
+    ofPushStyle();
+    for (float tileY = 0.0f; tileY < height; tileY += TileSize) {
+        for (float tileX = 0.0f; tileX < width; tileX += TileSize) {
+            const auto column = static_cast<int>(tileX / TileSize);
+            const auto row = static_cast<int>(tileY / TileSize);
+            ofSetColor(((column + row) % 2 == 0) ? 52 : 72);
+            ofDrawRectangle(x + tileX, y + tileY,
+                            std::min(TileSize, width - tileX),
+                            std::min(TileSize, height - tileY));
+        }
+    }
+    ofPopStyle();
 }
 
 ofxOGraf::Graphic& ofApp::graphic() { return broadcastGraphic; }

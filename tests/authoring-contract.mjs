@@ -2,11 +2,12 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const root = new URL("../", import.meta.url);
-const [header, implementation, loader, example, imguiExample, imguiMain, schemaText, wrapper] = await Promise.all([
+const [header, implementation, loader, example, basicMain, imguiExample, imguiMain, schemaText, wrapper] = await Promise.all([
     readFile(new URL("src/ofxOGrafAuthoring.h", root), "utf8"),
     readFile(new URL("src/ofxOGrafAuthoring.cpp", root), "utf8"),
     readFile(new URL("src/ofxOGrafSceneLoader.cpp", root), "utf8"),
     readFile(new URL("example-basic/src/ofApp.cpp", root), "utf8"),
+    readFile(new URL("example-basic/src/main.cpp", root), "utf8"),
     readFile(new URL("example-imgui/src/ofApp.cpp", root), "utf8"),
     readFile(new URL("example-imgui/src/main.cpp", root), "utf8"),
     readFile(new URL("schema/broadcast-scene-0.3.schema.json", root), "utf8"),
@@ -33,6 +34,14 @@ assert.match(loader, /compileNeutral03/);
 assert.match(loader, /rootCompositionId/);
 assert.match(example, /SceneBuilder/);
 assert.match(example, /scene\.animate/);
+assert.match(example, /ofFbo::Settings/);
+assert.match(example, /internalformat = GL_RGBA/);
+assert.match(example, /renderTarget\.draw/);
+assert.match(example, /headline\.position\(\{260\.0, 740\.0, 0\.0\}\)/);
+assert.match(example, /panel\.position\(\{720\.0, 700\.0, 0\.0\}\)/);
+assert.match(basicMain, /setSize\(1280, 720\)/);
+assert.match(example, /broadcastGraphic\.play\(\)/);
+assert.doesNotMatch(basicMain, /GLFW/);
 assert.match(example, /loadJson\(scene\.build\(\)\)/);
 assert.match(wrapper, /compositionInfo\(scene/);
 assert.match(imguiExample, /SceneBuilder/);

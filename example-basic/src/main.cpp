@@ -58,12 +58,15 @@ EMSCRIPTEN_BINDINGS(ofx_ograf_bridge) {
 #endif
 
 int main() {
-    ofGLFWWindowSettings settings;
-    settings.setSize(1920, 1080);
-    settings.windowMode = OF_WINDOW;
-#ifndef __EMSCRIPTEN__
+#ifdef __EMSCRIPTEN__
+    ofGLESWindowSettings settings;
+#else
+    ofGLWindowSettings settings;
     settings.setGLVersion(3, 2);
 #endif
+    settings.setSize(1280, 720);
+    settings.windowMode = OF_WINDOW;
+
     auto window = ofCreateWindow(settings);
     appInstance = std::make_shared<ofApp>();
     ofRunApp(window, appInstance);
