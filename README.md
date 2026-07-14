@@ -20,6 +20,7 @@ The existing AE path is not a binary `.mogrt` converter: it imports AE's scripta
 - `after-effects/bake_unsupported_layers.jsx`: alpha-PNG fallback renderer for AE-only layers and effects.
 - `src/ofxOGrafAuthoring.*` and `schema/broadcast-scene-0.3.schema.json`: typed, tool-neutral C++ scene authoring with stable IDs, controls, assets, provenance, validation, and deterministic JSON.
 - `src/ofxOGrafCodeTemplate.*`: procedural OF template contract with typed descriptors, explicit time, deterministic random streams, and a lifecycle host.
+- `ofxOGraf::RenderSurface`: fixed-resolution RGBA rendering, texture/FBO access, and aspect-fitted premultiplied-alpha native previews.
 - `scripts/validate-template-definition.mjs`: native/WASM/OGraf descriptor and declared-asset validator.
 - `docs/native-authoring.md`: direct openFrameworks authoring, delivery, and deterministic-runtime guide.
 - `schema/broadcast-scene-0.2.schema.json`: expanded neutral interchange format; the original 0.1 schema remains for compatibility.

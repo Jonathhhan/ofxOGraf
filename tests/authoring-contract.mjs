@@ -2,10 +2,11 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const root = new URL("../", import.meta.url);
-const [header, implementation, loader, example, basicMain, imguiExample, imguiMain, schemaText, wrapper] = await Promise.all([
+const [header, implementation, loader, renderSurface, example, basicMain, imguiExample, imguiMain, schemaText, wrapper] = await Promise.all([
     readFile(new URL("src/ofxOGrafAuthoring.h", root), "utf8"),
     readFile(new URL("src/ofxOGrafAuthoring.cpp", root), "utf8"),
     readFile(new URL("src/ofxOGrafSceneLoader.cpp", root), "utf8"),
+    readFile(new URL("src/ofxOGrafRenderSurface.h", root), "utf8"),
     readFile(new URL("example-basic/src/ofApp.cpp", root), "utf8"),
     readFile(new URL("example-basic/src/main.cpp", root), "utf8"),
     readFile(new URL("example-imgui/src/ofApp.cpp", root), "utf8"),
@@ -34,9 +35,17 @@ assert.match(loader, /compileNeutral03/);
 assert.match(loader, /rootCompositionId/);
 assert.match(example, /SceneBuilder/);
 assert.match(example, /scene\.animate/);
-assert.match(example, /ofFbo::Settings/);
-assert.match(example, /internalformat = GL_RGBA/);
-assert.match(example, /renderTarget\.draw/);
+assert.match(renderSurface, /class RenderSurface/);
+assert.match(renderSurface, /ofFbo::Settings/);
+assert.match(renderSurface, /internalformat = GL_RGBA/);
+assert.match(renderSurface, /ofClear\(0, 0, 0, 0\)/);
+assert.match(renderSurface, /useStencil = true/);
+assert.match(renderSurface, /glBlendFunc\(GL_ONE, GL_ONE_MINUS_SRC_ALPHA\)/);
+assert.match(renderSurface, /fittedBounds/);
+assert.match(renderSurface, /ofTexture& texture\(\)/);
+assert.match(example, /preview\.allocate\(broadcastGraphic\.getScene\(\)\)/);
+assert.match(example, /preview\.render\(broadcastGraphic\)/);
+assert.match(example, /preview\.drawFit/);
 assert.match(example, /headline\.position\(\{260\.0, 740\.0, 0\.0\}\)/);
 assert.match(example, /panel\.position\(\{720\.0, 700\.0, 0\.0\}\)/);
 assert.match(basicMain, /setSize\(1280, 720\)/);
@@ -46,10 +55,10 @@ assert.match(example, /loadJson\(scene\.build\(\)\)/);
 assert.match(wrapper, /compositionInfo\(scene/);
 assert.match(imguiExample, /SceneBuilder/);
 assert.match(imguiExample, /controls\.draw\(graphic\)/);
-assert.match(imguiExample, /ofFbo::Settings/);
-assert.match(imguiExample, /internalformat = GL_RGBA/);
-assert.match(imguiExample, /ofClear\(0, 0, 0, 0\)/);
-assert.match(imguiExample, /renderTarget\.draw/);
+assert.match(imguiExample, /preview\.allocate\(graphic\.getScene\(\)\)/);
+assert.match(imguiExample, /preview\.render\(graphic\)/);
+assert.match(imguiExample, /preview\.drawFit/);
+assert.doesNotMatch(example + imguiExample, /ofFbo::Settings|renderTarget/);
 assert.doesNotMatch(imguiMain, /GLFW/);
 assert.match(wrapper, /this\.canvas\.width = resolution[\s\S]*this\.module = await createOfxOGrafModule/,
     "canvas must be sized before WebGL module creation");

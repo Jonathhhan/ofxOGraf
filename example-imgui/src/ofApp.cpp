@@ -26,16 +26,7 @@ void ofApp::setup() {
         .bind(panel.fillPropertyId()).ui("Style", 1);
 
     graphic.loadJson(scene.build());
-
-    ofFbo::Settings targetSettings;
-    targetSettings.width = CompositionWidth;
-    targetSettings.height = CompositionHeight;
-    targetSettings.internalformat = GL_RGBA;
-    targetSettings.useDepth = false;
-    targetSettings.useStencil = false;
-    targetSettings.textureTarget = GL_TEXTURE_2D;
-    renderTarget.allocate(targetSettings);
-
+    preview.allocate(graphic.getScene());
     gui.setup();
 }
 
@@ -44,30 +35,9 @@ void ofApp::update() {
 }
 
 void ofApp::draw() {
-    renderTarget.begin();
-    ofClear(0, 0, 0, 0);
-    graphic.draw();
-    renderTarget.end();
-
+    preview.render(graphic);
     ofClear(24, 24, 24, 255);
-
-    const float compositionWidth = static_cast<float>(CompositionWidth);
-    const float compositionHeight = static_cast<float>(CompositionHeight);
-    const float previewScale = std::min(
-        static_cast<float>(ofGetWidth()) / compositionWidth,
-        static_cast<float>(ofGetHeight()) / compositionHeight);
-    const float previewX = (ofGetWidth() - compositionWidth * previewScale) * 0.5f;
-    const float previewY = (ofGetHeight() - compositionHeight * previewScale) * 0.5f;
-
-    const float previewWidth = compositionWidth * previewScale;
-    const float previewHeight = compositionHeight * previewScale;
-    drawTransparencyGrid(previewX, previewY, previewWidth, previewHeight);
-    ofSetColor(255);
-    ofEnableAlphaBlending();
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    renderTarget.draw(previewX, previewY, previewWidth, previewHeight);
-
-    ofEnableAlphaBlending();
+    preview.drawFit(0.0f, 0.0f, ofGetWidth(), ofGetHeight(), true);
     gui.begin();
     controls.draw(graphic);
     gui.end();
@@ -77,20 +47,4 @@ void ofApp::windowResized(int width, int height) {
     if (width != WindowWidth || height != WindowHeight) {
         ofSetWindowShape(WindowWidth, WindowHeight);
     }
-}
-
-void ofApp::drawTransparencyGrid(float x, float y, float width, float height) const {
-    constexpr float TileSize = 24.0f;
-    ofPushStyle();
-    for (float tileY = 0.0f; tileY < height; tileY += TileSize) {
-        for (float tileX = 0.0f; tileX < width; tileX += TileSize) {
-            const auto column = static_cast<int>(tileX / TileSize);
-            const auto row = static_cast<int>(tileY / TileSize);
-            ofSetColor(((column + row) % 2 == 0) ? 52 : 72);
-            ofDrawRectangle(x + tileX, y + tileY,
-                            std::min(TileSize, width - tileX),
-                            std::min(TileSize, height - tileY));
-        }
-    }
-    ofPopStyle();
 }

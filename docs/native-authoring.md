@@ -116,6 +116,30 @@ Sequences must declare every frame as an asset (or use a future explicit sequenc
 
 The consuming openFrameworks application continues to own `setup()`, `update()`, and `draw()`. The addon supplies a host/adapter; it must not create a hidden application lifecycle. `ofxImGui` remains optional and is activated by the example application's `addons.make`, not by a core addon dependency.
 
+Use `RenderSurface` when the template resolution must stay independent of the
+editor window. It owns a fixed RGBA FBO, exposes its texture and FBO for output
+integration, and draws premultiplied alpha correctly:
+
+```cpp
+ofxOGraf::Graphic graphic;
+ofxOGraf::RenderSurface preview;
+
+void ofApp::setup() {
+    graphic.setup();
+    graphic.loadJson(scene.build());
+    preview.allocate(graphic.getScene());
+}
+
+void ofApp::draw() {
+    preview.render(graphic);
+    ofClear(24, 24, 24, 255);
+    preview.drawFit(0, 0, ofGetWidth(), ofGetHeight(), true);
+}
+```
+
+The final `true` enables the checkerboard for native preview only. Delivery code
+can consume `preview.texture()` or `preview.fbo()` without drawing that grid.
+
 Asset and descriptor changes can reload in place. Portable C++ hot swapping is not an initial requirement: a code change should trigger an incremental rebuild and relaunch of the native preview.
 
 For browser preview, use a development server that watches descriptor, asset, JS, and WASM outputs. After a successful C++ rebuild it should dispose the old module and load the new build in a fresh iframe. The iframe avoids stale custom-element registrations, WebGL contexts, event handlers, and WASM memory. Preserve control values only when the id and type are compatible, and keep the last successful iframe visible when compilation fails.

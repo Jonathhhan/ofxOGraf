@@ -17,10 +17,8 @@ private:
     static constexpr int CompositionWidth = 1920;
     static constexpr int CompositionHeight = 1080;
 
-    void drawTransparencyGrid(float x, float y, float width, float height) const;
-
     ofxOGraf::Graphic graphic;
+    ofxOGraf::RenderSurface preview;
     ofxOGraf::ImGuiControls controls;
     ofxImGui::Gui gui;
-    ofFbo renderTarget;
 };
