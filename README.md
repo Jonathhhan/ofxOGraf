@@ -1,6 +1,6 @@
 # ofxOGraf
 
-`ofxOGraf` is a compiler/runtime for reconstructing an After Effects composition as a portable broadcast graphic:
+`ofxOGraf` is a tool-neutral openFrameworks authoring and runtime addon for portable broadcast graphics. Templates can be created directly with `SceneBuilder` or `CodeTemplate`; After Effects is an optional importer.
 
 ```text
 After Effects composition
@@ -12,12 +12,16 @@ openFrameworks (native or Emscripten/WebAssembly)
 EBU OGraf v1 renderer
 ```
 
-This is not a binary `.mogrt` converter. It exports AE's scriptable scene model and reconstructs supported features in a renderer-independent runtime. Features that cannot execute outside AE can be handled by renderer extensions or deterministic baked-frame fallbacks.
+The existing AE path is not a binary `.mogrt` converter: it imports AE's scriptable scene model. Native scenes use the neutral Broadcast Scene 0.3 model, while unsupported source-specific features remain extensions or deterministic baked-frame fallbacks.
 
 ## What is included
 
 - `after-effects/export_broadcast_scene_v2.jsx`: recursive exporter for compositions, fonts, images, controls, sampled expressions, masks, mattes, effects, 3D transforms, and shape operators. The original MVP exporter remains available as `export_selected_comp.jsx`.
 - `after-effects/bake_unsupported_layers.jsx`: alpha-PNG fallback renderer for AE-only layers and effects.
+- `src/ofxOGrafAuthoring.*` and `schema/broadcast-scene-0.3.schema.json`: typed, tool-neutral C++ scene authoring with stable IDs, controls, assets, provenance, validation, and deterministic JSON.
+- `src/ofxOGrafCodeTemplate.*`: procedural OF template contract with typed descriptors, explicit time, deterministic random streams, and a lifecycle host.
+- `scripts/validate-template-definition.mjs`: native/WASM/OGraf descriptor and declared-asset validator.
+- `docs/native-authoring.md`: direct openFrameworks authoring, delivery, and deterministic-runtime guide.
 - `schema/broadcast-scene-0.2.schema.json`: expanded neutral interchange format; the original 0.1 schema remains for compatibility.
 - `src/`: openFrameworks addon with deterministic timeline evaluation, asset caching, recursive scene rendering, renderer-extension hooks, AE-style 2D/3D transforms, a neutral controls API, and an optional ofxImGui adapter.
 - `example-basic/`: dependency-free native/Emscripten example and embind lifecycle bridge.
@@ -60,7 +64,7 @@ See `docs/renderer-support.md` for the feature matrix and fallback strategy.
 
 ## Native openFrameworks build
 
-Use openFrameworks Project Generator on `example-basic`, then build it normally for your platform. The example expects this addon to live at `addons/ofxOGraf`. For a native Essential Graphics inspector, generate/build `example-imgui`; that example adds `ofxImGui` without making it a core dependency. See `docs/essential-controls.md`.
+Use openFrameworks Project Generator on `example-basic`, then build it normally for your platform. It constructs and renders a neutral lower third directly in C++ with `SceneBuilder`. For procedural drawing, implement `CodeTemplate` and host it with `CodeTemplateHost`. The optional `example-imgui` inspector remains independent of the core addon. See `docs/native-authoring.md` and `docs/essential-controls.md`.
 
 ## Emscripten build
 
@@ -96,6 +100,9 @@ With Node.js available:
 node scripts/validate.mjs
 node tests/feature-contract.mjs
 node tests/controls-contract.mjs
+node tests/authoring-contract.mjs
+node tests/code-template-contract.mjs
+node scripts/validate-template-definition.mjs
 node --check ograf/OfBroadcastGraphic.js
 node --check ograf/EssentialControls.js
 ```

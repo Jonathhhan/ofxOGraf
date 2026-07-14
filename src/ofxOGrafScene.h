@@ -22,10 +22,12 @@ struct Scene {
     int height = 1080;
     double duration = 0.0;
     double frameRate = 50.0;
+    ofJson document;
     ofJson raw;
     std::vector<Layer> layers;
 
     const Layer* findLayer(int index) const;
+    const ofJson& sourceDocument() const;
 };
 
 } // namespace ofxOGraf

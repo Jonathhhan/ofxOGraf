@@ -45,6 +45,24 @@ bool Graphic::loadJson(const std::string& jsonText) {
     }
 }
 
+bool Graphic::loadJson(const ofJson& document) {
+    try {
+        scene = SceneLoader::loadJson(document);
+        data = Controls::withDefaults(scene, data);
+        renderer.setScene(scene);
+        renderer.setData(data);
+        loaded = true;
+        lastError.clear();
+        timeline.setTime(0.0);
+        return true;
+    } catch (const std::exception& error) {
+        loaded = false;
+        lastError = error.what();
+        ofLogError("ofxOGraf") << lastError;
+        return false;
+    }
+}
+
 void Graphic::setData(const ofJson& value) {
     data = loaded ? Controls::withDefaults(scene, value) : (value.is_object() ? value : ofJson::object());
     renderer.setData(data);
@@ -103,6 +121,7 @@ void Graphic::draw() {
 
 bool Graphic::isLoaded() const { return loaded; }
 const Scene& Graphic::getScene() const { return scene; }
+const ofJson& Graphic::getDocument() const { return scene.sourceDocument(); }
 const ofJson& Graphic::getData() const { return data; }
 const ofJson& Graphic::getControls() const { return Controls::definitions(scene); }
 ofJson Graphic::getControlDefaults() const { return Controls::defaultData(scene); }

@@ -5,8 +5,9 @@ namespace ofxOGraf {
 
 const ofJson& Controls::definitions(const Scene& scene) {
     static const ofJson empty = ofJson::array();
-    if (!scene.raw.contains("controls") || !scene.raw["controls"].is_array()) return empty;
-    return scene.raw["controls"];
+    const auto& document = scene.sourceDocument();
+    if (!document.contains("controls") || !document["controls"].is_array()) return empty;
+    return document["controls"];
 }
 
 ofJson Controls::defaultData(const Scene& scene) {

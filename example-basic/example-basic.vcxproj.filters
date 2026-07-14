@@ -13,6 +13,12 @@
 		<ClCompile Include="..\src\ofxOGrafControls.cpp">
 			<Filter>addons\ofxOGraf\src</Filter>
 		</ClCompile>
+		<ClCompile Include="..\src\ofxOGrafAuthoring.cpp">
+			<Filter>addons\ofxOGraf\src</Filter>
+		</ClCompile>
+		<ClCompile Include="..\src\ofxOGrafCodeTemplate.cpp">
+			<Filter>addons\ofxOGraf\src</Filter>
+		</ClCompile>
 		<ClCompile Include="..\src\ofxOGrafExtensions.cpp">
 			<Filter>addons\ofxOGraf\src</Filter>
 		</ClCompile>
@@ -60,6 +66,12 @@
 			<Filter>addons\ofxOGraf\src</Filter>
 		</ClInclude>
 		<ClInclude Include="..\src\ofxOGrafAssets.h">
+			<Filter>addons\ofxOGraf\src</Filter>
+		</ClInclude>
+		<ClInclude Include="..\src\ofxOGrafAuthoring.h">
+			<Filter>addons\ofxOGraf\src</Filter>
+		</ClInclude>
+		<ClInclude Include="..\src\ofxOGrafCodeTemplate.h">
 			<Filter>addons\ofxOGraf\src</Filter>
 		</ClInclude>
 		<ClInclude Include="..\src\ofxOGrafControls.h">

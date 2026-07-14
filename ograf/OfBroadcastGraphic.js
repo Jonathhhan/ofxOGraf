@@ -21,23 +21,30 @@ export default class OfBroadcastGraphic extends HTMLElement {
 
     async load({ data = {}, renderType = "realtime", renderCharacteristics = {} } = {}) {
         if (this.module) await this.dispose({});
-        this.module = await createOfxOGrafModule({ canvas: this.canvas });
         const sceneUrl = this.getAttribute("scene") || "./scene.json";
         const response = await fetch(sceneUrl);
         if (!response.ok) return { statusCode: response.status, statusMessage: `Could not load ${sceneUrl}` };
         const scene = await response.json();
+        const composition = this.compositionInfo(scene);
+        if (!composition) return { statusCode: 422, statusMessage: "Scene has no root composition" };
+
+        // The drawing buffer must be sized before Emscripten creates WebGL.
+        const resolution = renderCharacteristics.resolution || composition;
+        this.canvas.width = resolution.width || composition.width;
+        this.canvas.height = resolution.height || composition.height;
+        this.module = await createOfxOGrafModule({ canvas: this.canvas });
         this.scene = scene;
         if (!this.module.loadGraphic(JSON.stringify(scene))) {
-            return { statusCode: 422, statusMessage: this.module.getLastError?.() || "Invalid scene" };
+            const message = this.module.getLastError?.() || "Invalid scene";
+            this.module.exit?.();
+            this.module = null;
+            return { statusCode: 422, statusMessage: message };
         }
         const resolvedData = this.mergePatch(this.sceneDefaults(scene), data);
         this.initialData = structuredClone(resolvedData);
         this.data = structuredClone(resolvedData);
         this.module.updateGraphic(JSON.stringify(this.data), true);
         this.renderType = renderType;
-        const resolution = renderCharacteristics.resolution || scene.composition;
-        this.canvas.width = resolution.width || scene.composition.width;
-        this.canvas.height = resolution.height || scene.composition.height;
         this.dispatchState("ograf-ready");
         return { statusCode: 200, statusMessage: "OK" };
     }
@@ -145,6 +152,12 @@ export default class OfBroadcastGraphic extends HTMLElement {
 
     getControls() {
         return Array.isArray(this.scene?.controls) ? structuredClone(this.scene.controls) : [];
+    }
+
+    compositionInfo(scene = this.scene) {
+        if (scene?.composition?.width && scene?.composition?.height) return scene.composition;
+        if (!Array.isArray(scene?.compositions)) return null;
+        return scene.compositions.find(composition => composition?.id === scene.rootCompositionId) || null;
     }
 
     sceneDefaults(scene = this.scene) {

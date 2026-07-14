@@ -24,7 +24,17 @@ export function normalizeControls(controls = []) {
         if (!control || typeof control.id !== "string" || !control.id || ids.has(control.id)) return false;
         ids.add(control.id);
         return true;
-    }).map(control => ({ ...control, type: normalizeControlType(control), name: control.name || control.id }));
+    }).map(control => {
+        const constraints = control.constraints || {};
+        return {
+            ...control,
+            type: normalizeControlType(control),
+            name: control.name || control.label || control.id,
+            min: control.min ?? constraints.minimum,
+            max: control.max ?? constraints.maximum,
+            step: control.step ?? constraints.step
+        };
+    });
 }
 
 export function controlDefaults(controls = []) {

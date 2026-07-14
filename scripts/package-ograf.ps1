@@ -2,7 +2,9 @@
 param(
     [string]$SourceDir = (Join-Path $PSScriptRoot '..\ograf'),
     [string]$OutputPath = (Join-Path $PSScriptRoot '..\build\ofxOGraf-graphic.zip'),
-    [switch]$AllowMissingRuntime
+    [switch]$AllowMissingRuntime,
+    [string]$TemplateDefinition = '',
+    [string]$AssetRoot = ''
 )
 
 $ErrorActionPreference = 'Stop'
@@ -19,10 +21,28 @@ if ($manifest.'$schema' -ne 'https://ograf.ebu.io/v1/specification/json-schemas/
     throw 'The manifest does not target the OGraf v1 Graphics schema.'
 }
 
-$required = @(
-    $manifest.main,
-    'scene.json'
-)
+if (-not $TemplateDefinition) {
+    $candidateDefinition = Join-Path $source 'template-definition.json'
+    if (Test-Path -LiteralPath $candidateDefinition -PathType Leaf) {
+        $TemplateDefinition = $candidateDefinition
+    }
+}
+
+if ($TemplateDefinition) {
+    $definitionPath = [System.IO.Path]::GetFullPath($TemplateDefinition)
+    $definitionAssetRoot = if ($AssetRoot) {
+        [System.IO.Path]::GetFullPath($AssetRoot)
+    } else {
+        Join-Path $source 'data'
+    }
+    & node (Join-Path $PSScriptRoot 'validate-template-definition.mjs') `
+        --strict --check-assets --asset-root $definitionAssetRoot $definitionPath
+    if ($LASTEXITCODE -ne 0) {
+        throw 'TemplateDefinition validation failed.'
+    }
+}
+
+$required = @($manifest.main, 'scene.json')
 if (-not $AllowMissingRuntime) {
     $required += @('dist/ofxOGraf.js', 'dist/ofxOGraf.wasm')
 }

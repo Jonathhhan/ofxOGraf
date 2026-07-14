@@ -181,6 +181,18 @@ void Renderer::drawText(const Layer& layer, double time) {
     std::string text = value.value("text", layer.name);
     const std::string controlId = layer.source.value("controlId", "");
     if (!controlId.empty() && data.contains(controlId) && data[controlId].is_string()) text = data[controlId].get<std::string>();
+    if (layer.source["text"].contains("styleControlIds")) {
+        const auto& styleControls = layer.source["text"]["styleControlIds"];
+        const std::string sizeControl = styleControls.value("fontSize", "");
+        if (!sizeControl.empty() && data.contains(sizeControl) && data[sizeControl].is_number()) {
+            value["fontSize"] = data[sizeControl];
+        }
+        const std::string fillControl = styleControls.value("fillColor", "");
+        if (!fillControl.empty() && data.contains(fillControl) && data[fillControl].is_array() &&
+            data[fillControl].size() >= 3) {
+            value["fillColor"] = data[fillControl];
+        }
+    }
 
     const float size = value.value("fontSize", 32.0f);
     const std::string fontName = value.value("font", value.value("fontFamily", ""));
@@ -287,7 +299,15 @@ ofJson Renderer::evaluate(const ofJson& property, double time) const {
     ofJson value = Timeline::evaluate(property, time);
     const std::string controlId = property.value("controlId", "");
     if (controlId.empty() || !data.contains(controlId) || data[controlId].is_null()) return value;
-    const ofJson& controlled = data[controlId];
+    ofJson controlled = data[controlId];
+    const double multiplier = property.value("controlMultiplier", 1.0);
+    if (multiplier != 1.0) {
+        const auto multiply = [&](const auto& self, ofJson& item) -> void {
+            if (item.is_number()) item = item.get<double>() * multiplier;
+            else if (item.is_array()) for (auto& child : item) self(self, child);
+        };
+        multiply(multiply, controlled);
+    }
     if (value.is_object() && value.contains("text") && controlled.is_string()) {
         value["text"] = controlled;
         return value;

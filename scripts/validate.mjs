@@ -1,4 +1,5 @@
 import { readFile } from "node:fs/promises";
+import { validateTemplateDefinitionFile } from "./validate-template-definition.mjs";
 
 const root = new URL("../", import.meta.url);
 const errors = [];
@@ -70,10 +71,15 @@ validateScene(await json("example-basic/bin/data/scene.json"), "native example s
 validateScene(await json("examples/feature-showcase.scene.json"), "feature showcase scene");
 validateScene(await json("example-imgui/bin/data/scene.json"), "ofxImGui example scene");
 await json("schema/broadcast-scene-0.2.schema.json");
+await json("schema/broadcast-scene-0.3.schema.json");
+const nativeDefinition = await validateTemplateDefinitionFile("examples/native-authoring/lower-third.template.json");
+for (const error of nativeDefinition.errors) errors.push(`native authoring: ${error}`);
+if (!nativeDefinition.valid) errors.push("native authoring: TemplateDefinition fixture is invalid");
+
 
 if (errors.length) {
     console.error(errors.join("\n"));
     process.exitCode = 1;
 } else {
-    console.log("Validated OGraf manifest, wrapper/control contracts, schemas, and 5 Broadcast Scene files.");
+    console.log("Validated OGraf contracts, 0.2/0.3 schemas, 5 scenes, and native TemplateDefinition.");
 }

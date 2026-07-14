@@ -9,4 +9,8 @@ const Layer* Scene::findLayer(int index) const {
     return nullptr;
 }
 
+const ofJson& Scene::sourceDocument() const {
+    return document.is_object() ? document : raw;
+}
+
 } // namespace ofxOGraf

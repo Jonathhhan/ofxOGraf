@@ -1,0 +1,140 @@
+{
+  "contract": "ofxograf-code-template",
+  "contractVersion": 1,
+  "id": "com.jonathan-frank.ofx-ograf-native-lower-third",
+  "name": "Native openFrameworks Lower Third",
+  "composition": {
+    "width": 1920,
+    "height": 1080,
+    "frameRate": 50,
+    "duration": 5
+  },
+  "randomSeed": 424242,
+  "controls": [
+    {
+      "id": "headline",
+      "label": "Headline",
+      "type": "string",
+      "default": "ofxOGraf"
+    },
+    {
+      "id": "subtitle",
+      "label": "Subtitle",
+      "type": "string",
+      "default": "Native openFrameworks template",
+      "multiline": true
+    },
+    {
+      "id": "accent-color",
+      "label": "Accent color",
+      "type": "color",
+      "default": [1, 0.8, 0, 1]
+    },
+    {
+      "id": "safe-area",
+      "label": "Show safe area",
+      "type": "boolean",
+      "default": false
+    },
+    {
+      "id": "text-scale",
+      "label": "Text scale",
+      "type": "number",
+      "default": 1,
+      "min": 0.5,
+      "max": 2,
+      "step": 0.05
+    },
+    {
+      "id": "anchor",
+      "label": "Anchor",
+      "type": "vector2",
+      "default": [220, 850]
+    },
+    {
+      "id": "alignment",
+      "label": "Alignment",
+      "type": "string",
+      "default": "left",
+      "options": [
+        { "value": "left", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "right", "label": "Right" }
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "id": "inter-bold",
+      "kind": "font",
+      "uri": "fonts/Inter-Bold.ttf",
+      "required": true,
+      "preload": true
+    },
+    {
+      "id": "brand-mark",
+      "kind": "image",
+      "uri": "images/brand-mark.png",
+      "required": true,
+      "preload": true
+    },
+    {
+      "id": "lower-third-vertex-shader",
+      "kind": "shader",
+      "uri": "shaders/lower-third.vert",
+      "required": true,
+      "preload": true
+    },
+    {
+      "id": "lower-third-fragment-shader",
+      "kind": "shader",
+      "uri": "shaders/lower-third.frag",
+      "required": true,
+      "preload": true
+    }
+  ],
+  "actions": [
+    {
+      "id": "in",
+      "label": "Animate in",
+      "kind": "in",
+      "playback": "once",
+      "start": 0,
+      "duration": 0.5
+    },
+    {
+      "id": "update",
+      "label": "Update data",
+      "kind": "update",
+      "playback": "once",
+      "start": 0.5,
+      "duration": 0
+    },
+    {
+      "id": "out",
+      "label": "Animate out",
+      "kind": "out",
+      "playback": "once",
+      "start": 4.5,
+      "duration": 0.5
+    }
+  ],
+  "metadata": {
+    "version": "0.1.0",
+    "description": "Canonical descriptor fixture for a directly authored openFrameworks graphic.",
+    "source": {
+      "kind": "code",
+      "factory": "createNativeLowerThird"
+    },
+    "targets": ["native", "wasm", "ograf"],
+    "pixelAspect": 1,
+    "alpha": true,
+    "supportsRealTime": true,
+    "supportsNonRealTime": true,
+    "stepCount": 1,
+    "rendererCapabilities": {
+      "required": ["webgl2", "alpha-canvas", "truetype-fonts"],
+      "optional": ["stencil-buffer"]
+    }
+  }
+}

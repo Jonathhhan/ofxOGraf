@@ -230,6 +230,8 @@
 		<ClCompile Include="src\ofApp.cpp" />
 		<ClCompile Include="..\src\ofxOGrafAssets.cpp" />
 		<ClCompile Include="..\src\ofxOGrafControls.cpp" />
+		<ClCompile Include="..\src\ofxOGrafAuthoring.cpp" />
+		<ClCompile Include="..\src\ofxOGrafCodeTemplate.cpp" />
 		<ClCompile Include="..\src\ofxOGrafExtensions.cpp" />
 		<ClCompile Include="..\src\ofxOGrafGraphic.cpp" />
 		<ClCompile Include="..\src\ofxOGrafImGuiControls.cpp" />
@@ -243,6 +245,8 @@
 		<ClCompile Include="..\..\ofxImGui\src\EngineGLFW.cpp" />
 		<ClCompile Include="..\..\ofxImGui\src\EngineOpenFrameworks.cpp" />
 		<ClCompile Include="..\..\ofxImGui\src\EngineOpenGLES.cpp" />
+		<ClInclude Include="..\src\ofxOGrafAuthoring.h" />
+		<ClInclude Include="..\src\ofxOGrafCodeTemplate.h" />
 		<ClCompile Include="..\..\ofxImGui\src\Gui.cpp" />
 		<ClCompile Include="..\..\ofxImGui\src\GuiEventHelper.cpp" />
 		<ClCompile Include="..\..\ofxImGui\src\ImHelpers.cpp" />

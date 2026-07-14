@@ -14,6 +14,7 @@ public:
     void setup();
     bool loadFile(const std::string& path);
     bool loadJson(const std::string& jsonText);
+    bool loadJson(const ofJson& document);
     void setData(const ofJson& value);
     void updateData(const ofJson& patch);
 
@@ -29,6 +30,7 @@ public:
 
     bool isLoaded() const;
     const Scene& getScene() const;
+    const ofJson& getDocument() const;
     const ofJson& getData() const;
     const ofJson& getControls() const;
     ofJson getControlDefaults() const;

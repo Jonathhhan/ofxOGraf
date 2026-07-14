@@ -1,0 +1,366 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://ofxograf.dev/schema/broadcast-scene-0.3.schema.json",
+  "title": "Broadcast Scene 0.3 tool-neutral authoring document",
+  "type": "object",
+  "required": [
+    "$schema", "format", "version", "id", "generator", "provenance",
+    "coordinateSystem", "rootCompositionId", "compositions", "assets",
+    "controls", "actions", "requiredExtensions", "extensions"
+  ],
+  "properties": {
+    "$schema": { "const": "https://ofxograf.dev/schema/broadcast-scene-0.3.schema.json" },
+    "format": { "const": "broadcast-scene" },
+    "version": { "type": "string", "pattern": "^0\\.3\\.[0-9]+$" },
+    "id": { "$ref": "#/$defs/id" },
+    "generator": { "$ref": "#/$defs/tool" },
+    "provenance": { "type": "array", "items": { "$ref": "#/$defs/provenance" } },
+    "coordinateSystem": { "$ref": "#/$defs/coordinateSystem" },
+    "rootCompositionId": { "$ref": "#/$defs/id" },
+    "compositions": { "type": "array", "items": { "$ref": "#/$defs/composition" } },
+    "assets": { "type": "array", "items": { "$ref": "#/$defs/asset" } },
+    "controls": { "type": "array", "items": { "$ref": "#/$defs/control" } },
+    "actions": { "type": "array", "items": { "$ref": "#/$defs/action" } },
+    "requiredExtensions": { "type": "array", "items": { "$ref": "#/$defs/extensionRequirement" } },
+    "extensions": { "$ref": "#/$defs/extensions" }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "namespace": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*(\\.[a-z][a-z0-9-]*)+$"
+    },
+    "semanticVersion": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$"
+    },
+    "tool": {
+      "type": "object",
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "$ref": "#/$defs/namespace" },
+        "version": { "$ref": "#/$defs/semanticVersion" }
+      },
+      "additionalProperties": false
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["operation", "tool"],
+      "properties": {
+        "operation": { "enum": ["create", "import", "transform", "migrate"] },
+        "tool": { "$ref": "#/$defs/tool" },
+        "source": { "type": "object" },
+        "losses": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["code"],
+            "properties": {
+              "code": { "type": "string", "minLength": 1 },
+              "targetId": { "$ref": "#/$defs/id" },
+              "detail": { "type": "string" }
+            },
+            "additionalProperties": true
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "coordinateSystem": {
+      "type": "object",
+      "required": ["origin", "xAxis", "yAxis", "units"],
+      "properties": {
+        "origin": { "enum": ["top-left", "center"] },
+        "xAxis": { "enum": ["right", "left"] },
+        "yAxis": { "enum": ["down", "up"] },
+        "units": { "enum": ["pixels", "normalized"] }
+      },
+      "additionalProperties": false
+    },
+    "frameRate": {
+      "type": "object",
+      "required": ["numerator", "denominator"],
+      "properties": {
+        "numerator": { "type": "integer", "minimum": 1 },
+        "denominator": { "type": "integer", "minimum": 1 }
+      },
+      "additionalProperties": false
+    },
+    "extensionValue": {
+      "type": "object",
+      "required": ["version", "data"],
+      "properties": {
+        "version": { "$ref": "#/$defs/semanticVersion" },
+        "data": {}
+      },
+      "additionalProperties": false
+    },
+    "extensions": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/namespace" },
+      "additionalProperties": { "$ref": "#/$defs/extensionValue" }
+    },
+    "extensionRequirement": {
+      "type": "object",
+      "required": ["id", "version", "capabilities"],
+      "properties": {
+        "id": { "$ref": "#/$defs/namespace" },
+        "version": { "type": "string", "minLength": 1 },
+        "capabilities": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+      },
+      "additionalProperties": false
+    },
+    "keyframe": {
+      "type": "object",
+      "required": ["time", "value", "inInterpolation", "outInterpolation"],
+      "properties": {
+        "time": { "type": "number" },
+        "value": {},
+        "inInterpolation": { "enum": ["linear", "hold", "bezier"] },
+        "outInterpolation": { "enum": ["linear", "hold", "bezier"] }
+      },
+      "additionalProperties": false
+    },
+    "valueProperty": {
+      "type": "object",
+      "required": ["id", "type", "value"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "enum": ["scalar", "integer", "boolean", "string", "color", "vector2", "vector3", "vector4"] },
+        "value": {},
+        "keyframes": { "type": "array", "items": { "$ref": "#/$defs/keyframe" } }
+      },
+      "allOf": [
+        { "if": { "properties": { "type": { "const": "scalar" } } }, "then": { "properties": { "value": { "type": "number" } } } },
+        { "if": { "properties": { "type": { "const": "integer" } } }, "then": { "properties": { "value": { "type": "integer" } } } },
+        { "if": { "properties": { "type": { "const": "boolean" } } }, "then": { "properties": { "value": { "type": "boolean" } } } },
+        { "if": { "properties": { "type": { "const": "string" } } }, "then": { "properties": { "value": { "type": "string" } } } },
+        { "if": { "properties": { "type": { "const": "color" } } }, "then": { "properties": { "value": { "$ref": "#/$defs/color" } } } },
+        { "if": { "properties": { "type": { "const": "vector2" } } }, "then": { "properties": { "value": { "$ref": "#/$defs/vector2" } } } },
+        { "if": { "properties": { "type": { "const": "vector3" } } }, "then": { "properties": { "value": { "$ref": "#/$defs/vector3" } } } },
+        { "if": { "properties": { "type": { "const": "vector4" } } }, "then": { "properties": { "value": { "$ref": "#/$defs/vector4" } } } }
+      ],
+      "additionalProperties": false
+    },
+    "vector2": { "type": "array", "prefixItems": [{ "type": "number" }, { "type": "number" }], "items": false, "minItems": 2, "maxItems": 2 },
+    "vector3": { "type": "array", "prefixItems": [{ "type": "number" }, { "type": "number" }, { "type": "number" }], "items": false, "minItems": 3, "maxItems": 3 },
+    "vector4": { "type": "array", "prefixItems": [{ "type": "number" }, { "type": "number" }, { "type": "number" }, { "type": "number" }], "items": false, "minItems": 4, "maxItems": 4 },
+    "color": {
+      "type": "array",
+      "prefixItems": [
+        { "type": "number", "minimum": 0, "maximum": 1 },
+        { "type": "number", "minimum": 0, "maximum": 1 },
+        { "type": "number", "minimum": 0, "maximum": 1 },
+        { "type": "number", "minimum": 0, "maximum": 1 }
+      ],
+      "items": false,
+      "minItems": 4,
+      "maxItems": 4
+    },
+    "transform": {
+      "type": "object",
+      "required": ["anchor", "position", "scale", "rotation", "opacity"],
+      "properties": {
+        "anchor": { "$ref": "#/$defs/valueProperty" },
+        "position": { "$ref": "#/$defs/valueProperty" },
+        "scale": { "$ref": "#/$defs/valueProperty" },
+        "rotation": { "$ref": "#/$defs/valueProperty" },
+        "opacity": { "$ref": "#/$defs/valueProperty" }
+      },
+      "additionalProperties": false
+    },
+    "timing": {
+      "type": "object",
+      "required": ["start", "duration"],
+      "properties": {
+        "start": { "type": "number" },
+        "duration": { "type": "number", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "textStyle": {
+      "type": "object",
+      "required": ["fontFamily", "fontSize", "fill", "alignment"],
+      "properties": {
+        "fontFamily": { "type": "string" },
+        "fontAssetId": { "$ref": "#/$defs/id" },
+        "fontSize": { "$ref": "#/$defs/valueProperty" },
+        "fill": { "$ref": "#/$defs/valueProperty" },
+        "alignment": { "enum": ["left", "center", "right", "justify"] }
+      },
+      "additionalProperties": false
+    },
+    "textContent": {
+      "type": "object",
+      "required": ["type", "source", "style"],
+      "properties": {
+        "type": { "const": "text" },
+        "source": { "$ref": "#/$defs/valueProperty" },
+        "style": { "$ref": "#/$defs/textStyle" }
+      },
+      "additionalProperties": false
+    },
+    "geometry": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "enum": ["rectangle", "ellipse", "path"] },
+        "size": { "$ref": "#/$defs/vector2" },
+        "radius": { "type": "number", "minimum": 0 },
+        "vertices": { "type": "array", "items": { "$ref": "#/$defs/vector2" } },
+        "closed": { "type": "boolean" }
+      },
+      "allOf": [
+        { "if": { "properties": { "type": { "enum": ["rectangle", "ellipse"] } } }, "then": { "required": ["size"] } },
+        { "if": { "properties": { "type": { "const": "path" } } }, "then": { "required": ["vertices", "closed"] } }
+      ],
+      "additionalProperties": false
+    },
+    "stroke": {
+      "type": "object",
+      "required": ["color", "width"],
+      "properties": {
+        "color": { "$ref": "#/$defs/valueProperty" },
+        "width": { "$ref": "#/$defs/valueProperty" }
+      },
+      "additionalProperties": false
+    },
+    "shapeStyle": {
+      "type": "object",
+      "properties": {
+        "fill": { "$ref": "#/$defs/valueProperty" },
+        "stroke": { "$ref": "#/$defs/stroke" }
+      },
+      "additionalProperties": false
+    },
+    "shapeContent": {
+      "type": "object",
+      "required": ["type", "geometry", "style"],
+      "properties": {
+        "type": { "const": "shape" },
+        "geometry": { "$ref": "#/$defs/geometry" },
+        "style": { "$ref": "#/$defs/shapeStyle" }
+      },
+      "additionalProperties": false
+    },
+    "layer": {
+      "type": "object",
+      "required": ["id", "name", "type", "enabled", "timing", "transform", "content", "extensions"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "type": { "enum": ["text", "shape"] },
+        "enabled": { "type": "boolean" },
+        "timing": { "$ref": "#/$defs/timing" },
+        "parentId": { "$ref": "#/$defs/id" },
+        "transform": { "$ref": "#/$defs/transform" },
+        "content": { "oneOf": [{ "$ref": "#/$defs/textContent" }, { "$ref": "#/$defs/shapeContent" }] },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      },
+      "allOf": [
+        { "if": { "properties": { "type": { "const": "text" } } }, "then": { "properties": { "content": { "$ref": "#/$defs/textContent" } } } },
+        { "if": { "properties": { "type": { "const": "shape" } } }, "then": { "properties": { "content": { "$ref": "#/$defs/shapeContent" } } } }
+      ],
+      "additionalProperties": false
+    },
+    "composition": {
+      "type": "object",
+      "required": ["id", "name", "width", "height", "duration", "frameRate", "layers", "extensions"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "duration": { "type": "number", "minimum": 0 },
+        "frameRate": { "$ref": "#/$defs/frameRate" },
+        "layers": { "type": "array", "items": { "$ref": "#/$defs/layer" } },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      },
+      "additionalProperties": false
+    },
+    "assetBase": {
+      "type": "object",
+      "required": ["id", "type", "uri", "extensions"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "type": { "enum": ["image", "font"] },
+        "uri": { "type": "string", "minLength": 1, "pattern": "^(?![A-Za-z]:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\\\]+$" },
+        "sha256": { "type": "string", "pattern": "^[0-9a-fA-F]{64}$" },
+        "width": { "type": "integer", "minimum": 1 },
+        "height": { "type": "integer", "minimum": 1 },
+        "family": { "type": "string" },
+        "style": { "type": "string" },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      },
+      "additionalProperties": false
+    },
+    "asset": {
+      "allOf": [
+        { "$ref": "#/$defs/assetBase" },
+        {
+          "if": { "properties": { "type": { "const": "font" } } },
+          "then": { "required": ["family", "style"] }
+        }
+      ]
+    },
+    "binding": {
+      "type": "object",
+      "required": ["targetId", "conversion"],
+      "properties": {
+        "targetId": { "$ref": "#/$defs/id" },
+        "conversion": { "enum": ["identity", "clamp", "scale", "component-x", "component-y", "component-z", "format-string"] }
+      },
+      "additionalProperties": false
+    },
+    "control": {
+      "type": "object",
+      "required": ["id", "name", "type", "default", "bindings", "ui", "extensions"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "type": { "enum": ["string", "boolean", "integer", "number", "color", "vector2", "vector3", "vector4", "enum", "asset"] },
+        "default": {},
+        "bindings": { "type": "array", "items": { "$ref": "#/$defs/binding" } },
+        "constraints": {
+          "type": "object",
+          "required": ["minimum", "maximum"],
+          "properties": {
+            "minimum": { "type": "number" },
+            "maximum": { "type": "number" },
+            "step": { "type": "number", "exclusiveMinimum": 0 }
+          },
+          "additionalProperties": false
+        },
+        "ui": {
+          "type": "object",
+          "properties": {
+            "group": { "type": "string" },
+            "order": { "type": "integer" },
+            "description": { "type": "string" }
+          },
+          "additionalProperties": false
+        },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      },
+      "additionalProperties": false
+    },
+    "action": {
+      "type": "object",
+      "required": ["id", "name", "type", "parameters", "extensions"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "name": { "type": "string" },
+        "type": { "type": "string", "minLength": 1 },
+        "parameters": { "type": "object" },
+        "extensions": { "$ref": "#/$defs/extensions" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

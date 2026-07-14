@@ -79,6 +79,9 @@ bool ImGuiControls::draw(Graphic& graphic, const std::string& title, bool* open)
         const std::string label = control.value("name", id);
         const std::string type = Controls::normalizedType(control);
         const ofJson value = currentValue(graphic, control);
+        const ofJson constraints = control.value("constraints", ofJson::object());
+        const bool hasRange = (control.contains("min") && control.contains("max")) ||
+                              (constraints.contains("minimum") && constraints.contains("maximum"));
         bool controlChanged = false;
 
         ImGui::PushID(id.c_str());
@@ -88,16 +91,20 @@ bool ImGuiControls::draw(Graphic& graphic, const std::string& title, bool* open)
             if (controlChanged) patch[id] = edited;
         } else if (type == "integer") {
             int edited = value.is_number() ? value.get<int>() : 0;
-            const int step = std::max(1, control.value("step", 1));
-            if (control.contains("min") && control.contains("max")) {
-                controlChanged = ImGui::SliderInt(label.c_str(), &edited, control["min"].get<int>(), control["max"].get<int>());
+            const int step = std::max(1, control.value("step", constraints.value("step", 1)));
+            if (hasRange) {
+                const int minimum = control.contains("min") ? control["min"].get<int>() : constraints["minimum"].get<int>();
+                const int maximum = control.contains("max") ? control["max"].get<int>() : constraints["maximum"].get<int>();
+                controlChanged = ImGui::SliderInt(label.c_str(), &edited, minimum, maximum);
             } else controlChanged = ImGui::DragInt(label.c_str(), &edited, static_cast<float>(step));
             if (controlChanged) patch[id] = edited;
         } else if (type == "number") {
             float edited = value.is_number() ? value.get<float>() : 0.0f;
-            const float step = control.value("step", 0.1f);
-            if (control.contains("min") && control.contains("max")) {
-                controlChanged = ImGui::SliderFloat(label.c_str(), &edited, control["min"].get<float>(), control["max"].get<float>());
+            const float step = control.value("step", constraints.value("step", 0.1f));
+            if (hasRange) {
+                const float minimum = control.contains("min") ? control["min"].get<float>() : constraints["minimum"].get<float>();
+                const float maximum = control.contains("max") ? control["max"].get<float>() : constraints["maximum"].get<float>();
+                controlChanged = ImGui::SliderFloat(label.c_str(), &edited, minimum, maximum);
             } else controlChanged = ImGui::DragFloat(label.c_str(), &edited, step);
             if (controlChanged) patch[id] = edited;
         } else if (type == "color") {
@@ -107,7 +114,7 @@ bool ImGuiControls::draw(Graphic& graphic, const std::string& title, bool* open)
             }
             controlChanged = ImGui::ColorEdit4(label.c_str(), edited.data());
             if (controlChanged) patch[id] = {edited[0], edited[1], edited[2], edited[3]};
-        } else if (type == "vector") {
+        } else if (type == "vector" || type == "vector2" || type == "vector3" || type == "vector4") {
             std::array<float, 4> edited{0, 0, 0, 0};
             std::size_t count = value.is_array() ? std::min<std::size_t>(4, value.size()) : 2;
             if (value.is_array()) for (std::size_t i = 0; i < count; ++i) edited[i] = value[i].get<float>();
