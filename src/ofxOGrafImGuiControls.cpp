@@ -1,5 +1,6 @@
 #include "ofxOGrafImGuiControls.h"
 #include <algorithm>
+#include <vector>
 
 #if defined(ofxAddons_ENABLE_IMGUI)
 #include "ofxImGui.h"
@@ -39,15 +40,37 @@ ofJson currentValue(const Graphic& graphic, const ofJson& control) {
     if (!id.empty() && data.contains(id)) return data[id];
     return control.value("default", ofJson());
 }
+struct ControlUiMetadata {
+    std::string group = "General";
+    int order = 0;
+    std::string description;
+};
 
+ControlUiMetadata uiMetadata(const ofJson& control) {
+    const auto ui = control.value("ui", ofJson::object());
+    ControlUiMetadata metadata;
+    metadata.group = ui.value("group", control.value("group", metadata.group));
+    if (metadata.group.empty()) metadata.group = "General";
+    metadata.order = ui.value("order", control.value("order", metadata.order));
+    metadata.description = ui.value("description", control.value("description", ""));
+    return metadata;
+}
+
+struct OrderedControl {
+    const ofJson* control = nullptr;
+    ControlUiMetadata ui;
+    std::size_t groupOrder = 0;
+    std::size_t sourceIndex = 0;
+};
 } // namespace
 #endif
 
-bool ImGuiControls::draw(Graphic& graphic, const std::string& title, bool* open) {
+bool ImGuiControls::draw(Graphic& graphic, const std::string& title, bool* open, const ContentCallback& footer) {
 #if !defined(ofxAddons_ENABLE_IMGUI)
     (void)graphic;
     (void)title;
     (void)open;
+    (void)footer;
     return false;
 #else
     bool changed = false;
@@ -71,8 +94,34 @@ bool ImGuiControls::draw(Graphic& graphic, const std::string& title, bool* open)
     }
     ImGui::Separator();
 
+    std::vector<std::string> groups;
+    std::vector<OrderedControl> orderedControls;
+    orderedControls.reserve(controls.size());
+    for (std::size_t sourceIndex = 0; sourceIndex < controls.size(); ++sourceIndex) {
+        const auto& control = controls[sourceIndex];
+        if (!control.is_object() || control.value("id", "").empty()) continue;
+        const auto ui = uiMetadata(control);
+        const auto group = std::find(groups.begin(), groups.end(), ui.group);
+        const auto groupOrder = group == groups.end()
+            ? (groups.push_back(ui.group), groups.size() - 1)
+            : static_cast<std::size_t>(std::distance(groups.begin(), group));
+        orderedControls.push_back({&control, ui, groupOrder, sourceIndex});
+    }
+    std::stable_sort(orderedControls.begin(), orderedControls.end(), [](const auto& left, const auto& right) {
+        if (left.groupOrder != right.groupOrder) return left.groupOrder < right.groupOrder;
+        if (left.ui.order != right.ui.order) return left.ui.order < right.ui.order;
+        return left.sourceIndex < right.sourceIndex;
+    });
+
     ofJson patch = ofJson::object();
-    for (const auto& control : controls) {
+    std::string currentGroup;
+    for (const auto& ordered : orderedControls) {
+        const auto& control = *ordered.control;
+        if (ordered.ui.group != currentGroup) {
+            if (!currentGroup.empty()) ImGui::Separator();
+            ImGui::TextDisabled("%s", ordered.ui.group.c_str());
+            currentGroup = ordered.ui.group;
+        }
         if (!control.is_object()) continue;
         const std::string id = control.value("id", "");
         if (id.empty()) continue;
@@ -157,8 +206,16 @@ bool ImGuiControls::draw(Graphic& graphic, const std::string& title, bool* open)
                 textSources[id] = patch[id].get<std::string>();
             }
         }
+        if (!ordered.ui.description.empty() && ImGui::IsItemHovered()) {
+            ImGui::SetTooltip("%s", ordered.ui.description.c_str());
+        }
         ImGui::PopID();
         changed = changed || controlChanged;
+    }
+
+    if (footer) {
+        ImGui::Separator();
+        footer();
     }
 
     if (!patch.empty()) graphic.updateData(patch);
@@ -166,5 +223,4 @@ bool ImGuiControls::draw(Graphic& graphic, const std::string& title, bool* open)
     return changed;
 #endif
 }
-
 } // namespace ofxOGraf

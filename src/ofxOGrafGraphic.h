@@ -23,7 +23,12 @@ public:
     double getTime() const;
 
     void play(int step = 0, bool skipAnimation = false);
+    void pause();
+    void resume();
     void stop(bool skipAnimation = false);
+    bool isPlaying() const;
+    void setLooping(bool enabled);
+    bool isLooping() const;
     bool isActionComplete(const std::string& action = "") const;
     void update(double deltaSeconds);
     void draw();
@@ -35,6 +40,7 @@ public:
     const ofJson& getControls() const;
     ofJson getControlDefaults() const;
     const std::string& getLastError() const;
+    const std::vector<std::string>& getAssetWarnings() const;
     Extensions& extensions();
 
 private:
@@ -44,6 +50,7 @@ private:
     ofJson data = ofJson::object();
     bool loaded = false;
     bool playing = false;
+    bool looping = false;
     bool stopping = false;
     bool actionComplete = true;
     double playStart = 0.0;

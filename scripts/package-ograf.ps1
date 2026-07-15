@@ -8,6 +8,8 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+Add-Type -AssemblyName System.IO.Compression.FileSystem
+Add-Type -AssemblyName System.IO.Compression
 $source = [System.IO.Path]::GetFullPath($SourceDir)
 $output = [System.IO.Path]::GetFullPath($OutputPath)
 $manifestPath = Join-Path $source 'graphic.ograf.json'
@@ -103,7 +105,23 @@ try {
     # Archive the staged folder contents so the manifest is at the ZIP root.
     # The SuperFlyTV server also accepts nested manifests, but a root manifest
     # is the most portable package layout.
-    Compress-Archive -Path (Join-Path $stage '*') -DestinationPath $output -CompressionLevel Optimal
+    $archive = [System.IO.Compression.ZipFile]::Open($output, [System.IO.Compression.ZipArchiveMode]::Create)
+    try {
+        Get-ChildItem -LiteralPath $stage -File -Recurse | ForEach-Object {
+            $relativePath = $_.FullName.Substring($stage.Length).TrimStart('\', '/').Replace('\', '/')
+            $entry = $archive.CreateEntry($relativePath, [System.IO.Compression.CompressionLevel]::Optimal)
+            $input = [System.IO.File]::OpenRead($_.FullName)
+            $entryStream = $entry.Open()
+            try {
+                $input.CopyTo($entryStream)
+            } finally {
+                $entryStream.Dispose()
+                $input.Dispose()
+            }
+        }
+    } finally {
+        $archive.Dispose()
+    }
     Write-Output $output
 } finally {
     if (Test-Path -LiteralPath $stage) {

@@ -1,78 +1,189 @@
 {
-  "$schema": "https://ograf.ebu.io/v1/specification/json-schemas/graphics/schema.json",
-  "id": "com.jonathan-frank.ofx-ograf-broadcast-graphic",
-  "version": "0.1.0",
-  "name": "openFrameworks Broadcast Graphic",
-  "description": "An After Effects scene reconstructed by openFrameworks/WebAssembly",
-  "author": {
-    "name": "Jonathan Frank"
-  },
-  "main": "./OfBroadcastGraphic.js",
-  "supportsRealTime": true,
-  "supportsNonRealTime": true,
-  "stepCount": 1,
-  "actionDurations": [
-    {
-      "type": "playAction",
-      "duration": -1
-    },
-    {
-      "type": "updateAction",
-      "duration": 0
-    },
-    {
-      "type": "stopAction",
-      "duration": -1
-    }
-  ],
-  "schema": {
-    "type": "object",
-    "properties": {
-      "headline": {
-        "type": "string",
-        "title": "Headline",
-        "default": "Headline"
-      },
-      "subtitle": {
-        "type": "string",
-        "title": "Subtitle",
-        "default": "Subtitle"
-      },
-      "accentColor": {
-        "type": "array",
-        "title": "Accent color",
-        "items": {
-          "type": "number",
-          "minimum": 0,
-          "maximum": 1
-        },
-        "minItems": 3,
-        "maxItems": 4,
-        "default": [
-          1,
-          0.8,
-          0,
-          1
-        ]
-      }
-    }
-  },
-  "renderRequirements": [
-    {
-      "resolution": {
-        "width": {
-          "ideal": 1920
-        },
-        "height": {
-          "ideal": 1080
-        }
-      },
-      "frameRate": {
-        "ideal": 50
-      },
-      "accessToPublicInternet": {
-        "exact": false
-      }
-    }
-  ]
+    "$schema":  "https://ograf.ebu.io/v1/specification/json-schemas/graphics/schema.json",
+    "id":  "com.jonathan-frank.ofx-ograf-broadcast-graphic",
+    "version":  "0.1.0",
+    "name":  "openFrameworks Broadcast Graphic",
+    "description":  "Native openFrameworks lower third with portable Motion Essential Graphics controls",
+    "author":  {
+                   "name":  "Jonathan Frank"
+               },
+    "main":  "./NativeLowerThirdGraphic.js",
+    "supportsRealTime":  true,
+    "supportsNonRealTime":  true,
+    "stepCount":  1,
+    "actionDurations":  [
+                            {
+                                "type":  "playAction",
+                                "duration":  650
+                            },
+                            {
+                                "type":  "updateAction",
+                                "duration":  0
+                            },
+                            {
+                                "type":  "stopAction",
+                                "duration":  900
+                            }
+                        ],
+    "schema":  {
+                   "type":  "object",
+                   "properties":  {
+                                      "headline":  {
+                                                       "type":  "string",
+                                                       "title":  "Headline",
+                                                       "default":  "Headline"
+                                                   },
+                                      "subtitle":  {
+                                                       "type":  "string",
+                                                       "title":  "Subtitle",
+                                                       "default":  "Subtitle"
+                                                   },
+                                      "accent-color":  {
+                                                           "type":  "array",
+                                                           "title":  "Accent color",
+                                                           "items":  {
+                                                                         "type":  "number",
+                                                                         "minimum":  0,
+                                                                         "maximum":  1
+                                                                     },
+                                                           "minItems":  3,
+                                                           "maxItems":  4,
+                                                           "default":  [
+                                                                           1,
+                                                                           0.8,
+                                                                           0,
+                                                                           1
+                                                                       ]
+                                                       },
+                                      "motion-position":  {
+                                                              "type":  "array",
+                                                              "title":  "Banderole position",
+                                                              "items":  {
+                                                                            "type":  "number"
+                                                                        },
+                                                              "minItems":  2,
+                                                              "maxItems":  2,
+                                                              "default":  [
+                                                                              720,
+                                                                              700
+                                                                          ]
+                                                          },
+                                      "motion-text-offset":  {
+                                                                 "type":  "array",
+                                                                 "title":  "Headline inset",
+                                                                 "items":  {
+                                                                               "type":  "number"
+                                                                           },
+                                                                 "minItems":  2,
+                                                                 "maxItems":  2,
+                                                                 "default":  [
+                                                                                 -460,
+                                                                                 40
+                                                                             ]
+                                                             },
+                                      "motion-entry-direction":  {
+                                                                     "type":  "array",
+                                                                     "title":  "Entry direction",
+                                                                     "items":  {
+                                                                                   "type":  "number"
+                                                                               },
+                                                                     "minItems":  2,
+                                                                     "maxItems":  2,
+                                                                     "default":  [
+                                                                                     -1,
+                                                                                     0
+                                                                                 ]
+                                                                 },
+                                      "motion-exit-direction":  {
+                                                                    "type":  "array",
+                                                                    "title":  "Exit direction",
+                                                                    "items":  {
+                                                                                  "type":  "number"
+                                                                              },
+                                                                    "minItems":  2,
+                                                                    "maxItems":  2,
+                                                                    "default":  [
+                                                                                    1,
+                                                                                    0
+                                                                                ]
+                                                                },
+                                      "motion-entry-travel":  {
+                                                                  "type":  "number",
+                                                                  "title":  "Entry travel",
+                                                                  "minimum":  0,
+                                                                  "maximum":  3840,
+                                                                  "default":  1340
+                                                              },
+                                      "motion-exit-travel":  {
+                                                                 "type":  "number",
+                                                                 "title":  "Exit travel",
+                                                                 "minimum":  0,
+                                                                 "maximum":  3840,
+                                                                 "default":  1800
+                                                             },
+                                      "motion-entry-duration":  {
+                                                                    "type":  "number",
+                                                                    "title":  "Entry duration",
+                                                                    "minimum":  0.05,
+                                                                    "maximum":  4,
+                                                                    "default":  0.65
+                                                                },
+                                      "motion-hold-duration":  {
+                                                                   "type":  "number",
+                                                                   "title":  "Hold duration",
+                                                                   "minimum":  0,
+                                                                   "maximum":  10,
+                                                                   "default":  3.45
+                                                               },
+                                      "motion-exit-duration":  {
+                                                                   "type":  "number",
+                                                                   "title":  "Exit duration",
+                                                                   "minimum":  0.05,
+                                                                   "maximum":  4,
+                                                                   "default":  0.9
+                                                               },
+                                      "motion-entry-influence":  {
+                                                                     "type":  "number",
+                                                                     "title":  "Entry Bezier influence",
+                                                                     "minimum":  0,
+                                                                     "maximum":  100,
+                                                                     "default":  0
+                                                                 },
+                                      "motion-exit-influence":  {
+                                                                    "type":  "number",
+                                                                    "title":  "Exit Bezier influence",
+                                                                    "minimum":  0,
+                                                                    "maximum":  100,
+                                                                    "default":  0
+                                                                },
+                                      "motion-fade-in":  {
+                                                             "type":  "boolean",
+                                                             "title":  "Fade in",
+                                                             "default":  false
+                                                         },
+                                      "motion-fade-out":  {
+                                                              "type":  "boolean",
+                                                              "title":  "Fade out",
+                                                              "default":  false
+                                                          }
+                                  }
+               },
+    "renderRequirements":  [
+                               {
+                                   "resolution":  {
+                                                      "width":  {
+                                                                    "ideal":  1920
+                                                                },
+                                                      "height":  {
+                                                                     "ideal":  1080
+                                                                 }
+                                                  },
+                                   "frameRate":  {
+                                                     "ideal":  50
+                                                 },
+                                   "accessToPublicInternet":  {
+                                                                  "exact":  false
+                                                              }
+                               }
+                           ]
 }

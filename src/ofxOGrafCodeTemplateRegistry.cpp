@@ -1,9 +1,44 @@
 #include "ofxOGrafCodeTemplateRegistry.h"
 
+#include <cstdint>
 #include <exception>
+#include <iomanip>
+#include <sstream>
 #include <utility>
 
 namespace ofxOGraf {
+namespace {
+
+std::uint64_t fnv1a64(const std::string& value) {
+    std::uint64_t hash = 14695981039346656037ULL;
+    for (const unsigned char character : value) {
+        hash ^= character;
+        hash *= 1099511628211ULL;
+    }
+    return hash;
+}
+
+std::string fingerprintHex(std::uint64_t value) {
+    std::ostringstream output;
+    output << std::hex << std::nouppercase << std::setfill('0') << std::setw(16) << value;
+    return output.str();
+}
+
+std::string abiSignature(const std::string& factoryId, const TemplateDefinition& definition) {
+    std::ostringstream output;
+    output << "ofxograf-template-abi-v1\n";
+    output << "factory=" << factoryId << '\n';
+    output << "template=" << definition.id << '\n';
+    for (const auto& control : definition.controls) {
+        output << "control=" << control.id << ':' << toString(control.type) << '\n';
+    }
+    for (const auto& action : definition.actions) {
+        output << "action=" << action.id << ':' << toString(action.kind) << ':' << toString(action.playback) << '\n';
+    }
+    return output.str();
+}
+
+} // namespace
 
 bool CodeTemplateRegistry::registerFactory(const std::string& id, Factory factory, std::string* error) {
     if (id.empty()) {
@@ -41,6 +76,17 @@ std::vector<std::string> CodeTemplateRegistry::ids() const {
     return result;
 }
 
+std::string CodeTemplateRegistry::abiFingerprint(const std::string& id, std::string* error) const {
+    auto instance = create(id, error);
+    if (!instance) return {};
+    const auto definition = instance->definition();
+    const auto errors = definition.validate();
+    if (!errors.empty()) {
+        if (error) *error = "Invalid code template definition for ABI fingerprint: " + errors.front();
+        return {};
+    }
+    return fingerprintHex(fnv1a64(abiSignature(id, definition)));
+}
 std::unique_ptr<CodeTemplate> CodeTemplateRegistry::create(const std::string& id, std::string* error) const {
     const auto found = factories.find(id);
     if (found == factories.end()) {

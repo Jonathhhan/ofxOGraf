@@ -10,7 +10,7 @@ for (const token of [
     "declaredAssets",
     "template-definition.json",
     "Staged TemplateDefinition validation failed.",
-    "Compress-Archive"
+    "CreateEntry"
 ]) assert.ok(packager.includes(token), `packager lacks ${token}`);
 
 assert.match(packager, /Where-Object \{ \$_\.Name -ne 'data' \}/,

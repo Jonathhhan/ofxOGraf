@@ -13,11 +13,12 @@ public:
     void windowResized(int width, int height) override;
     bool loadCodeTemplate(const std::string& factoryId, const ofJson& initialData = ofJson::object());
     bool updateCodeTemplate(const ofJson& patch);
-    bool playCodeTemplate();
+    bool playCodeTemplate(const std::string& actionId = {});
     bool stopCodeTemplate();
     bool seekCodeTemplate(double timeSeconds);
     bool isCodeTemplateActionComplete() const;
     std::string codeTemplateLastError() const;
+    std::string codeTemplateAbiFingerprint(const std::string& factoryId) const;
     void useSceneGraphic();
 
 

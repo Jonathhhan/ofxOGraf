@@ -1,12 +1,21 @@
 #include "ofMain.h"
 #include "ofApp.h"
 
-int main() {
+namespace {
+std::shared_ptr<ofApp> appInstance;
+}
+
+int main(int argc, char* argv[]) {
+#ifdef __EMSCRIPTEN__
+    ofGLESWindowSettings settings;
+#else
     ofGLWindowSettings settings;
-    settings.setSize(1280, 720);
     settings.setGLVersion(3, 2);
+#endif
+    settings.setSize(1280, 720);
     settings.windowMode = OF_WINDOW;
-    ofCreateWindow(settings);
-    ofRunApp(std::make_shared<ofApp>());
+    auto window = ofCreateWindow(settings);
+    appInstance = std::make_shared<ofApp>();
+    ofRunApp(window, appInstance);
     ofRunMainLoop();
 }

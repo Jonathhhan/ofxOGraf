@@ -17,8 +17,14 @@ private:
     static constexpr int CompositionWidth = 1920;
     static constexpr int CompositionHeight = 1080;
 
+    ofJson buildBanderoleScene() const;
+    void rebuildBanderoleScene(bool restart);
+
     ofxOGraf::Graphic graphic;
     ofxOGraf::RenderSurface preview;
     ofxOGraf::ImGuiControls controls;
     ofxImGui::Gui gui;
+    ofxOGraf::LowerThirdMotion motion;
+    double fontSize = 54.0;
+    float animationSpeed = 1.0f;
 };

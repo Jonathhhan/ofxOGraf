@@ -6,6 +6,33 @@
 #include <iomanip>
 #include <sstream>
 
+namespace {
+
+#ifdef __EMSCRIPTEN__
+void drawUnindexedTextMesh(const ofTrueTypeFont& font, const std::string& text, float x, float y) {
+    const ofMesh& indexed = font.getStringMesh(text, x, y, ofIsVFlipped());
+    const auto& vertices = indexed.getVertices();
+    const auto& texCoords = indexed.getTexCoords();
+    if (vertices.empty() || texCoords.size() != vertices.size()) return;
+
+    ofMesh triangles;
+    triangles.setMode(OF_PRIMITIVE_TRIANGLES);
+    for (const auto sourceIndex : indexed.getIndices()) {
+        const auto index = static_cast<std::size_t>(sourceIndex);
+        if (index >= vertices.size()) continue;
+        triangles.addVertex(vertices[index]);
+        triangles.addTexCoord(texCoords[index]);
+    }
+    if (triangles.getVertices().empty()) return;
+
+    font.getFontTexture().bind();
+    triangles.draw();
+    font.getFontTexture().unbind();
+}
+#endif
+
+} // namespace
+
 namespace ofxOGraf {
 
 void Renderer::setup() {
@@ -25,6 +52,7 @@ void Renderer::setData(const ofJson& value) {
 }
 
 Extensions& Renderer::extensions() { return extensionRegistry; }
+const std::vector<std::string>& Renderer::assetWarnings() const { return assets.warnings(); }
 
 void Renderer::cacheCompositions() {
     compositions.clear();
@@ -59,9 +87,13 @@ void Renderer::drawComposition(const Scene& scene, double time) {
             const Layer* matte = scene.findLayer(layer.index - 1);
             if (matte) {
                 const bool inverted = matteType.find("INVERTED") != std::string::npos;
-                beginMatte(scene, *matte, time, inverted);
-                drawLayer(scene, layer, time, false);
-                endMatte();
+                if (beginMatte(scene, *matte, layer, time, inverted)) {
+                    drawLayer(scene, layer, time, false);
+                    endMatte();
+                }
+                // Without a stencil attachment, rendering unmasked content would
+                // be wrong. The target layer is intentionally skipped after the
+                // once-per-layer diagnostic from beginMatte().
                 consumedMattes.insert(matte->index);
                 continue;
             }
@@ -148,9 +180,18 @@ void Renderer::drawLayer(const Scene& scene, const Layer& layer, double time, bo
             if (value.is_number()) opacityMultiplier *= ofClamp(value.get<float>() / 100.0f, 0.0f, 1.0f);
         }
     }
-    if (includeMasks && layer.source.contains("masks")) applyMasks(layer, time, true);
+    bool masksApplied = false;
+    if (includeMasks && layer.source.contains("masks")) {
+        masksApplied = applyMasks(layer, time, true);
+        if (!masksApplied) {
+            hasColorOverride = false;
+            opacityMultiplier = 1.0f;
+            ofPopMatrix();
+            return;
+        }
+    }
     drawLayerContent(scene, layer, time);
-    if (includeMasks && layer.source.contains("masks")) applyMasks(layer, time, false);
+    if (masksApplied) applyMasks(layer, time, false);
     hasColorOverride = false;
     opacityMultiplier = 1.0f;
     ofPopMatrix();
@@ -221,7 +262,16 @@ void Renderer::drawText(const Layer& layer, double time) {
         if (!font) {
             ofSetColor(fill);
             ofDrawBitmapString(line, x, y);
-        } else if (tracking == 0.0f) {
+        }
+#ifdef __EMSCRIPTEN__
+        // Keep text dynamic while avoiding the indexed VBO submission that
+        // tears one corner of glyph quads in the current WebGL renderer.
+        else {
+            ofSetColor(fill);
+            drawUnindexedTextMesh(*font, line, x, y);
+        }
+#else
+        else if (tracking == 0.0f) {
             if (value.value("applyStroke", false) && strokeWidth > 0.0f) {
                 auto glyphPaths = font->getStringAsPoints(line, true, true);
                 ofPushMatrix();
@@ -247,6 +297,7 @@ void Renderer::drawText(const Layer& layer, double time) {
                 cursor += font->stringWidth(glyph) + tracking;
             }
         }
+#endif
         y += leading;
     }
 }

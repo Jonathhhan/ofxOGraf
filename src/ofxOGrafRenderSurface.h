@@ -13,8 +13,18 @@ public:
         settings.width = std::max(1, width);
         settings.height = std::max(1, height);
         settings.internalformat = GL_RGBA;
+#ifdef __EMSCRIPTEN__
+        // WebGL rejects the stencil-only attachment configuration used by OF.
+        // The renderer detects this and skips stencil-only masks/mattes with a
+        // diagnostic rather than producing an incorrect unmasked frame.
         settings.useDepth = false;
+        settings.useStencil = false;
+#else
+        // Native render surfaces use a packed depth/stencil attachment so masks
+        // and alpha track mattes work in offscreen captures as well.
+        settings.useDepth = true;
         settings.useStencil = true;
+#endif
         settings.textureTarget = GL_TEXTURE_2D;
         target.allocate(settings);
     }

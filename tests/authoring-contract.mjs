@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const root = new URL("../", import.meta.url);
-const [header, implementation, loader, renderSurface, example, basicMain, imguiExample, imguiMain, schemaText, wrapper] = await Promise.all([
+const [header, implementation, loader, renderSurface, example, basicMain, imguiExample, imguiMain, schemaText, wrapper, renderer, assetsHeader, assetsImplementation] = await Promise.all([
     readFile(new URL("src/ofxOGrafAuthoring.h", root), "utf8"),
     readFile(new URL("src/ofxOGrafAuthoring.cpp", root), "utf8"),
     readFile(new URL("src/ofxOGrafSceneLoader.cpp", root), "utf8"),
@@ -12,7 +12,10 @@ const [header, implementation, loader, renderSurface, example, basicMain, imguiE
     readFile(new URL("example-imgui/src/ofApp.cpp", root), "utf8"),
     readFile(new URL("example-imgui/src/main.cpp", root), "utf8"),
     readFile(new URL("schema/broadcast-scene-0.3.schema.json", root), "utf8"),
-    readFile(new URL("ograf/OfBroadcastGraphic.js", root), "utf8")
+    readFile(new URL("ograf/OfBroadcastGraphic.js", root), "utf8"),
+    readFile(new URL("src/ofxOGrafRendererShapes.cpp", root), "utf8"),
+    readFile(new URL("src/ofxOGrafAssets.h", root), "utf8"),
+    readFile(new URL("src/ofxOGrafAssets.cpp", root), "utf8")
 ]);
 const schema = JSON.parse(schemaText);
 
@@ -39,7 +42,17 @@ assert.match(renderSurface, /class RenderSurface/);
 assert.match(renderSurface, /ofFbo::Settings/);
 assert.match(renderSurface, /internalformat = GL_RGBA/);
 assert.match(renderSurface, /ofClear\(0, 0, 0, 0\)/);
+assert.match(renderSurface, /#ifdef __EMSCRIPTEN__/);
+assert.match(renderSurface, /useStencil = false/);
 assert.match(renderSurface, /useStencil = true/);
+assert.match(renderer, /GL_STENCIL_BITS/);
+assert.match(renderer, /warnedStencilLayers/);
+assert.match(renderer, /return false;/);
+assert.match(assetsHeader, /warnings\(\) const/);
+assert.match(assetsImplementation, /validateDeclaredAssets/);
+assert.match(assetsImplementation, /unavailableFontPaths/);
+assert.match(assetsImplementation, /unavailableImagePaths/);
+assert.match(assetsImplementation, /warnOnce/);
 assert.match(renderSurface, /glBlendFunc\(GL_ONE, GL_ONE_MINUS_SRC_ALPHA\)/);
 assert.match(renderSurface, /fittedBounds/);
 assert.match(renderSurface, /ofTexture& texture\(\)/);
@@ -54,10 +67,12 @@ assert.doesNotMatch(basicMain, /GLFW/);
 assert.match(example, /loadJson\(scene\.build\(\)\)/);
 assert.match(wrapper, /compositionInfo\(scene/);
 assert.match(imguiExample, /SceneBuilder/);
-assert.match(imguiExample, /controls\.draw\(graphic\)/);
+assert.match(imguiExample, /controls\.draw\(graphic/);
 assert.match(imguiExample, /preview\.allocate\(graphic\.getScene\(\)\)/);
 assert.match(imguiExample, /preview\.render\(graphic\)/);
 assert.match(imguiExample, /preview\.drawFit/);
+assert.match(imguiExample, /panelWidth/);
+assert.match(imguiExample, /fontSizeChanged/);
 assert.doesNotMatch(example + imguiExample, /ofFbo::Settings|renderTarget/);
 assert.doesNotMatch(imguiMain, /GLFW/);
 assert.match(wrapper, /this\.canvas\.width = resolution[\s\S]*this\.module = await createOfxOGrafModule/,

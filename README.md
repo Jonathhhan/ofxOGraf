@@ -74,15 +74,13 @@ Use openFrameworks Project Generator on `example-basic`, then build it normally 
 
 ## Emscripten build
 
-Install the current openFrameworks Emscripten platform/toolchain, generate the Emscripten project, and build `example-basic`. Its `config.make` enables embind, ES-module output, memory growth, and WebGL 2. Copy/rename the generated artifacts into:
+Install the openFrameworks Emscripten platform/toolchain, then build the OGraf target:
 
-```text
-ograf/dist/ofxOGraf.js
-ograf/dist/ofxOGraf.wasm
-ograf/dist/ofxOGraf.data   # when emitted
+```powershell
+scripts\build-ograf.ps1
 ```
 
-Emscripten's emitted module name must remain `createOfxOGrafModule`, as configured in `example-basic/config.make`.
+This keeps the classic localhost preview separate from the OGraf ES-module build, stages `ograf/dist/ofxOGraf.{js,wasm,data}`, and creates `build/ofxOGraf-graphic.zip`. The OGraf module factory is `createOfxOGrafModule`.
 
 ## OGraf package
 

@@ -62,6 +62,14 @@ bool isActionComplete(const std::string& action) {
     return graphic() && graphic()->isActionComplete(action);
 }
 
+std::string getCodeTemplateAbiFingerprint(const std::string& factoryId) {
+    return appInstance ? appInstance->codeTemplateAbiFingerprint(factoryId) : std::string();
+}
+
+bool isRuntimeReady() {
+    return static_cast<bool>(appInstance);
+}
+
 std::string getLastError() {
     return !appInstance ? "Application is not ready." : (codeTemplateActive ? appInstance->codeTemplateLastError() : appInstance->graphic().getLastError());
 }
@@ -85,8 +93,8 @@ bool updateCodeTemplate(const std::string& json, bool) {
     }
 }
 
-void playCodeTemplate(bool) {
-    if (appInstance) appInstance->playCodeTemplate();
+bool playCodeTemplate(const std::string& actionId, bool) {
+    return appInstance && appInstance->playCodeTemplate(actionId);
 }
 
 void stopCodeTemplate(bool) {
@@ -110,6 +118,8 @@ EMSCRIPTEN_BINDINGS(ofx_ograf_bridge) {
     emscripten::function("goToTime", &goToTime);
     emscripten::function("isActionComplete", &isActionComplete);
     emscripten::function("getLastError", &getLastError);
+    emscripten::function("getCodeTemplateAbiFingerprint", &getCodeTemplateAbiFingerprint);
+    emscripten::function("isRuntimeReady", &isRuntimeReady);
     emscripten::function("loadCodeTemplate", &loadCodeTemplate);
     emscripten::function("updateCodeTemplate", &updateCodeTemplate);
     emscripten::function("playCodeTemplate", &playCodeTemplate);

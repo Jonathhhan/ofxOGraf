@@ -1,6 +1,23 @@
 # Essential Graphics controls
 
 The exported `scene.controls` array is the single source of truth for both control surfaces. `ofxOGraf` does not require a GUI dependency.
+Both surfaces normalize optional presentation metadata before rendering. Use `ui` in a scene control; code-template descriptors may instead use the equivalent top-level fields for compatibility:
+
+```json
+{
+  "id": "headline",
+  "name": "Headline",
+  "type": "string",
+  "default": "Breaking news",
+  "ui": {
+    "group": "Content",
+    "order": 10,
+    "description": "Primary on-air text."
+  }
+}
+```
+
+Controls are grouped in first-declared group order, then sorted by `order` (and original declaration order for ties). Missing metadata becomes `General`, `0`, and an empty description. ImGui shows descriptions as hover tooltips; the browser panel shows them below the label.
 
 ## Browser/OGraf controls
 

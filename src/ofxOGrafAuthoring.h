@@ -2,6 +2,7 @@
 
 #include "ofJson.h"
 #include <array>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -38,12 +39,41 @@ struct Color {
     double b = 1.0;
     double a = 1.0;
 };
+// The runtime currently evaluates Bezier influence deterministically. `speed`
+// is retained in exported JSON for AE compatibility, but does not yet alter
+// interpolation because that requires value-range-normalized velocity semantics.
+struct BezierEase {
+    double influence = 33.333;
+    double speed = 0.0;
+};
+
 struct AuthoringKeyframe {
     double time = 0.0;
     ofJson value;
     std::string interpolation = "linear";
+    std::optional<BezierEase> inEase;
+    std::optional<BezierEase> outEase;
 };
 
+// A tool-neutral lower-third entrance/hold/exit animation. Attach it to any
+// panel and headline layer created by SceneBuilder.
+struct LowerThirdMotion {
+    Vector2 position{720.0, 700.0};
+    Vector2 textOffset{-460.0, 40.0};
+    Vector2 entryDirection{-1.0, 0.0};
+    Vector2 exitDirection{1.0, 0.0};
+    double entryDistance = 1340.0;
+    double exitDistance = 1800.0;
+    double entryDuration = 0.65;
+    double holdDuration = 3.45;
+    double exitDuration = 0.90;
+    bool fadeIn = false;
+    bool fadeOut = false;
+    BezierEase entryEase{0.0, 0.0};
+    BezierEase exitEase{0.0, 0.0};
+
+    double duration() const { return entryDuration + holdDuration + exitDuration; }
+};
 
 struct ShapeGeometry {
     std::string type = "rectangle";
@@ -220,5 +250,8 @@ private:
 
     ofJson document;
 };
+
+void animateLowerThird(SceneBuilder& scene, const LayerBuilder& panel,
+                       const LayerBuilder& headline, const LowerThirdMotion& motion);
 
 } // namespace ofxOGraf

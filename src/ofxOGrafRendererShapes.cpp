@@ -264,11 +264,26 @@ void Renderer::drawShapeGroup(const ofJson& group, double time, bool ignoreRepea
     ofPopMatrix();
 }
 
-void Renderer::applyMasks(const Layer& layer, double time, bool begin) {
-    if (!begin) {
-        glDisable(GL_STENCIL_TEST);
-        return;
+bool Renderer::canUseStencil(const Layer& layer, const char* feature) {
+    GLint stencilBits = 0;
+    glGetIntegerv(GL_STENCIL_BITS, &stencilBits);
+    if (stencilBits > 0) return true;
+
+    const std::string key = std::string(feature) + ":" + std::to_string(layer.index);
+    if (warnedStencilLayers.insert(key).second) {
+        ofLogWarning("ofxOGraf") << "Skipping " << feature << " for layer '" << layer.name
+                                  << "': the active render target has no stencil attachment."
+                                  << " Use a stencil-capable native surface or bake the feature for WebGL.";
     }
+    return false;
+}
+
+bool Renderer::applyMasks(const Layer& layer, double time, bool begin) {
+    if (!begin) {
+        endMatte();
+        return true;
+    }
+    if (!canUseStencil(layer, "mask")) return false;
     glEnable(GL_STENCIL_TEST);
     glClearStencil(0);
     glClear(GL_STENCIL_BUFFER_BIT);
@@ -302,9 +317,12 @@ void Renderer::applyMasks(const Layer& layer, double time, bool begin) {
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glStencilFunc(inverted ? GL_NOTEQUAL : GL_EQUAL, 1, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    return true;
 }
 
-void Renderer::beginMatte(const Scene& scene, const Layer& matte, double time, bool inverted) {
+bool Renderer::beginMatte(const Scene& scene, const Layer& matte, const Layer& target,
+                          double time, bool inverted) {
+    if (!canUseStencil(target, "track matte")) return false;
     glEnable(GL_STENCIL_TEST);
     glClearStencil(0);
     glClear(GL_STENCIL_BUFFER_BIT);
@@ -316,8 +334,15 @@ void Renderer::beginMatte(const Scene& scene, const Layer& matte, double time, b
     glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
     glStencilFunc(inverted ? GL_NOTEQUAL : GL_EQUAL, 1, 0xFF);
     glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    return true;
 }
 
-void Renderer::endMatte() { glDisable(GL_STENCIL_TEST); }
+void Renderer::endMatte() {
+    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    glStencilMask(0xFF);
+    glStencilFunc(GL_ALWAYS, 0, 0xFF);
+    glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+    glDisable(GL_STENCIL_TEST);
+}
 
 } // namespace ofxOGraf

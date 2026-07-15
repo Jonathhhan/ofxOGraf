@@ -1,5 +1,6 @@
 #include "ofxOGrafGraphic.h"
 #include "ofxOGrafSceneLoader.h"
+#include <cmath>
 
 namespace ofxOGraf {
 
@@ -87,6 +88,18 @@ void Graphic::play(int, bool skipAnimation) {
     timeline.setTime(skipAnimation ? scene.duration : playStart);
 }
 
+void Graphic::pause() {
+    playing = false;
+}
+
+void Graphic::resume() {
+    if (!loaded || scene.duration <= 0.0) return;
+    if (timeline.getTime() >= scene.duration) timeline.setTime(0.0);
+    playing = true;
+    stopping = false;
+    actionComplete = false;
+}
+
 void Graphic::stop(bool skipAnimation) {
     playing = false;
     stopping = !skipAnimation;
@@ -95,14 +108,22 @@ void Graphic::stop(bool skipAnimation) {
     if (skipAnimation) timeline.setTime(scene.duration);
 }
 
+bool Graphic::isPlaying() const { return playing; }
+void Graphic::setLooping(bool enabled) { looping = enabled; }
+bool Graphic::isLooping() const { return looping; }
+
 bool Graphic::isActionComplete(const std::string&) const { return actionComplete; }
 
 void Graphic::update(double deltaSeconds) {
     if (playing) {
         timeline.setTime(timeline.getTime() + deltaSeconds);
         if (timeline.getTime() >= scene.duration) {
-            playing = false;
-            actionComplete = true;
+            if (looping && scene.duration > 0.0) {
+                timeline.setTime(std::fmod(timeline.getTime(), scene.duration));
+            } else {
+                playing = false;
+                actionComplete = true;
+            }
         }
     } else if (stopping) {
         stopElapsed += deltaSeconds;
@@ -126,6 +147,7 @@ const ofJson& Graphic::getData() const { return data; }
 const ofJson& Graphic::getControls() const { return Controls::definitions(scene); }
 ofJson Graphic::getControlDefaults() const { return Controls::defaultData(scene); }
 const std::string& Graphic::getLastError() const { return lastError; }
+const std::vector<std::string>& Graphic::getAssetWarnings() const { return renderer.assetWarnings(); }
 Extensions& Graphic::extensions() { return renderer.extensions(); }
 
 } // namespace ofxOGraf

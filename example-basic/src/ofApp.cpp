@@ -77,8 +77,8 @@ bool ofApp::updateCodeTemplate(const ofJson& patch) {
     return usingCodeTemplate && codeTemplate.updateData(patch);
 }
 
-bool ofApp::playCodeTemplate() {
-    return usingCodeTemplate && codeTemplate.play();
+bool ofApp::playCodeTemplate(const std::string& actionId) {
+    return usingCodeTemplate && codeTemplate.play(actionId);
 }
 
 bool ofApp::stopCodeTemplate() {
@@ -95,6 +95,10 @@ bool ofApp::isCodeTemplateActionComplete() const {
 
 std::string ofApp::codeTemplateLastError() const {
     return codeTemplate.lastError();
+}
+
+std::string ofApp::codeTemplateAbiFingerprint(const std::string& factoryId) const {
+    return codeTemplateRegistry.abiFingerprint(factoryId);
 }
 
 void ofApp::useSceneGraphic() {

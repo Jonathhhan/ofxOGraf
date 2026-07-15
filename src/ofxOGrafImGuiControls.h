@@ -3,6 +3,7 @@
 #include "ofxOGrafControls.h"
 #include "ofxOGrafGraphic.h"
 #include <array>
+#include <functional>
 #include <string>
 #include <unordered_map>
 
@@ -12,8 +13,12 @@ namespace ofxOGraf {
 // includes ofxImGui, whose addon_config defines ofxAddons_ENABLE_IMGUI.
 class ImGuiControls {
 public:
+    using ContentCallback = std::function<void()>;
+
     static bool available();
-    bool draw(Graphic& graphic, const std::string& title = "Essential Graphics", bool* open = nullptr);
+    // Appends optional template-specific controls in the same Essential Graphics window.
+    bool draw(Graphic& graphic, const std::string& title = "Essential Graphics", bool* open = nullptr,
+              const ContentCallback& footer = {});
     void resetState();
 
 private:

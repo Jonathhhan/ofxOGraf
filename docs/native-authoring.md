@@ -114,7 +114,14 @@ C++ TemplateDefinition
         +-- graphic.ograf.json data schema
 ```
 
-All updates are validated by the C++ registry even if an HTML controller has already validated them. JavaScript is an operator interface, not the authority for renderer state. Renaming a C++ variable must not rename its public control id. A deliberate public rename needs an explicit migration alias and a major-version review.
+All updates are validated by the C++ registry even if an HTML controller has already validated them. JavaScript is an operator interface, not the authority for renderer state.
+### Portable motion controls
+
+The packaged `NativeLowerThird` demonstrates a portable `Motion` group: position, text inset, entry/exit vectors, travel, durations, Bezier influence, and fade switches. These are ordinary `TemplateDefinition` controls, not browser-only settings. `EssentialControls.js` discovers them from `template-definition.json` and sends normal `updateAction()` patches; the same ids are evaluated by the native and WASM `CodeTemplate`.
+
+`EssentialControls.js` also renders non-`update` descriptor actions as playback buttons. For a code template, those buttons invoke the declared action id directly (`Animate in`, `Animate out`, and so on); they do not infer timing from a generic OGraf step index.
+
+Keep structural motion settings in the public data model and evaluate them against explicit `FrameContext::timeSeconds`. A host can then preserve its data and playhead while applying a patch, without exposing an authoring-only GUI dependency to OGraf. Renaming a C++ variable must not rename its public control id. A deliberate public rename needs an explicit migration alias and a major-version review.
 
 The serialized control types are `boolean`, `integer`, `number`, `string`, `color`, `vector2`, `vector3`, and `json`. A non-empty option list turns a compatible scalar control into an enum in generated operator schemas. Defaults are mandatory because optional or duplicated defaults allow the native application, WASM module, and manifest to drift.
 
@@ -231,6 +238,16 @@ import {
 ```
 
 ## Packaging and OGraf delivery
+
+### Code-template ABI guard
+
+Before a browser graphic calls `loadCodeTemplate`, it hashes the neutral template descriptor and asks the WASM runtime for the matching factory fingerprint. The hash covers the template id plus the ordered control ids/types and action ids/kinds/playback modes. It deliberately excludes delivery metadata such as render requirements, so a package can carry target-specific requirements without duplicating them in portable C++.
+
+If the descriptor and compiled factory differ, loading stops with HTTP-style status `422` and names both fingerprints. Rebuild and package the template together whenever its public controls or actions change. This prevents a stale WASM file from accepting an apparently valid but incompatible OGraf descriptor.
+
+The same load boundary checks `metadata.rendererCapabilities.required` before creating WASM. Browser packages provide `webgl2` and `alpha-canvas`; a host may append truthful capabilities through `renderCharacteristics.capabilities`. Missing requirements also return `422`, listing the unsupported capability ids.
+The current `ofxEmscripten` window backend resolves its target as `#canvas`, so the custom element keeps its single renderer canvas in light DOM with that id. A future backend accepting a canvas reference can restore shadow-DOM isolation and multiple simultaneous graphics.
+The module factory can resolve before openFrameworks has finished creating its application instance. The browser bridge therefore waits for the exported `isRuntimeReady()` signal before querying the ABI or loading a template, returning `503` rather than a misleading compatibility error if initialization never completes.
 
 The intended release pipeline is:
 

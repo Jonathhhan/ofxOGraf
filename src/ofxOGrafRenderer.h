@@ -17,6 +17,7 @@ public:
     void draw(double time);
 
     Extensions& extensions();
+    const std::vector<std::string>& assetWarnings() const;
 
 private:
     struct Style {
@@ -38,6 +39,7 @@ private:
     Extensions extensionRegistry;
     std::unordered_map<std::string, Scene> compositions;
     std::set<std::string> warnedEffects;
+    std::set<std::string> warnedStencilLayers;
     bool ready = false;
     bool hasColorOverride = false;
     ofFloatColor colorOverride = ofFloatColor::white;
@@ -63,9 +65,11 @@ private:
     void applyHierarchyTransform(const Scene& scene, const Layer& layer, double time, std::set<int>& visiting);
     void applyTransform(const ofJson& transform, double time) const;
     void applyEffectState(const Layer& layer, double time);
-    void applyMasks(const Layer& layer, double time, bool begin);
-    void beginMatte(const Scene& scene, const Layer& matte, double time, bool inverted);
+    bool applyMasks(const Layer& layer, double time, bool begin);
+    bool beginMatte(const Scene& scene, const Layer& matte, const Layer& target,
+                    double time, bool inverted);
     void endMatte();
+    bool canUseStencil(const Layer& layer, const char* feature);
 
     ofJson evaluate(const ofJson& property, double time) const;
     static const ofJson* findProperty(const ofJson& group, const std::string& matchName);

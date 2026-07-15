@@ -23,6 +23,8 @@ public:
 
     bool contains(const std::string& id) const;
     std::vector<std::string> ids() const;
+    // Stable v1 interface fingerprint for descriptor/runtime compatibility checks.
+    std::string abiFingerprint(const std::string& id, std::string* error = nullptr) const;
     std::unique_ptr<CodeTemplate> create(const std::string& id, std::string* error = nullptr) const;
 
 private:

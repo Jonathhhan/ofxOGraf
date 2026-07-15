@@ -20,23 +20,52 @@ export function normalizeControlType(control = {}) {
 
 export function normalizeControls(controls = []) {
     const ids = new Set();
+    const groups = new Map();
     return (Array.isArray(controls) ? controls : []).filter(control => {
         if (!control || typeof control.id !== "string" || !control.id || ids.has(control.id)) return false;
         ids.add(control.id);
         return true;
-    }).map(control => {
+    }).map((control, sourceIndex) => {
         const constraints = control.constraints || {};
+        const sourceUi = control.ui && typeof control.ui === "object" ? control.ui : {};
+        const sourceGroup = sourceUi.group ?? control.group;
+        const group = typeof sourceGroup === "string" && sourceGroup.trim() ? sourceGroup.trim() : "General";
+        if (!groups.has(group)) groups.set(group, groups.size);
         return {
             ...control,
             type: normalizeControlType(control),
             name: control.name || control.label || control.id,
             min: control.min ?? constraints.minimum,
             max: control.max ?? constraints.maximum,
-            step: control.step ?? constraints.step
+            step: control.step ?? constraints.step,
+            ui: {
+                group,
+                order: Number.isFinite(Number(sourceUi.order ?? control.order)) ? Number(sourceUi.order ?? control.order) : 0,
+                description: typeof (sourceUi.description ?? control.description) === "string" ? (sourceUi.description ?? control.description) : ""
+            },
+            _groupOrder: groups.get(group),
+            _sourceIndex: sourceIndex
         };
-    });
+    }).sort((left, right) =>
+        left._groupOrder - right._groupOrder ||
+        left.ui.order - right.ui.order ||
+        left._sourceIndex - right._sourceIndex
+    ).map(({ _groupOrder, _sourceIndex, ...control }) => control);
 }
 
+export function normalizeActions(actions = []) {
+    const ids = new Set();
+    return (Array.isArray(actions) ? actions : []).filter(action => {
+        if (!action || typeof action.id !== "string" || !action.id || ids.has(action.id)) return false;
+        ids.add(action.id);
+        return action.kind !== "update";
+    }).map(action => ({
+        id: action.id,
+        label: action.label || action.name || action.id,
+        kind: action.kind || "custom",
+        playback: action.playback || "once"
+    }));
+}
 export function controlDefaults(controls = []) {
     return normalizeControls(controls).reduce((data, control) => {
         if (Object.hasOwn(control, "default")) data[control.id] = clone(control.default);
@@ -69,6 +98,7 @@ export class OfEssentialControls extends HTMLElementBase {
         super();
         this.graphic = null;
         this.controls = [];
+        this.actions = [];
         this.data = {};
         this.updateQueue = Promise.resolve();
         this.onReady = event => this.refresh(event.detail?.scene, event.detail?.data);
@@ -81,7 +111,11 @@ export class OfEssentialControls extends HTMLElementBase {
             h2 { margin:0; font-size:14px; font-weight:650; }
             button { border:1px solid #454c5a; border-radius:5px; padding:5px 9px; color:inherit; background:#292e37; cursor:pointer; }
             button:hover { background:#343a45; }
-            #fields { display:grid; gap:14px; padding:16px; }
+            #actions { display:flex; flex-wrap:wrap; gap:8px; padding:14px 16px 0; }
+            #actions:empty { display:none; }
+            #fields { display:grid; gap:18px; padding:16px; }
+            .group { display:grid; gap:10px; }
+            .group > h3 { margin:0; color:#8e96a5; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
             .field { display:grid; gap:6px; }
             .row { display:flex; align-items:center; gap:8px; }
             label { color:#c9ced9; font-weight:600; }
@@ -91,12 +125,13 @@ export class OfEssentialControls extends HTMLElementBase {
             input[type=range] { padding:0; accent-color:#5ba6ff; }
             textarea { min-height:78px; resize:vertical; }
             output { min-width:48px; text-align:right; font-variant-numeric:tabular-nums; }
-            .vector { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+.vector { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+            .description { color:#8e96a5; font-size:12px; }
             #status { padding:0 16px 14px; color:#8e96a5; min-height:18px; }
             .empty { color:#8e96a5; }
           </style>
           <header><h2>Essential Graphics</h2><button id="reset" type="button">Reset</button></header>
-          <div id="fields"></div><div id="status" role="status" aria-live="polite"></div>`;
+          <div id="actions" aria-label="Template playback"></div><div id="fields"></div><div id="status" role="status" aria-live="polite"></div>`;
         this.shadowRoot.getElementById("reset").addEventListener("click", () => this.resetDefaults());
         this.shadowRoot.addEventListener("focusout", () => queueMicrotask(() => {
             if (!this.shadowRoot.activeElement) this.renderFields();
@@ -128,6 +163,7 @@ export class OfEssentialControls extends HTMLElementBase {
 
     refresh(scene = {}, data = {}) {
         this.controls = normalizeControls(scene?.controls);
+        this.actions = normalizeActions(scene?.actions);
         this.data = { ...controlDefaults(this.controls), ...(data || {}) };
         this.renderFields();
     }
@@ -139,6 +175,7 @@ export class OfEssentialControls extends HTMLElementBase {
 
     renderFields() {
         if (!this.shadowRoot) return;
+        this.renderActions();
         const fields = this.shadowRoot.getElementById("fields");
         fields.replaceChildren();
         if (!this.controls.length) {
@@ -148,14 +185,60 @@ export class OfEssentialControls extends HTMLElementBase {
             fields.appendChild(empty);
             return;
         }
-        for (const control of this.controls) fields.appendChild(this.createField(control));
+let group = null;
+        let groupName = "";
+        for (const control of this.controls) {
+            if (control.ui.group !== groupName) {
+                groupName = control.ui.group;
+                group = document.createElement("section");
+                group.className = "group";
+                const heading = document.createElement("h3");
+                heading.textContent = groupName;
+                group.appendChild(heading);
+                fields.appendChild(group);
+            }
+            group.appendChild(this.createField(control));
+        }
     }
 
+    renderActions() {
+        const actions = this.shadowRoot?.getElementById("actions");
+        if (!actions) return;
+        actions.replaceChildren();
+        for (const action of this.actions) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.textContent = action.label;
+            button.dataset.actionId = action.id;
+            button.addEventListener("click", () => this.runAction(action));
+            actions.appendChild(button);
+        }
+    }
+
+    runAction(action) {
+        const status = this.shadowRoot?.getElementById("status");
+        if (status) status.textContent = `${action.label}…`;
+        this.updateQueue = this.updateQueue.then(async () => {
+            if (!this.graphic?.playNamedAction) throw new Error("Template actions are unavailable");
+            const result = await this.graphic.playNamedAction({ actionId: action.id });
+            if (result?.statusCode !== 200) throw new Error(result?.statusMessage || "Action failed");
+            this.dispatchEvent(new CustomEvent("template-action", { detail: { action }, bubbles: true }));
+        }).then(() => {
+            if (status) status.textContent = "";
+        }).catch(error => {
+            if (status) status.textContent = error.message;
+        });
+    }
     createField(control) {
         const field = document.createElement("div");
         field.className = "field";
         const label = document.createElement("label");
-        label.textContent = control.name;
+label.textContent = control.name;
+        const description = control.ui.description ? document.createElement("small") : null;
+        if (description) {
+            description.className = "description";
+            description.textContent = control.ui.description;
+        }
         const value = this.data[control.id] ?? control.default;
         let input;
 
@@ -169,6 +252,7 @@ export class OfEssentialControls extends HTMLElementBase {
             return field;
         }
         field.appendChild(label);
+        if (description) field.appendChild(description);
 
         if (control.type === "enum") {
             input = document.createElement("select");

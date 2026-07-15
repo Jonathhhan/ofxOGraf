@@ -6,11 +6,39 @@ namespace ofxOGraf {
 void Assets::configure(const ofJson& scene) {
     clear();
     assetData = scene.value("assets", ofJson::object());
+    validateDeclaredAssets();
 }
 
 void Assets::clear() {
     fonts.clear();
     images.clear();
+    unavailableFontPaths.clear();
+    unavailableImagePaths.clear();
+    warningKeys.clear();
+    assetWarnings.clear();
+}
+
+void Assets::warnOnce(const std::string& key, const std::string& message) {
+    if (!warningKeys.insert(key).second) return;
+    assetWarnings.push_back(message);
+    ofLogWarning("ofxOGraf") << message;
+}
+
+void Assets::validateDeclaredAssets() {
+    const auto validate = [&](const char* category, std::unordered_set<std::string>& unavailable) {
+        if (!assetData.contains(category) || !assetData[category].is_array()) return;
+        for (const auto& entry : assetData[category]) {
+            const std::string path = entry.value("file", "");
+            const std::string id = entry.value("id", entry.value("postScriptName", entry.value("family", path)));
+            if (!path.empty() && ofFile::doesFileExist(path)) continue;
+            unavailable.insert(path);
+            warnOnce(std::string(category) + ":" + path,
+                     std::string(std::string(category) == "fonts" ? "Font" : "Image") +
+                         " asset unavailable: " + (path.empty() ? id : path));
+        }
+    };
+    validate("fonts", unavailableFontPaths);
+    validate("images", unavailableImagePaths);
 }
 
 std::string Assets::fontPath(const std::string& postScriptName) const {
@@ -32,8 +60,21 @@ ofTrueTypeFont* Assets::font(const std::string& postScriptName, float size) {
 
     auto loaded = std::make_unique<ofTrueTypeFont>();
     const std::string path = fontPath(postScriptName);
-    if (path.empty() || !loaded->load(path, pixelSize, true, true, true)) {
-        ofLogWarning("ofxOGraf") << "Font asset unavailable: " << postScriptName << " (expected " << path << ")";
+    if (unavailableFontPaths.count(path)) return nullptr;
+#ifdef __EMSCRIPTEN__
+    // A full Unicode atlas can exceed WebGL's practical texture limits and
+    // produces corrupted UVs in some browser drivers. The browser renderer
+    // currently draws its ASCII control/template labels as bitmap glyphs;
+    // keep that atlas compact and skip desktop-only contours.
+    constexpr bool fullCharacterSet = false;
+    constexpr bool makeContours = false;
+#else
+    constexpr bool fullCharacterSet = true;
+    constexpr bool makeContours = true;
+#endif
+    if (path.empty() || !loaded->load(path, pixelSize, true, fullCharacterSet, makeContours)) {
+        unavailableFontPaths.insert(path);
+        warnOnce("font:" + path, "Font asset unavailable: " + postScriptName + " (expected " + path + ")");
         return nullptr;
     }
     auto* result = loaded.get();
@@ -52,16 +93,20 @@ std::string Assets::imagePath(const std::string& idOrPath) const {
 
 ofImage* Assets::image(const std::string& idOrPath) {
     const std::string path = imagePath(idOrPath);
+    if (unavailableImagePaths.count(path)) return nullptr;
     const auto existing = images.find(path);
     if (existing != images.end()) return existing->second.get();
     auto loaded = std::make_unique<ofImage>();
     if (path.empty() || !loaded->load(path)) {
-        ofLogWarning("ofxOGraf") << "Image asset unavailable: " << path;
+        unavailableImagePaths.insert(path);
+        warnOnce("image:" + path, "Image asset unavailable: " + path);
         return nullptr;
     }
     auto* result = loaded.get();
     images.emplace(path, std::move(loaded));
     return result;
 }
+
+const std::vector<std::string>& Assets::warnings() const { return assetWarnings; }
 
 } // namespace ofxOGraf

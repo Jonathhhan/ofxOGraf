@@ -353,16 +353,98 @@ SceneBuilder& SceneBuilder::animate(const std::string& propertyId,
                              return left.time < right.time;
                          });
         (*value)["keyframes"] = ofJson::array();
+        const auto serializeEase = [](const BezierEase& ease) {
+            return ofJson::array({{{"influence", std::clamp(ease.influence, 0.0, 100.0)},
+                                   {"speed", ease.speed}}});
+        };
         for (const auto& keyframe : ordered) {
-            (*value)["keyframes"].push_back({
+            ofJson serialized = {
                 {"time", keyframe.time},
                 {"value", keyframe.value},
                 {"inInterpolation", keyframe.interpolation},
                 {"outInterpolation", keyframe.interpolation}
-            });
+            };
+            if (keyframe.inEase) serialized["inEase"] = serializeEase(*keyframe.inEase);
+            if (keyframe.outEase) serialized["outEase"] = serializeEase(*keyframe.outEase);
+            (*value)["keyframes"].push_back(std::move(serialized));
         }
     }
     return *this;
+}
+
+namespace {
+
+Vector2 normalizedDirection(Vector2 direction, Vector2 fallback) {
+    const double length = std::sqrt(direction.x * direction.x + direction.y * direction.y);
+    if (length <= std::numeric_limits<double>::epsilon()) return fallback;
+    return {direction.x / length, direction.y / length};
+}
+
+ofJson positionValue(Vector2 value) {
+    return ofJson::array({value.x, value.y, 0.0});
+}
+
+AuthoringKeyframe motionKeyframe(double time, Vector2 value,
+                                 std::optional<BezierEase> inEase,
+                                 std::optional<BezierEase> outEase) {
+    return {time, positionValue(value), "bezier", std::move(inEase), std::move(outEase)};
+}
+
+AuthoringKeyframe opacityKeyframe(double time, double value,
+                                  std::optional<BezierEase> inEase,
+                                  std::optional<BezierEase> outEase) {
+    return {time, value, "bezier", std::move(inEase), std::move(outEase)};
+}
+
+} // namespace
+
+void animateLowerThird(SceneBuilder& scene, const LayerBuilder& panel,
+                       const LayerBuilder& headline, const LowerThirdMotion& motion) {
+    const Vector2 entryDirection = normalizedDirection(motion.entryDirection, {-1.0, 0.0});
+    const Vector2 exitDirection = normalizedDirection(motion.exitDirection, {1.0, 0.0});
+    const double entryDuration = std::max(0.0, motion.entryDuration);
+    const double holdDuration = std::max(0.0, motion.holdDuration);
+    const double exitDuration = std::max(0.0, motion.exitDuration);
+    const double exitStart = entryDuration + holdDuration;
+    const double endTime = exitStart + exitDuration;
+
+    const Vector2 panelFinal = motion.position;
+    const Vector2 headlineFinal{motion.position.x + motion.textOffset.x,
+                                motion.position.y + motion.textOffset.y};
+    const Vector2 panelEntry{panelFinal.x + entryDirection.x * motion.entryDistance,
+                             panelFinal.y + entryDirection.y * motion.entryDistance};
+    const Vector2 headlineEntry{headlineFinal.x + entryDirection.x * motion.entryDistance,
+                                headlineFinal.y + entryDirection.y * motion.entryDistance};
+    const Vector2 panelExit{panelFinal.x + exitDirection.x * motion.exitDistance,
+                            panelFinal.y + exitDirection.y * motion.exitDistance};
+    const Vector2 headlineExit{headlineFinal.x + exitDirection.x * motion.exitDistance,
+                               headlineFinal.y + exitDirection.y * motion.exitDistance};
+
+    const auto in = motion.entryEase;
+    const auto out = motion.exitEase;
+    scene.animate(panel.positionPropertyId(), {
+        motionKeyframe(0.0, panelEntry, std::nullopt, in),
+        motionKeyframe(entryDuration, panelFinal, in, std::nullopt),
+        motionKeyframe(exitStart, panelFinal, std::nullopt, out),
+        motionKeyframe(endTime, panelExit, out, std::nullopt)
+    });
+    scene.animate(headline.positionPropertyId(), {
+        motionKeyframe(0.0, headlineEntry, std::nullopt, in),
+        motionKeyframe(entryDuration, headlineFinal, in, std::nullopt),
+        motionKeyframe(exitStart, headlineFinal, std::nullopt, out),
+        motionKeyframe(endTime, headlineExit, out, std::nullopt)
+    });
+
+    if (motion.fadeIn || motion.fadeOut) {
+        const std::vector<AuthoringKeyframe> opacity = {
+            opacityKeyframe(0.0, motion.fadeIn ? 0.0 : 100.0, std::nullopt, in),
+            opacityKeyframe(entryDuration, 100.0, in, std::nullopt),
+            opacityKeyframe(exitStart, 100.0, std::nullopt, out),
+            opacityKeyframe(endTime, motion.fadeOut ? 0.0 : 100.0, out, std::nullopt)
+        };
+        scene.animate(panel.opacityPropertyId(), opacity);
+        scene.animate(headline.opacityPropertyId(), opacity);
+    }
 }
 
 SceneBuilder& SceneBuilder::imageAsset(const std::string& id, const std::string& uri,
