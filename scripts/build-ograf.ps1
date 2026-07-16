@@ -31,6 +31,9 @@ if ($shellPaths.Count -gt 0) {
     $env:PATH = (($shellPaths -join ';') + ';' + $env:PATH)
 }
 $env:PATH = "$emscriptenDir;$EmsdkRoot;$env:PATH"
+if (![string]::IsNullOrWhiteSpace($env:OF_ROOT)) {
+    $env:OF_ROOT = $env:OF_ROOT -replace '\\', '/'
+}
 Set-Location $projectDir
 # GNU Make invokes the MSYS shell, which otherwise strips the backslashes from
 # C:\emsdk paths before cmd.exe sees them.
