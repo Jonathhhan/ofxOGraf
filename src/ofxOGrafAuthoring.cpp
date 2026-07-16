@@ -645,7 +645,6 @@ std::string SceneBuilder::prettyJson(int indent) const { return document.dump(in
 
 bool SceneBuilder::write(const std::string& path, bool pretty) const {
     if (!valid()) return false;
-    if (!valid()) return false;
     std::ofstream output(path, std::ios::binary | std::ios::trunc);
     if (!output) return false;
     output << (pretty ? prettyJson() : canonicalJson()) << '\n';
