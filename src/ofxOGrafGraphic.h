@@ -15,7 +15,12 @@ public:
     bool loadFile(const std::string& path);
     bool loadJson(const std::string& jsonText);
     bool loadJson(const ofJson& document);
+    // Replace all control values. Missing keys are filled from the scene's
+    // declared defaults. Does not validate; any value is accepted.
     void setData(const ofJson& value);
+    // Merge-patch the current control data with `patch`. Validates the result
+    // against the scene's control schema; returns false and sets getLastError()
+    // if any value is out of range or has the wrong type.
     bool updateData(const ofJson& patch);
 
     void setTime(double seconds);

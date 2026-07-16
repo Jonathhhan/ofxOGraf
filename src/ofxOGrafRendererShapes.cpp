@@ -38,6 +38,8 @@ Renderer::Style Renderer::styleFor(const ofJson& group, double time) const {
             style.stops.emplace_back(0.0f, style.fill);
             style.stops.emplace_back(1.0f, ofFloatColor(style.fill.r, style.fill.g, style.fill.b, 0.0f));
         }
+        std::sort(style.stops.begin(), style.stops.end(),
+                  [](const auto& a, const auto& b) { return a.first < b.first; });
     }
     if (hasColorOverride) {
         style.fill = colorOverride;
@@ -134,7 +136,8 @@ void Renderer::drawGradient(const ofPath& path, const Style& style) const {
         else if (right == style.stops.end()) value = style.stops.back().second;
         else {
             const auto& left = *(right - 1);
-            const float local = (t - left.first) / std::max(0.0001f, right->first - left.first);
+            const float gap = right->first - left.first;
+            const float local = gap > 0.0f ? (t - left.first) / gap : 1.0f;
             value = left.second.getLerped(right->second, local);
         }
         mesh.addColor(value);

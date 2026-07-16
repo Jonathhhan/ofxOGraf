@@ -1,7 +1,6 @@
 #include "ofxOGrafTimeline.h"
 #include "ofMath.h"
 #include <algorithm>
-#include <cmath>
 
 namespace ofxOGraf {
 

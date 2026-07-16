@@ -40,6 +40,7 @@ private:
     std::unordered_map<std::string, Scene> compositions;
     std::set<std::string> warnedEffects;
     std::set<std::string> warnedStencilLayers;
+    std::set<std::string> warnedNonAscii;
     bool ready = false;
     bool hasColorOverride = false;
     ofFloatColor colorOverride = ofFloatColor::white;
