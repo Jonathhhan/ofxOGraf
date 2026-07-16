@@ -100,6 +100,45 @@ bool ControlDescriptor::accepts(const ofJson& value) const {
     return false;
 }
 
+bool ControlDescriptor::validateValue(const ofJson& value, const std::string& path, std::string& error) const {
+    if (!accepts(value)) {
+        error = path + ": expected " + toString(type);
+        return false;
+    }
+    if ((type == ControlValueType::Integer || type == ControlValueType::Number) && value.is_number()) {
+        const double number = value.get<double>();
+        if (!std::isfinite(number)) {
+            error = path + ": number must be finite";
+            return false;
+        }
+        if (minimum && minimum->is_number() && number < minimum->get<double>()) {
+            error = path + ": value is below minimum " + minimum->dump();
+            return false;
+        }
+        if (maximum && maximum->is_number() && number > maximum->get<double>()) {
+            error = path + ": value is above maximum " + maximum->dump();
+            return false;
+        }
+    }
+    if (type == ControlValueType::Color) {
+        for (const auto& channel : value) {
+            const double number = channel.get<double>();
+            if (!std::isfinite(number) || number < 0.0 || number > 1.0) {
+                error = path + ": color channels must be finite and in the range 0..1";
+                return false;
+            }
+        }
+    }
+    if (!options.empty()) {
+        const bool matched = std::any_of(options.begin(), options.end(),
+            [&](const ControlOption& option) { return option.value == value; });
+        if (!matched) {
+            error = path + ": value is not an allowed option";
+            return false;
+        }
+    }
+    return true;
+}
 ofJson ControlDescriptor::toJson() const {
     ofJson result = {
         {"id", id},
@@ -156,7 +195,9 @@ std::vector<std::string> TemplateDefinition::validate() const {
     for (const auto& control : controls) {
         if (control.id.empty()) errors.push_back("control id is empty");
         else if (!controlIds.insert(control.id).second) errors.push_back("duplicate control id: " + control.id);
-        if (!control.accepts(control.defaultValue)) errors.push_back("invalid default for control: " + control.id);
+        std::string controlError;
+        if (!control.validateValue(control.defaultValue, "/" + control.id, controlError))
+            errors.push_back("invalid default for control " + control.id + ": " + controlError);
     }
 
     std::unordered_set<std::string> assetIds;
@@ -499,8 +540,7 @@ bool CodeTemplateHost::validateData(const ofJson& value, std::string& error) con
         }
     }
     for (const auto& control : templateDefinition.controls) {
-        if (value.contains(control.id) && !control.accepts(value.at(control.id))) {
-            error = "Invalid value type for control: " + control.id;
+        if (value.contains(control.id) && !control.validateValue(value.at(control.id), "/" + control.id, error)) {
             return false;
         }
     }

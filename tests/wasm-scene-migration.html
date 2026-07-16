@@ -1,0 +1,69 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>ofxOGraf WASM migration contract</title>
+<canvas id="canvas" width="16" height="16" hidden></canvas>
+<pre id="result">RUNNING</pre>
+<script type="module">
+import createOfxOGrafModule from "../example-basic/bin/em/ofxOGraf/index.js";
+
+const cases = [
+  ["scene-version-01.json", true, true, "0.1.0", ""],
+  ["scene-version-02.json", true, false, "0.2.0", ""],
+  ["scene-version-03.json", true, true, "0.3.0", ""],
+  ["scene-version-malformed.json", false, false, "", "scene.version.invalid"],
+  ["scene-version-forward.json", false, false, "", "scene.version.unsupported"]
+];
+
+const result = document.getElementById("result");
+try {
+  const module = await createOfxOGrafModule({
+    canvas: document.getElementById("canvas"),
+    locateFile: file => `../example-basic/bin/em/ofxOGraf/${file}`
+  });
+  const reports = [];
+  for (const [file, ok, migrated, sourceVersion, errorCode] of cases) {
+    const source = await (await fetch(`fixtures/${file}`)).text();
+    const report = JSON.parse(module.inspectSceneMigration(source));
+    let passed = report.ok === ok;
+    if (ok) {
+      passed &&= report.migrated === migrated;
+      passed &&= report.sourceVersion === sourceVersion;
+      passed &&= report.runtimeVersion === "0.2.0";
+      passed &&= report.documentVersion === "0.2.0";
+      passed &&= report.idempotent === true;
+      passed &&= report.stableIdsPreserved === true;
+      passed &&= report.missingStableIds.length === 0;
+    } else {
+      passed &&= String(report.error).includes(errorCode);
+    }
+    reports.push({file, passed, report});
+  }
+  const requiredSource = await (await fetch("fixtures/scene-required-extension.json")).text();
+  const requiredLoaded = module.loadGraphic(requiredSource);
+  const requiredError = module.getLastError();
+  reports.push({
+    file: "scene-required-extension.json",
+    passed: !requiredLoaded && requiredError.includes("scene.extension.required"),
+    report: {ok: requiredLoaded, error: requiredError}
+  });
+  const structuredSource = await (await fetch("fixtures/scene-structured-controls.json")).text();
+  const structuredLoaded = module.loadGraphic(structuredSource);
+  const beforeInvalid = module.getGraphicData();
+  const invalidAccepted = module.updateGraphic(JSON.stringify({rows: [{id: "broken", score: 2}]}), false);
+  const invalidError = module.getLastError();
+  const afterInvalid = module.getGraphicData();
+  const validAccepted = module.updateGraphic(JSON.stringify({rows: [{id: "row-2", label: "Beta", score: 2}]}), false);
+  reports.push({
+    file: "scene-structured-controls.json",
+    passed: structuredLoaded && !invalidAccepted && beforeInvalid === afterInvalid
+      && invalidError.includes("/rows/0/label") && validAccepted,
+    report: {structuredLoaded, invalidAccepted, invalidError, statePreserved: beforeInvalid === afterInvalid, validAccepted}
+  });
+  const passed = reports.every(report => report.passed);
+  result.dataset.status = passed ? "pass" : "fail";
+  result.textContent = JSON.stringify({passed, reports}, null, 2);
+} catch (error) {
+  result.dataset.status = "error";
+  result.textContent = JSON.stringify({passed: false, error: String(error)}, null, 2);
+}
+</script>

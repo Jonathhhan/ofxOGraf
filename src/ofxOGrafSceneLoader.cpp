@@ -2,11 +2,42 @@
 #include "ofFileUtils.h"
 #include <stdexcept>
 #include <algorithm>
+#include <sstream>
 #include <unordered_map>
 
 namespace {
 
 using BindingMap = std::unordered_map<std::string, std::string>;
+
+struct SceneVersion {
+    int major = -1;
+    int minor = -1;
+    int patch = -1;
+};
+
+SceneVersion parseSceneVersion(const ofJson& document) {
+    if (!document.contains("version") || !document["version"].is_string()) {
+        throw std::runtime_error("[scene.version.missing] Scene version must be a semantic version string.");
+    }
+    const std::string value = document["version"].get<std::string>();
+    SceneVersion version;
+    char first = 0;
+    char second = 0;
+    std::istringstream stream(value);
+    if (!(stream >> version.major >> first >> version.minor >> second >> version.patch) ||
+        first != '.' || second != '.' || stream.peek() != std::char_traits<char>::eof() ||
+        version.major < 0 || version.minor < 0 || version.patch < 0) {
+        throw std::runtime_error("[scene.version.invalid] Scene version must use major.minor.patch: " + value);
+    }
+    return version;
+}
+
+void requireSupportedVersion(const SceneVersion& version, const std::string& value) {
+    if (version.major != 0 || version.minor < 1 || version.minor > 3) {
+        throw std::runtime_error("[scene.version.unsupported] Unsupported Broadcast Scene version: " + value);
+    }
+}
+
 
 bool isNeutral03(const ofJson& document) {
     return document.contains("rootCompositionId") && document.contains("compositions");
@@ -262,6 +293,9 @@ ofJson legacyComposition(const ofJson& composition, const BindingMap& bindings) 
             converted["text"] = legacyText(layer, bindings);
         } else if (layer.value("type", "") == "shape" && layer.contains("content")) {
             converted["contents"] = legacyShape(layer, bindings);
+        } else if (layer.value("type", "") == "repeat" && layer.contains("content")) {
+            converted["repeat"] = layer["content"];
+            converted["controlId"] = layer["content"].value("controlId", "");
         } else if (layer.value("type", "") == "image" && layer.contains("content")) {
             converted["source"] = {
                 {"assetId", layer["content"].value("assetId", "")}
@@ -290,6 +324,7 @@ ofJson compileNeutral03(const ofJson& document) {
     ofJson compiled = document;
     ofJson rootComposition = legacyComposition(*root, bindings);
     compiled["composition"] = rootComposition["composition"];
+    compiled["composition"]["id"] = rootComposition.value("id", rootId);
     compiled["layers"] = rootComposition["layers"];
     compiled["assets"] = legacyAssets(document);
     compiled["compositions"] = ofJson::array();
@@ -301,6 +336,7 @@ ofJson compileNeutral03(const ofJson& document) {
         {"version", "1.0.0"},
         {"data", {{"compiledFrom", "broadcast-scene-0.3"}}}
     };
+    compiled["version"] = ofxOGraf::SceneLoader::RuntimeVersion;
     return compiled;
 }
 
@@ -310,10 +346,16 @@ namespace ofxOGraf {
 
 void SceneLoader::validate(const ofJson& json) {
     if (!json.is_object()) throw std::runtime_error("Scene root must be an object.");
+    const SceneVersion version = parseSceneVersion(json);
+    const std::string versionText = json.at("version").get<std::string>();
+    requireSupportedVersion(version, versionText);
+    if (version.minor == 3 && !isNeutral03(json)) {
+        throw std::runtime_error("[scene.version.structure] Broadcast Scene 0.3 requires the neutral compositions model.");
+    }
     if (json.value("format", "") != "broadcast-scene") {
         throw std::runtime_error("Unsupported or missing scene format.");
     }
-    if (isNeutral03(json)) {
+    if (version.minor == 3) {
         if (!json["compositions"].is_array() || json["compositions"].empty()) {
             throw std::runtime_error("Neutral scene has no compositions.");
         }
@@ -347,9 +389,48 @@ Scene SceneLoader::loadString(const std::string& jsonText) {
     return loadJson(ofJson::parse(jsonText));
 }
 
+SceneMigrationResult SceneLoader::migrate(const ofJson& json) {
+    if (!json.is_object()) throw std::runtime_error("Scene root must be an object.");
+    if (json.value("format", "") != "broadcast-scene") {
+        throw std::runtime_error("Unsupported or missing scene format.");
+    }
+    const SceneVersion version = parseSceneVersion(json);
+    const std::string versionText = json.at("version").get<std::string>();
+    requireSupportedVersion(version, versionText);
+
+    SceneMigrationResult result;
+    result.sourceVersion = versionText;
+    result.runtimeVersion = RuntimeVersion;
+    result.document = json;
+
+    if (version.minor == 1) {
+        result.document["version"] = RuntimeVersion;
+        result.migrated = true;
+        result.diagnostics.push_back({
+            "scene.migration.legacy-01", "/version",
+            "Broadcast Scene 0.1 was upgraded to the compatible 0.2 runtime representation."
+        });
+    } else if (version.minor == 2) {
+        result.runtimeVersion = versionText;
+    } else {
+        if (!isNeutral03(json)) {
+            throw std::runtime_error("[scene.version.structure] Broadcast Scene 0.3 requires the neutral compositions model.");
+        }
+        result.document = compileNeutral03(json);
+        result.migrated = true;
+        result.diagnostics.push_back({
+            "scene.migration.neutral-03", "/",
+            "Broadcast Scene 0.3 was compiled to the 0.2 runtime representation without changing stable IDs."
+        });
+    }
+    return result;
+}
+
+
 Scene SceneLoader::loadJson(const ofJson& json) {
-    validate(json);
-    const ofJson compiled = compileNeutral03(json);
+    const SceneMigrationResult migration = migrate(json);
+    validate(migration.document);
+    const ofJson& compiled = migration.document;
     Scene scene;
     scene.raw = compiled;
     const auto& composition = compiled.at("composition");

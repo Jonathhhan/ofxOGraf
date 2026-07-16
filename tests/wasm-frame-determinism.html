@@ -1,0 +1,61 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>ofxOGraf WASM frame determinism contract</title>
+<canvas id="canvas" width="1280" height="720" hidden></canvas>
+<pre id="result">RUNNING</pre>
+<script type="module">
+import createOfxOGrafModule from "../example-basic/bin/em/ofxOGraf/index.js";
+
+const result = document.getElementById("result");
+const waitFor = async predicate => {
+  for (let attempt = 0; attempt < 200; ++attempt) {
+    if (predicate()) return;
+    await new Promise(resolve => setTimeout(resolve, 25));
+  }
+  throw new Error("WASM runtime did not become ready");
+};
+const capture = (module, milliseconds) => {
+  module.goToTime(milliseconds);
+  return JSON.parse(module.renderFrameDiagnostics());
+};
+
+try {
+  const module = await createOfxOGrafModule({
+    canvas: document.getElementById("canvas"),
+    locateFile: file => `../example-basic/bin/em/ofxOGraf/${file}`
+  });
+  await waitFor(() => module.isRuntimeReady());
+
+  const scene = await (await fetch("../example-basic/bin/data/scene.json")).text();
+  if (!module.loadGraphic(scene)) throw new Error(module.getLastError());
+
+  const fresh = capture(module, 500);
+  capture(module, 1500);
+  const backward = capture(module, 500);
+  if (!module.loadGraphic(scene)) throw new Error(module.getLastError());
+  const reloaded = capture(module, 500);
+
+  const lifecycleHashes = [];
+  for (let cycle = 0; cycle < 5; ++cycle) {
+    if (!module.loadGraphic(scene)) throw new Error(module.getLastError());
+    module.playGraphic(0, false);
+    lifecycleHashes.push(capture(module, 500).hash);
+    module.stopGraphic(true);
+  }
+
+  const frameIsRgba = fresh.width === 1920 && fresh.height === 1080
+    && fresh.transparent > 0 && (fresh.translucent + fresh.opaque) > 0;
+  const backwardStable = backward.hash === fresh.hash;
+  const reloadStable = reloaded.hash === fresh.hash;
+  const lifecycleStable = lifecycleHashes.every(hash => hash === fresh.hash);
+  const passed = frameIsRgba && backwardStable && reloadStable && lifecycleStable;
+  result.dataset.status = passed ? "pass" : "fail";
+  result.textContent = JSON.stringify({
+    passed, frameIsRgba, backwardStable, reloadStable, lifecycleStable,
+    lifecycleHashes, fresh, backward, reloaded
+  }, null, 2);
+} catch (error) {
+  result.dataset.status = "error";
+  result.textContent = JSON.stringify({passed: false, error: String(error)}, null, 2);
+}
+</script>

@@ -23,7 +23,9 @@ The existing AE path is not a binary `.mogrt` converter: it imports AE's scripta
 - `src/ofxOGrafCodeTemplate.*`: procedural OF template contract with typed descriptors, explicit time, deterministic random streams, and a lifecycle host.
 - `ofxOGraf::RenderSurface`: fixed-resolution RGBA rendering, texture/FBO access, and aspect-fitted premultiplied-alpha native previews.
 - `scripts/validate-template-definition.mjs`: native/WASM/OGraf descriptor and declared-asset validator.
+- `scripts/verify-ograf-package.ps1` and `docs/package-integrity.md`: reproducible ZIP, SHA-256 allowlist, BOM, provenance, offline policy, and deployment verification.
 - `docs/native-authoring.md`: direct openFrameworks authoring, delivery, and deterministic-runtime guide.
+- `docs/css-text-overlays.md`: optional descriptor-driven HTML/CSS typography above compiled C++/WebGL templates.
 - `schema/broadcast-scene-0.2.schema.json`: expanded neutral interchange format; the original 0.1 schema remains for compatibility.
 - `src/`: openFrameworks addon with deterministic timeline evaluation, asset caching, recursive scene rendering, renderer-extension hooks, AE-style 2D/3D transforms, a neutral controls API, and an optional ofxImGui adapter.
 - `example-basic/`: dependency-free native/Emscripten example and embind lifecycle bridge.
@@ -31,6 +33,10 @@ The existing AE path is not a binary `.mogrt` converter: it imports AE's scripta
 - `ograf/EssentialControls.js`: reusable HTML control panel generated from the same neutral `scene.controls` model.
 - `ograf/`: OGraf v1 Web Component, manifest, real-time lifecycle, deterministic seeking, and scheduled non-real-time actions.
 - `examples/lower-third.scene.json` and `examples/feature-showcase.scene.json`: hand-authored baseline and expanded-feature scenes.
+- `examples/ograf-dev-*.scene.json`: native ports of selected MIT-licensed [ograf.dev tutorials](https://ograf.dev/tutorials).
+- `example-tutorials/`: runnable native gallery; press `1` through `4` to switch graphics and `R` to replay the current animation.
+- `docs/future-proof-agent-plan.md`: ordered roadmap and execution contract for coding agents.
+- `docs/scene-compatibility.md`: supported scene versions, migration guarantees, and the process for adding future schemas.
 
 ## Renderer scope
 
@@ -92,7 +98,7 @@ Create a server-ready ZIP after the Emscripten artifacts exist:
 scripts\package-ograf.ps1
 ```
 
-The packager validates the manifest and referenced runtime files and places the manifest at the archive root. For integration steps and the renderer conventions discovered in SuperFlyTV's implementation, see `docs/testing-with-ograf-server.md`.
+The packager validates the manifest and referenced runtime files, generates `package-integrity.json` and `package-bom.json`, enforces offline assets, and creates a deterministic archive. Verify the delivered artifact with `scripts\verify-ograf-package.ps1 build\ofxOGraf-graphic.zip`. For integration steps and the renderer conventions discovered in SuperFlyTV's implementation, see `docs/testing-with-ograf-server.md`.
 
 For a `CodeTemplate`, pass its serialized descriptor and asset root explicitly:
 
@@ -102,7 +108,7 @@ scripts\package-ograf.ps1 `
   -AssetRoot build\data
 ```
 
-The packager validates the descriptor before staging, copies only its declared `data/` assets, validates that staged filesystem again, then creates the ZIP.
+The packager validates the descriptor before staging, copies only its declared `data/` assets, validates that staged filesystem again, hashes the final allowlist, and then creates the ZIP. See `docs/package-integrity.md`.
 
 The manifest declares both real-time and non-real-time support. In non-real-time mode, `setActionsSchedule()` stores the action timeline and `goToTime()` rebuilds scheduled state when seeking backward before positioning the WASM timeline at the requested millisecond.
 
@@ -116,10 +122,13 @@ node tests/feature-contract.mjs
 node tests/controls-contract.mjs
 node tests/authoring-contract.mjs
 node tests/code-template-contract.mjs
+node tests/css-text-overlay-contract.mjs
 node tests/golden-frame-contract.mjs
 node scripts/validate-template-definition.mjs
 node tests/code-template-delivery-contract.mjs
 node tests/package-contract.mjs
+node tests/package-integrity-contract.mjs
+node tests/scene-migration-contract.mjs
 node --check ograf/OfBroadcastGraphic.js
 node --check ograf/EssentialControls.js
 ```

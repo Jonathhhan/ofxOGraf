@@ -10,16 +10,26 @@ void Graphic::setup() {
     renderer.setup();
 }
 
+bool Graphic::installScene(Scene candidate) {
+    const std::string extensionError = renderer.extensions().validateRequired(candidate.sourceDocument());
+    if (!extensionError.empty()) {
+        lastError = extensionError;
+        ofLogError("ofxOGraf") << lastError;
+        return false;
+    }
+    scene = std::move(candidate);
+    data = Controls::withDefaults(scene, data);
+    renderer.setScene(scene);
+    renderer.setData(data);
+    loaded = true;
+    lastError.clear();
+    timeline.setTime(0.0);
+    return true;
+}
+
 bool Graphic::loadFile(const std::string& path) {
     try {
-        scene = SceneLoader::loadFile(path);
-        data = Controls::withDefaults(scene, data);
-        renderer.setScene(scene);
-        renderer.setData(data);
-        loaded = true;
-        lastError.clear();
-        timeline.setTime(0.0);
-        return true;
+        return installScene(SceneLoader::loadFile(path));
     } catch (const std::exception& error) {
         loaded = false;
         lastError = error.what();
@@ -30,14 +40,7 @@ bool Graphic::loadFile(const std::string& path) {
 
 bool Graphic::loadJson(const std::string& jsonText) {
     try {
-        scene = SceneLoader::loadString(jsonText);
-        data = Controls::withDefaults(scene, data);
-        renderer.setScene(scene);
-        renderer.setData(data);
-        loaded = true;
-        lastError.clear();
-        timeline.setTime(0.0);
-        return true;
+        return installScene(SceneLoader::loadString(jsonText));
     } catch (const std::exception& error) {
         loaded = false;
         lastError = error.what();
@@ -48,14 +51,7 @@ bool Graphic::loadJson(const std::string& jsonText) {
 
 bool Graphic::loadJson(const ofJson& document) {
     try {
-        scene = SceneLoader::loadJson(document);
-        data = Controls::withDefaults(scene, data);
-        renderer.setScene(scene);
-        renderer.setData(data);
-        loaded = true;
-        lastError.clear();
-        timeline.setTime(0.0);
-        return true;
+        return installScene(SceneLoader::loadJson(document));
     } catch (const std::exception& error) {
         loaded = false;
         lastError = error.what();
@@ -69,13 +65,23 @@ void Graphic::setData(const ofJson& value) {
     renderer.setData(data);
 }
 
-void Graphic::updateData(const ofJson& patch) {
-    if (patch.is_object()) {
-        data.merge_patch(patch);
-        renderer.setData(data);
+bool Graphic::updateData(const ofJson& patch) {
+    if (!patch.is_object()) {
+        lastError = "[control.validation] /: Update patch must be an object.";
+        return false;
     }
+    ofJson candidate = data;
+    candidate.merge_patch(patch);
+    const auto errors = Controls::validateData(scene, candidate);
+    if (!errors.empty()) {
+        lastError = "[control.validation] " + errors.front().path + ": " + errors.front().message;
+        return false;
+    }
+    data = std::move(candidate);
+    renderer.setData(data);
+    lastError.clear();
+    return true;
 }
-
 void Graphic::setTime(double seconds) { timeline.setTime(ofClamp(seconds, 0.0, scene.duration)); }
 void Graphic::setTimeMilliseconds(double milliseconds) { setTime(milliseconds / 1000.0); }
 double Graphic::getTime() const { return timeline.getTime(); }

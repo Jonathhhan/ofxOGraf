@@ -29,6 +29,12 @@ for (const method of ["load", "play", "update", "updateData", "stop", "seek", "d
 
 assert.match(implementation, /0x9e3779b97f4a7c15ULL/);
 assert.match(implementation, /frameSeed = combineSeed\(renderContext\.randomSeed, frame\.frameIndex\)/);
+assert.match(header, /validateValue\(const ofJson& value/);
+assert.match(implementation, /value is below minimum/);
+assert.match(implementation, /value is above maximum/);
+assert.match(implementation, /value is not an allowed option/);
+assert.match(implementation, /color channels must be finite/);
+assert.match(implementation, /control\.validateValue\(value\.at\(control\.id\), "\/" \+ control\.id/);
 assert.doesNotMatch(implementation, /ofGetElapsedTime|ofGetLastFrameTime|ofRandom\s*\(/);
 assert.doesNotMatch(header + implementation, /ImGui|ADBE|After Effects/);
 

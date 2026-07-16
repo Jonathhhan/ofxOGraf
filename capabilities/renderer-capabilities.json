@@ -1,0 +1,69 @@
+{
+  "schemaVersion": "1.0.0",
+  "targets": {
+    "native": {
+      "label": "openFrameworks native",
+      "capabilities": {
+        "scene.core": "exact",
+        "layer.text": "tolerant",
+        "layer.shape": "exact",
+        "layer.image": "exact",
+        "layer.precomposition": "exact",
+        "layer.3d": "tolerant",
+        "mask.alpha": "exact",
+        "matte.alpha": "tolerant",
+        "effect.fill-tint": "exact",
+        "effect.arbitrary": "extension",
+        "text.complex-shaping": "extension",
+        "css.overlay": "unavailable",
+        "extension.runtime": "extension",
+        "controls.structured": "exact"
+      }
+    },
+    "wasm": {
+      "label": "Emscripten WebAssembly/WebGL 2",
+      "capabilities": {
+        "scene.core": "exact",
+        "layer.text": "tolerant",
+        "layer.shape": "exact",
+        "layer.image": "exact",
+        "layer.precomposition": "exact",
+        "layer.3d": "tolerant",
+        "mask.alpha": "exact",
+        "matte.alpha": "tolerant",
+        "effect.fill-tint": "exact",
+        "effect.arbitrary": "baked",
+        "text.complex-shaping": "tolerant",
+        "css.overlay": "exact",
+        "extension.runtime": "extension",
+        "controls.structured": "exact"
+      }
+    },
+    "ograf": {
+      "label": "OGraf HTML/WASM package",
+      "capabilities": {
+        "scene.core": "exact",
+        "layer.text": "tolerant",
+        "layer.shape": "exact",
+        "layer.image": "exact",
+        "layer.precomposition": "exact",
+        "layer.3d": "tolerant",
+        "mask.alpha": "exact",
+        "matte.alpha": "tolerant",
+        "effect.fill-tint": "exact",
+        "effect.arbitrary": "baked",
+        "text.complex-shaping": "tolerant",
+        "css.overlay": "exact",
+        "extension.runtime": "extension",
+        "controls.structured": "exact"
+      }
+    }
+  },
+  "statusOrder": [
+    "exact",
+    "tolerant",
+    "extension",
+    "baked",
+    "unavailable"
+  ]
+}

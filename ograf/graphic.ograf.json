@@ -55,7 +55,16 @@
                                                                            1
                                                                        ]
                                                        },
-                                      "motion-position":  {
+                                      "alignment":  {
+                                                        "type":  "string",
+                                                        "title":  "Alignment",
+                                                        "enum":  [
+                                                                     "left",
+                                                                     "center",
+                                                                     "right"
+                                                                 ],
+                                                        "default":  "left"
+                                                    },                                      "motion-position":  {
                                                               "type":  "array",
                                                               "title":  "Banderole position",
                                                               "items":  {

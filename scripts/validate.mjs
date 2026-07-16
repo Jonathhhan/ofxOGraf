@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { validateTemplateDefinitionFile } from "./validate-template-definition.mjs";
+import { preflightScene } from "./lib/scene-preflight.mjs";
 
 const root = new URL("../", import.meta.url);
 const errors = [];
@@ -28,6 +29,12 @@ function validateScene(scene, label) {
     for (const [index, layer] of (scene.layers || []).entries()) {
         requireFields(layer, ["index", "name", "type", "inPoint", "outPoint"], `${label}.layers[${index}]`);
     }
+}
+
+const capabilityRegistry = await json("capabilities/renderer-capabilities.json");
+requireFields(capabilityRegistry, ["schemaVersion", "targets", "statusOrder"], "capability registry");
+for (const target of ["native", "wasm", "ograf"]) {
+    requireFields(capabilityRegistry?.targets?.[target], ["label", "capabilities"], `capability registry.${target}`);
 }
 
 const manifest = await json("ograf/graphic.ograf.json");
@@ -66,9 +73,17 @@ if (manifest?.supportsNonRealTime) {
 }
 
 validateScene(await json("examples/lower-third.scene.json"), "example scene");
-validateScene(await json("ograf/scene.json"), "OGraf scene");
+const ografScene = await json("ograf/scene.json");
+validateScene(ografScene, "OGraf scene");
+if (ografScene) {
+    const preflight = await preflightScene(ografScene, {target: "ograf"});
+    if (!preflight.compatible) errors.push(`OGraf capability preflight: ${preflight.diagnostics.map(value => value.code).join(", ")}`);
+}
 validateScene(await json("example-basic/bin/data/scene.json"), "native example scene");
 validateScene(await json("examples/feature-showcase.scene.json"), "feature showcase scene");
+for (const name of ["lower-third", "bug", "ticker", "score-bug"]) {
+    validateScene(await json(`examples/ograf-dev-${name}.scene.json`), `ograf.dev ${name} scene`);
+}
 validateScene(await json("example-imgui/bin/data/scene.json"), "ofxImGui example scene");
 await json("schema/broadcast-scene-0.2.schema.json");
 await json("schema/broadcast-scene-0.3.schema.json");
@@ -81,5 +96,5 @@ if (errors.length) {
     console.error(errors.join("\n"));
     process.exitCode = 1;
 } else {
-    console.log("Validated OGraf contracts, 0.2/0.3 schemas, 5 scenes, and native TemplateDefinition.");
+    console.log("Validated OGraf contracts, 0.2/0.3 schemas, 9 scenes, and native TemplateDefinition.");
 }

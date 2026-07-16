@@ -1,5 +1,18 @@
 # Expanded renderer support
 
+## Scene versions
+
+The loader supports authored Broadcast Scene 0.1.x, 0.2.x, and 0.3.x documents. Version 0.1 is upgraded, 0.2 is the current runtime representation, and neutral 0.3 documents are compiled to that runtime representation. Missing, malformed, and forward versions fail before rendering.
+
+| Authored schema | Runtime status |
+|---|---|
+| 0.1.x | Deprecated; explicitly upgraded |
+| 0.2.x | Loaded directly |
+| 0.3.x | Neutral model compiled with stable IDs |
+
+See [scene-compatibility.md](scene-compatibility.md) for the compatibility and migration contract.
+
+
 The 0.2 pipeline uses three fidelity modes:
 
 1. **Native reconstruction** for portable scene features.

@@ -1,5 +1,6 @@
 import createOfxOGrafModule from "./dist/ofxOGraf.js";
 import { negotiateTemplateCapabilities, templateAbiFingerprint } from "./TemplateAbi.js";
+import CssTextOverlay from "./CssTextOverlay.js";
 
 export default class OfBroadcastGraphic extends HTMLElement {
     constructor() {
@@ -20,7 +21,10 @@ export default class OfBroadcastGraphic extends HTMLElement {
         this.canvas.width = 1920;
         this.canvas.height = 1080;
         this.canvas.style.cssText = "display:block;width:100%;height:100%;background:transparent";
+        this.style.position ||= "relative";
+        this.style.overflow ||= "hidden";
         this.appendChild(this.canvas);
+        this.cssTextOverlay = new CssTextOverlay(this);
     }
 
     async load({ data = {}, renderType = "realtime", renderCharacteristics = {} } = {}) {
@@ -91,6 +95,14 @@ export default class OfBroadcastGraphic extends HTMLElement {
             this.module = null;
             return { statusCode: 422, statusMessage: message };
         }
+        try {
+            await this.cssTextOverlay.load(scene, composition);
+            this.cssTextOverlay.update(this.data);
+        } catch (error) {
+            const message = `Could not load CSS text overlay: ${error?.message || error}`;
+            await this.dispose();
+            return { statusCode: 422, statusMessage: message };
+        }
         this.renderType = renderType;
         this.dispatchState("ograf-ready");
         return { statusCode: 200, statusMessage: "OK" };
@@ -129,10 +141,12 @@ export default class OfBroadcastGraphic extends HTMLElement {
     }
     async updateAction({ data = {}, skipAnimation = false } = {}) {
         this.ensureLoaded();
-        this.data = this.mergePatch(this.data, data);
+        const candidate = this.mergePatch(this.data, data);
         if (!this.updateRuntime(data, skipAnimation)) {
-            return { statusCode: 400, statusMessage: "Invalid update data" };
+            return { statusCode: 400, statusMessage: this.module.getLastError?.() || "Invalid update data" };
         }
+        this.data = candidate;
+        this.cssTextOverlay.update(this.data);
         await this.waitForAction("update");
         this.dispatchState("ograf-data-change");
         return { statusCode: 200, statusMessage: "OK" };
@@ -178,12 +192,14 @@ export default class OfBroadcastGraphic extends HTMLElement {
             await this.applyScheduledAction(item.action);
         }
         this.seekRuntime(timestamp);
+        this.cssTextOverlay.update(this.data);
         this.lastTimestamp = timestamp;
         this.dispatchState("ograf-data-change");
         return { statusCode: 200, statusMessage: "OK" };
     }
 
     async dispose() {
+        this.cssTextOverlay.clear();
         this.module?.exit?.();
         this.module = null;
         this.backend = "scene";

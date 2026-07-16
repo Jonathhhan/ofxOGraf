@@ -27,6 +27,8 @@ for (const token of ["loadCodeTemplate", "updateCodeTemplate", "playCodeTemplate
 assert.match(bridge, /playCodeTemplate\(const std::string& actionId, bool\)/);
 assert.match(bridge, /getCodeTemplateAbiFingerprint/);
 assert.match(bridge, /isRuntimeReady/);
+assert.match(bridge, /--code-template-controls-test/);
+assert.match(bridge, /runCodeTemplateControlsContract/);
 assert.match(wrapper, /waitForRuntimeReady/);
 assert.match(wrapper, /The openFrameworks runtime did not become ready/);
 assert.match(registry, /abiFingerprint/);
@@ -62,6 +64,11 @@ assert.match(wrapper, /this\.appendChild\(this\.canvas\)/);
 assert.match(preview, /Preview failed/);
 assert.match(preview, /Preview ready/);
 assert.match(preview, /goToTime\(\{ timestamp: 1000 \}\)/);
+const alignment = ografDescriptor.controls.find(value => value.id === "alignment");
+assert.deepEqual(alignment?.options?.map(option => option.value), ["left", "center", "right"]);
+assert.deepEqual(manifest.schema.properties.alignment.enum, ["left", "center", "right"]);
+assert.match(sample, /alignment == "center"/);
+assert.match(sample, /alignment == "right"/);
 const motionControlIds = [
     "motion-position", "motion-text-offset", "motion-entry-direction", "motion-exit-direction",
     "motion-entry-travel", "motion-exit-travel", "motion-entry-duration", "motion-hold-duration",

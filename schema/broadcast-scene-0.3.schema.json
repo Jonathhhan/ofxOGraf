@@ -249,23 +249,51 @@
       },
       "additionalProperties": false
     },
+    "repeatContent": {
+      "type": "object",
+      "required": ["controlId", "itemId", "maxItems", "rowHeight", "rowWidth", "columns"],
+      "properties": {
+        "controlId": { "$ref": "#/$defs/id" },
+        "itemId": { "type": "string", "minLength": 1 },
+        "maxItems": { "type": "integer", "minimum": 0, "maximum": 100 },
+        "rowHeight": { "type": "number", "exclusiveMinimum": 0 },
+        "rowWidth": { "type": "number", "exclusiveMinimum": 0 },
+        "backgroundColor": { "$ref": "#/$defs/color" },
+        "columns": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["field", "x", "y", "text"],
+            "properties": {
+              "field": { "type": "string", "minLength": 1 },
+              "x": { "type": "number" },
+              "y": { "type": "number" },
+              "text": { "type": "object" }
+            },
+            "additionalProperties": false
+          }
+        }
+      },
+      "additionalProperties": false
+    },
     "layer": {
       "type": "object",
       "required": ["id", "name", "type", "enabled", "timing", "transform", "content", "extensions"],
       "properties": {
         "id": { "$ref": "#/$defs/id" },
         "name": { "type": "string" },
-        "type": { "enum": ["text", "shape"] },
+        "type": { "enum": ["text", "shape", "repeat"] },
         "enabled": { "type": "boolean" },
         "timing": { "$ref": "#/$defs/timing" },
         "parentId": { "$ref": "#/$defs/id" },
         "transform": { "$ref": "#/$defs/transform" },
-        "content": { "oneOf": [{ "$ref": "#/$defs/textContent" }, { "$ref": "#/$defs/shapeContent" }] },
+        "content": { "oneOf": [{ "$ref": "#/$defs/textContent" }, { "$ref": "#/$defs/shapeContent" }, { "$ref": "#/$defs/repeatContent" }] },
         "extensions": { "$ref": "#/$defs/extensions" }
       },
       "allOf": [
         { "if": { "properties": { "type": { "const": "text" } } }, "then": { "properties": { "content": { "$ref": "#/$defs/textContent" } } } },
-        { "if": { "properties": { "type": { "const": "shape" } } }, "then": { "properties": { "content": { "$ref": "#/$defs/shapeContent" } } } }
+        { "if": { "properties": { "type": { "const": "shape" } } }, "then": { "properties": { "content": { "$ref": "#/$defs/shapeContent" } } } },
+        { "if": { "properties": { "type": { "const": "repeat" } } }, "then": { "properties": { "content": { "$ref": "#/$defs/repeatContent" } } } }
       ],
       "additionalProperties": false
     },
@@ -324,8 +352,19 @@
       "properties": {
         "id": { "$ref": "#/$defs/id" },
         "name": { "type": "string" },
-        "type": { "enum": ["string", "boolean", "integer", "number", "color", "vector2", "vector3", "vector4", "enum", "asset"] },
+        "type": { "enum": ["string", "boolean", "integer", "number", "color", "vector2", "vector3", "vector4", "enum", "asset", "object", "array", "media", "json"] },
         "default": {},
+        "options": { "type": "array" },
+        "schema": { "type": "object" },
+        "visibleWhen": {
+          "type": "object",
+          "required": ["controlId", "equals"],
+          "properties": {
+            "controlId": { "$ref": "#/$defs/id" },
+            "equals": {}
+          },
+          "additionalProperties": false
+        },
         "bindings": { "type": "array", "items": { "$ref": "#/$defs/binding" } },
         "constraints": {
           "type": "object",

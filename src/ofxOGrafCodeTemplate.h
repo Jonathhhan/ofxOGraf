@@ -57,6 +57,7 @@ struct ControlDescriptor {
     ofJson metadata = ofJson::object();
 
     bool accepts(const ofJson& value) const;
+    bool validateValue(const ofJson& value, const std::string& path, std::string& error) const;
     ofJson toJson() const;
 };
 

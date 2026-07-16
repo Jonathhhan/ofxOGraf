@@ -173,10 +173,54 @@ function normalizeCodeTemplateContract(definition, errors) {
         controls,
         actions,
         assets,
+        htmlTextOverlays: definition.htmlTextOverlays,
         rendererCapabilities: metadata.rendererCapabilities
     };
 }
 
+const CSS_TEXT_STYLE_PROPERTIES = new Set([
+    "color", "fontFamily", "fontSize", "fontStyle", "fontWeight", "fontStretch",
+    "fontFeatureSettings", "fontKerning", "fontVariationSettings", "letterSpacing",
+    "lineHeight", "textAlign", "textDecoration", "textShadow", "textTransform",
+    "whiteSpace", "wordBreak", "overflowWrap", "opacity"
+]);
+
+function validateHtmlTextOverlays(overlays, controls, assets, errors) {
+    if (overlays === undefined) return;
+    if (!Array.isArray(overlays)) {
+        errors.push("htmlTextOverlays: must be an array");
+        return;
+    }
+    const controlTypes = new Map((controls || []).map(control => [control?.id, control?.type]));
+    const assetTypes = new Map((assets || []).map(asset => [asset?.id, asset?.type || asset?.kind]));
+    const ids = new Set();
+    overlays.forEach((overlay, index) => {
+        const location = `htmlTextOverlays[${index}]`;
+        if (!isObject(overlay)) {
+            errors.push(`${location}: must be an object`);
+            return;
+        }
+        if (typeof overlay.id !== "string" || !STABLE_ID.test(overlay.id)) errors.push(`${location}.id: must be a stable lowercase id`);
+        else if (ids.has(overlay.id)) errors.push(`${location}.id: duplicate overlay id ${printable(overlay.id)}`);
+        else ids.add(overlay.id);
+        if (typeof overlay.dataKey !== "string" || !controlTypes.has(overlay.dataKey)) errors.push(`${location}.dataKey: must reference a declared control`);
+        if (overlay.visibleWhen !== undefined && controlTypes.get(overlay.visibleWhen) !== "boolean") errors.push(`${location}.visibleWhen: must reference a Boolean control`);
+        if (!isObject(overlay.rect)) errors.push(`${location}.rect: must be an object`);
+        else {
+            for (const field of ["x", "y", "width", "height"]) {
+                if (!isFiniteNumber(overlay.rect[field])) errors.push(`${location}.rect.${field}: must be finite`);
+            }
+            if (isFiniteNumber(overlay.rect.width) && overlay.rect.width <= 0) errors.push(`${location}.rect.width: must be greater than zero`);
+            if (isFiniteNumber(overlay.rect.height) && overlay.rect.height <= 0) errors.push(`${location}.rect.height: must be greater than zero`);
+        }
+        if (overlay.fontAssetId !== undefined && assetTypes.get(overlay.fontAssetId) !== "font") errors.push(`${location}.fontAssetId: must reference a declared font asset`);
+        if (overlay.style !== undefined && !isObject(overlay.style)) errors.push(`${location}.style: must be an object`);
+        else for (const [property, value] of Object.entries(overlay.style || {})) {
+            if (!CSS_TEXT_STYLE_PROPERTIES.has(property)) errors.push(`${location}.style.${property}: CSS property is not allowed`);
+            if (!["string", "number"].includes(typeof value)) errors.push(`${location}.style.${property}: value must be a string or number`);
+        }
+    });
+}
 function validateControl(control, location, errors) {
     if (!isObject(control)) {
         errors.push(`${location}: must be an object`);
@@ -401,6 +445,7 @@ export function validateTemplateDefinition(definition, { label = "template defin
 
     validateActions(definition.actions, errors);
     assets.push(...validateAssets(definition.assets, errors));
+    validateHtmlTextOverlays(definition.htmlTextOverlays, definition.controls, definition.assets, errors);
 
     const capabilities = definition.rendererCapabilities;
     if (!isObject(capabilities)) errors.push("rendererCapabilities: must be an object");

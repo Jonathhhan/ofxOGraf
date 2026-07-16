@@ -204,6 +204,7 @@ void Renderer::drawLayerContent(const Scene&, const Layer& layer, double time) {
     }
     if (extensionRegistry.drawLayer(layer, time, data)) return;
     if (layer.type == "text") drawText(layer, time);
+    else if (layer.type == "repeat") drawRepeat(layer, time);
     else if (layer.type == "shape" && layer.source.contains("contents")) drawShapeGroup(layer.source["contents"], time);
     else if (layer.type == "image" || layer.type == "solid") drawImage(layer, time);
     else if (layer.type == "precomp") {
@@ -214,6 +215,48 @@ void Renderer::drawLayerContent(const Scene&, const Layer& layer, double time) {
             const double childTime = stretch == 0.0 ? 0.0 : (time - layer.source.value("startTime", 0.0)) / stretch;
             drawComposition(found->second, childTime);
         } else drawFallback(layer, time);
+    }
+}
+
+
+void Renderer::drawRepeat(const Layer& layer, double time) {
+    if (!layer.source.contains("repeat")) return;
+    const auto& definition = layer.source["repeat"];
+    const std::string controlId = layer.source.value("controlId", definition.value("controlId", ""));
+    if (controlId.empty() || !data.contains(controlId) || !data[controlId].is_array()) return;
+    const auto& items = data[controlId];
+    const int maximum = std::max(0, definition.value("maxItems", 20));
+    const float rowHeight = definition.value("rowHeight", 60.0f);
+    const float rowWidth = definition.value("rowWidth", 600.0f);
+    const auto background = definition.value("backgroundColor", ofJson::array({0.0, 0.0, 0.0, 0.0}));
+    const auto columns = definition.value("columns", ofJson::array());
+
+    const std::size_t count = std::min(items.size(), static_cast<std::size_t>(maximum));
+    for (std::size_t index = 0; index < count; ++index) {
+        const auto& item = items[index];
+        ofPushMatrix();
+        ofTranslate(0.0f, static_cast<float>(index) * rowHeight);
+        ofSetColor(color(background));
+        ofDrawRectangle(0.0f, 0.0f, rowWidth, rowHeight);
+        for (const auto& column : columns) {
+            const std::string field = column.value("field", "");
+            if (field.empty() || !item.is_object() || !item.contains(field)) continue;
+            std::string text;
+            if (item[field].is_string()) text = item[field].get<std::string>();
+            else if (item[field].is_number() || item[field].is_boolean()) text = item[field].dump();
+            else continue;
+            ofJson style = column.value("text", ofJson::object());
+            style["text"] = text;
+            Layer textLayer;
+            textLayer.name = field;
+            textLayer.type = "text";
+            textLayer.source["text"] = {{"value", style}};
+            ofPushMatrix();
+            ofTranslate(column.value("x", 0.0f), column.value("y", rowHeight * 0.65f));
+            drawText(textLayer, time);
+            ofPopMatrix();
+        }
+        ofPopMatrix();
     }
 }
 

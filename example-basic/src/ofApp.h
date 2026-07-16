@@ -7,7 +7,7 @@
 class ofApp : public ofBaseApp {
 public:
     void setup() override;
-    explicit ofApp(std::string frameOutputPath = {}, double frameTime = 0.0);
+    explicit ofApp(std::string frameOutputPath = {}, double frameTime = 0.0, std::string scenePath = {});
     void update() override;
     void draw() override;
     void windowResized(int width, int height) override;
@@ -20,6 +20,7 @@ public:
     std::string codeTemplateLastError() const;
     std::string codeTemplateAbiFingerprint(const std::string& factoryId) const;
     void useSceneGraphic();
+    std::string renderFrameDiagnostics();
 
 
     ofxOGraf::Graphic& graphic();
@@ -36,6 +37,7 @@ private:
     bool usingCodeTemplate = false;
     ofxOGraf::RenderSurface preview;
     std::string frameOutputPath;
+    std::string scenePath;
     double frameTime = 0.0;
     bool frameExported = false;
 };

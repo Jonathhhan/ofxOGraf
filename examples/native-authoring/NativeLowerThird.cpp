@@ -53,8 +53,12 @@ TemplateDefinition NativeLowerThird::definition() const {
         "subtitle", "Subtitle", "Compiled C++ template", {}, {}, {}, {}, "Content", "Secondary on-air text.", true});
     value.addControl(TypedControlDescriptor<ofFloatColor>{
         "accent-color", "Accent color", {1.0f, 0.8f, 0.0f, 1.0f}, {}, {}, {}, {}, "Style", "Vertical accent strip."});
+    value.addControl(TypedControlDescriptor<std::string>{
+        "alignment", "Alignment", "left", {}, {}, {},
+        {{"left", "Left"}, {"center", "Center"}, {"right", "Right"}},
+        "Content", "Horizontal text alignment inside the panel."});
 
-    const LowerThirdMotion defaults;
+        const LowerThirdMotion defaults;
 
     // Keep these ids and defaults portable: the descriptor drives the HTML
     // Essential Controls panel while native hosts can use the same data patch.
@@ -101,7 +105,7 @@ void NativeLowerThird::onDraw(const FrameContext& frame) {
     const auto headline = data.value("headline", std::string("ofxOGraf"));
     const auto subtitle = data.value("subtitle", std::string("Compiled C++ template"));
     const auto accent = data.value("accent-color", ofJson::array({1.0, 0.8, 0.0, 1.0}));
-const LowerThirdMotion defaults;
+    const LowerThirdMotion defaults;
     const auto position = vectorControl(data, "motion-position", {static_cast<float>(defaults.position.x), static_cast<float>(defaults.position.y)});
     const auto textOffset = vectorControl(data, "motion-text-offset", {static_cast<float>(defaults.textOffset.x), static_cast<float>(defaults.textOffset.y)});
     const auto entryDirection = unitDirection(vectorControl(data, "motion-entry-direction", {static_cast<float>(defaults.entryDirection.x), static_cast<float>(defaults.entryDirection.y)}), {-1.0f, 0.0f});
@@ -142,10 +146,18 @@ const LowerThirdMotion defaults;
                static_cast<int>(255.0 * accent[2].get<double>()),
                static_cast<int>(255.0 * (accent.size() > 3 ? accent[3].get<double>() : 1.0) * alpha));
     ofDrawRectangle(panelPosition.x, panelPosition.y, 14.0f, 150.0f);
+    const std::string alignment = data.value("alignment", std::string("left"));
+    const ofBitmapFont bitmapFont;
+    const auto alignedX = [&](const std::string& text) {
+        const float width = bitmapFont.getBoundingBox(text, 0, 0).getWidth();
+        if (alignment == "center") return panelPosition.x + 590.0f - width * 0.5f;
+        if (alignment == "right") return panelPosition.x + 1140.0f - width;
+        return position.x + offset.x + textOffset.x;
+    };
     ofSetColor(255, 255, 255, static_cast<int>(255.0f * alpha));
-    ofDrawBitmapString(headline, position.x + offset.x + textOffset.x, position.y + offset.y + textOffset.y);
+    ofDrawBitmapString(headline, alignedX(headline), position.y + offset.y + textOffset.y);
     ofSetColor(205, 215, 230, static_cast<int>(255.0f * alpha));
-    ofDrawBitmapString(subtitle, position.x + offset.x + textOffset.x, position.y + offset.y + textOffset.y + 40.0f);
+    ofDrawBitmapString(subtitle, alignedX(subtitle), position.y + offset.y + textOffset.y + 40.0f);
     ofPopStyle();
     ofPopMatrix();
 }

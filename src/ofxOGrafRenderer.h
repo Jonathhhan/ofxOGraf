@@ -49,6 +49,7 @@ private:
     void drawComposition(const Scene& scene, double time);
     void drawLayer(const Scene& scene, const Layer& layer, double time, bool includeMasks = true);
     void drawLayerContent(const Scene& scene, const Layer& layer, double time);
+    void drawRepeat(const Layer& layer, double time);
     void drawText(const Layer& layer, double time);
     void drawImage(const Layer& layer, double time);
     void drawFallback(const Layer& layer, double time);

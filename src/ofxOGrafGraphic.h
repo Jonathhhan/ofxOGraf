@@ -16,7 +16,7 @@ public:
     bool loadJson(const std::string& jsonText);
     bool loadJson(const ofJson& document);
     void setData(const ofJson& value);
-    void updateData(const ofJson& patch);
+    bool updateData(const ofJson& patch);
 
     void setTime(double seconds);
     void setTimeMilliseconds(double milliseconds);
@@ -57,6 +57,8 @@ private:
     double stopDuration = 0.5;
     double stopElapsed = 0.0;
     std::string lastError;
+
+    bool installScene(Scene candidate);
 };
 
 } // namespace ofxOGraf

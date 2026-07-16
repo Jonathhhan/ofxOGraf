@@ -4,7 +4,8 @@ param(
     [string]$OutputPath = (Join-Path $PSScriptRoot '..\build\ofxOGraf-graphic.zip'),
     [switch]$AllowMissingRuntime,
     [string]$TemplateDefinition = '',
-    [string]$AssetRoot = ''
+    [string]$AssetRoot = '',
+    [string[]]$ExtensionProvider = @()
 )
 
 $ErrorActionPreference = 'Stop'
@@ -53,6 +54,18 @@ if ($TemplateDefinition) {
     }
 }
 
+$scenePath = Join-Path $source 'scene.json'
+if (Test-Path -LiteralPath $scenePath -PathType Leaf) {
+    $preflightArgs = @((Join-Path $PSScriptRoot 'preflight-scene.mjs'), $scenePath, '--target', 'ograf', '--json')
+    foreach ($provider in $ExtensionProvider) {
+        $preflightArgs += @('--provider', $provider)
+    }
+    $preflightJson = & node @preflightArgs
+    if ($LASTEXITCODE -ne 0) {
+        throw "OGraf capability preflight failed: $($preflightJson | Out-String)"
+    }
+}
+
 $required = @($manifest.main, 'scene.json')
 if (-not $AllowMissingRuntime) {
     $required += @('dist/ofxOGraf.js', 'dist/ofxOGraf.wasm')
@@ -98,6 +111,13 @@ try {
         Copy-Item -Path (Join-Path $source '*') -Destination $stage -Recurse -Force
     }
 
+    # Generate a deterministic bill of materials and SHA-256 allowlist, then
+    # verify the final staged filesystem before creating the archive.
+    & node (Join-Path $PSScriptRoot 'lib\package-integrity.mjs') generate $stage
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Package integrity generation or offline verification failed.'
+    }
+
     if (Test-Path -LiteralPath $output) {
         Remove-Item -LiteralPath $output
     }
@@ -107,9 +127,12 @@ try {
     # is the most portable package layout.
     $archive = [System.IO.Compression.ZipFile]::Open($output, [System.IO.Compression.ZipArchiveMode]::Create)
     try {
-        Get-ChildItem -LiteralPath $stage -File -Recurse | ForEach-Object {
+        Get-ChildItem -LiteralPath $stage -File -Recurse |
+            Sort-Object { $_.FullName.Substring($stage.Length).Replace('\', '/') } |
+            ForEach-Object {
             $relativePath = $_.FullName.Substring($stage.Length).TrimStart('\', '/').Replace('\', '/')
             $entry = $archive.CreateEntry($relativePath, [System.IO.Compression.CompressionLevel]::Optimal)
+            $entry.LastWriteTime = [DateTimeOffset]::new(1980, 1, 1, 0, 0, 0, [TimeSpan]::Zero)
             $input = [System.IO.File]::OpenRead($_.FullName)
             $entryStream = $entry.Open()
             try {

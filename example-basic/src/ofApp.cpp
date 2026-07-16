@@ -1,9 +1,13 @@
 #include "ofApp.h"
 #include "../../examples/native-authoring/NativeLowerThird.h"
+#include <cstdint>
+#include <iomanip>
+#include <sstream>
 #include <utility>
 
-ofApp::ofApp(std::string outputPath, double outputTime)
+ofApp::ofApp(std::string outputPath, double outputTime, std::string inputScenePath)
     : frameOutputPath(std::move(outputPath))
+    , scenePath(std::move(inputScenePath))
     , frameTime(outputTime) {}
 
 void ofApp::setup() {
@@ -11,6 +15,14 @@ void ofApp::setup() {
     ofSetWindowShape(WindowWidth, WindowHeight);
     broadcastGraphic.setup();
     ofxOGraf::examples::registerNativeLowerThird(codeTemplateRegistry);
+
+    if (!scenePath.empty()) {
+        broadcastGraphic.loadJson(ofBufferFromFile(scenePath).getText());
+        preview.allocate(broadcastGraphic.getScene());
+        if (frameOutputPath.empty()) broadcastGraphic.play();
+        else broadcastGraphic.setTime(frameTime);
+        return;
+    }
 
     ofxOGraf::SceneBuilder scene("scene:of-lower-third");
     scene.provenance("create", "cc.openframeworks.ofxograf.example-basic", "0.3.0");
@@ -139,6 +151,34 @@ void ofApp::windowResized(int width, int height) {
     if (width != WindowWidth || height != WindowHeight) {
         ofSetWindowShape(WindowWidth, WindowHeight);
     }
+}
+
+std::string ofApp::renderFrameDiagnostics() {
+    preview.render(broadcastGraphic);
+    const ofPixels pixels = preview.readPixels();
+    std::uint64_t hash = 1469598103934665603ULL;
+    std::uint64_t transparent = 0;
+    std::uint64_t translucent = 0;
+    std::uint64_t opaque = 0;
+    for (std::size_t index = 0; index < pixels.size(); ++index) {
+        hash ^= pixels[index];
+        hash *= 1099511628211ULL;
+        if ((index & 3U) == 3U) {
+            if (pixels[index] == 0) ++transparent;
+            else if (pixels[index] == 255) ++opaque;
+            else ++translucent;
+        }
+    }
+    std::ostringstream hashText;
+    hashText << std::hex << std::setfill('0') << std::setw(16) << hash;
+    return ofJson({
+        {"width", pixels.getWidth()},
+        {"height", pixels.getHeight()},
+        {"hash", hashText.str()},
+        {"transparent", transparent},
+        {"translucent", translucent},
+        {"opaque", opaque}
+    }).dump();
 }
 
 ofxOGraf::Graphic& ofApp::graphic() { return broadcastGraphic; }

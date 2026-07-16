@@ -42,6 +42,27 @@
                          "description":  "Vertical accent strip."
                      },
                      {
+                         "id":  "alignment",
+                         "label":  "Alignment",
+                         "type":  "string",
+                         "default":  "left",
+                         "options":  [
+                                         {
+                                             "value":  "left",
+                                             "label":  "Left"
+                                         },
+                                         {
+                                             "value":  "center",
+                                             "label":  "Center"
+                                         },
+                                         {
+                                             "value":  "right",
+                                             "label":  "Right"
+                                         }
+                                     ],
+                         "group":  "Content",
+                         "description":  "Horizontal text alignment inside the panel."
+                     },                     {
                          "id":  "motion-position",
                          "label":  "Banderole position",
                          "type":  "vector2",
