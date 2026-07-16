@@ -1,0 +1,161 @@
+name: Build and Deploy to GitHub Pages
+
+# Builds the Emscripten/WebAssembly target and publishes the ograf/ web
+# component to GitHub Pages so it can run directly in the browser.
+#
+# Prerequisites (one-time repository setup):
+#   Settings → Pages → Source: GitHub Actions
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Only one Pages deployment at a time; do not cancel in-progress deploys.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  # -----------------------------------------------------------------------
+  # Fast job: Node.js contract tests — no C++ compilation required.
+  # -----------------------------------------------------------------------
+  test:
+    name: JavaScript contract tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run contract tests
+        run: |
+          node scripts/validate.mjs
+          node tests/feature-contract.mjs
+          node tests/controls-contract.mjs
+          node tests/authoring-contract.mjs
+          node tests/code-template-contract.mjs
+          node tests/css-text-overlay-contract.mjs
+          node tests/golden-frame-contract.mjs
+          node scripts/validate-template-definition.mjs
+          node tests/code-template-delivery-contract.mjs
+          node tests/package-contract.mjs
+          node tests/package-integrity-contract.mjs
+          node tests/scene-migration-contract.mjs
+          node --check ograf/OfBroadcastGraphic.js
+          node --check ograf/EssentialControls.js
+
+  # -----------------------------------------------------------------------
+  # Emscripten build — produces ofxOGraf.{js,wasm} for the browser.
+  # -----------------------------------------------------------------------
+  build:
+    name: Emscripten build
+    runs-on: ubuntu-22.04
+    env:
+      OF_VERSION: '0.12.0'
+      # emsdk version tested with openFrameworks 0.12.0.
+      EMSDK_VERSION: '3.1.56'
+      OF_ROOT: /opt/openframeworks
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ------------------------------------------------------------------
+      # 1. Emscripten SDK
+      # ------------------------------------------------------------------
+      - name: Set up emsdk
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: ${{ env.EMSDK_VERSION }}
+          actions-cache-folder: emsdk-cache
+
+      # ------------------------------------------------------------------
+      # 2. openFrameworks (download + Linux dependencies + Emscripten core)
+      #    The entire /opt/openframeworks tree is cached under a stable key
+      #    so subsequent runs skip the 30-40 min core compile.
+      # ------------------------------------------------------------------
+      - name: Cache openFrameworks installation
+        uses: actions/cache@v4
+        id: of-cache
+        with:
+          path: ${{ env.OF_ROOT }}
+          key: of-${{ env.OF_VERSION }}-emsdk-${{ env.EMSDK_VERSION }}-${{ runner.os }}
+
+      - name: Download openFrameworks ${{ env.OF_VERSION }}
+        if: steps.of-cache.outputs.cache-hit != 'true'
+        run: |
+          wget -q \
+            "https://github.com/openframeworks/openFrameworks/releases/download/${{ env.OF_VERSION }}/of_v${{ env.OF_VERSION }}_linux64gcc6_release.tar.gz" \
+            -O /tmp/of.tar.gz
+          tar -xzf /tmp/of.tar.gz -C /tmp
+          mv "/tmp/of_v${{ env.OF_VERSION }}_linux64gcc6_release" "${{ env.OF_ROOT }}"
+
+      - name: Install openFrameworks Linux dependencies
+        if: steps.of-cache.outputs.cache-hit != 'true'
+        run: sudo "${{ env.OF_ROOT }}/scripts/linux/debian/install_dependencies.sh"
+
+      - name: Build openFrameworks Emscripten core
+        if: steps.of-cache.outputs.cache-hit != 'true'
+        working-directory: ${{ env.OF_ROOT }}/libs/openFrameworksCompiled/project/emscripten
+        run: emmake make -j4
+
+      # ------------------------------------------------------------------
+      # 3. Place addon and compile example-basic for OGraf (ESM + WASM)
+      # ------------------------------------------------------------------
+      - name: Place addon into OF addons tree
+        run: |
+          mkdir -p "${{ env.OF_ROOT }}/addons/ofxOGraf"
+          cp -r "${{ github.workspace }}/." "${{ env.OF_ROOT }}/addons/ofxOGraf/"
+
+      - name: Build example-basic (OGraf Emscripten target)
+        working-directory: ${{ env.OF_ROOT }}/addons/ofxOGraf/example-basic
+        run: emmake make -j4 APPNAME=ofxOGraf OGRAF_BUILD=1 PLATFORM_OS=emscripten
+
+      # ------------------------------------------------------------------
+      # 4. Stage WASM artifacts into ograf/dist/ for Pages deployment
+      # ------------------------------------------------------------------
+      - name: Stage WASM artifacts
+        run: |
+          ARTIFACT_DIR="${{ env.OF_ROOT }}/addons/ofxOGraf/example-basic/bin/em/ofxOGraf"
+          DIST_DIR="${{ github.workspace }}/ograf/dist"
+          mkdir -p "$DIST_DIR"
+          cp "$ARTIFACT_DIR/index.js"   "$DIST_DIR/ofxOGraf.js"
+          cp "$ARTIFACT_DIR/index.wasm" "$DIST_DIR/ofxOGraf.wasm"
+          if [ -f "$ARTIFACT_DIR/index.data" ]; then
+            cp "$ARTIFACT_DIR/index.data" "$DIST_DIR/ofxOGraf.data"
+          fi
+          echo "Staged artifacts:"
+          ls -lh "$DIST_DIR"
+
+      # ------------------------------------------------------------------
+      # 5. Upload ograf/ as the GitHub Pages artifact
+      # ------------------------------------------------------------------
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ograf/
+
+  # -----------------------------------------------------------------------
+  # Deploy to GitHub Pages — only on pushes to main (not PRs).
+  # -----------------------------------------------------------------------
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
