@@ -67,12 +67,30 @@ assert.match(preview, /goToTime\(\{ timestamp: 1000 \}\)/);
 const alignment = ografDescriptor.controls.find(value => value.id === "alignment");
 assert.deepEqual(alignment?.options?.map(option => option.value), ["left", "center", "right"]);
 assert.deepEqual(manifest.schema.properties.alignment.enum, ["left", "center", "right"]);
+assert.equal(ografDescriptor.actions.find(action => action.id === "in")?.metadata?.durationControlId, "motion-entry-duration");
+assert.deepEqual(ografDescriptor.actions.find(action => action.id === "out")?.metadata?.startControlIds,
+    ["motion-entry-duration", "motion-hold-duration"]);
+assert.equal(ografDescriptor.actions.find(action => action.id === "out")?.metadata?.durationControlId, "motion-exit-duration");
 assert.match(sample, /alignment == "center"/);
 assert.match(sample, /alignment == "right"/);
+assert.match(sample, /ofRotateDeg\(motionRotation\)/);
+assert.match(sample, /ofScale\(motionScale, motionScale\)/);
+assert.match(sample, /motion-entry-scale/);
+assert.match(sample, /motion-exit-rotation/);
+assert.match(sample, /mode == "linear"/);
+assert.match(sample, /mode == "smooth"/);
+assert.match(sample, /mode == "back"/);
+assert.deepEqual(ografDescriptor.controls.find(value => value.id === "motion-entry-easing")?.options?.map(option => option.value),
+    ["influence", "linear", "smooth", "back"]);
+assert.deepEqual(manifest.schema.properties["motion-exit-easing"].enum,
+    ["influence", "linear", "smooth", "back"]);
 const motionControlIds = [
     "motion-position", "motion-text-offset", "motion-entry-direction", "motion-exit-direction",
     "motion-entry-travel", "motion-exit-travel", "motion-entry-duration", "motion-hold-duration",
-    "motion-exit-duration", "motion-entry-influence", "motion-exit-influence", "motion-fade-in", "motion-fade-out"
+    "motion-exit-duration", "motion-entry-influence", "motion-exit-influence",
+    "motion-entry-easing", "motion-exit-easing", "motion-entry-overshoot", "motion-exit-overshoot",
+    "motion-entry-scale", "motion-exit-scale", "motion-entry-rotation", "motion-exit-rotation",
+    "motion-fade-in", "motion-fade-out"
 ];
 for (const id of motionControlIds) {
     assert.ok(sample.includes(`"${id}"`), `native lower-third lacks portable motion control ${id}`);

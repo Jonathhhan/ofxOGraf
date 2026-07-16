@@ -290,6 +290,8 @@ private:
 
     const ActionDescriptor* currentAction() const;
     const ActionDescriptor* findAction(const std::string& id) const;
+    double actionStartSeconds(const ActionDescriptor& action) const;
+    double actionDurationSeconds(const ActionDescriptor& action) const;
     FrameContext makeFrame(double deltaSeconds, bool seeking) const;
     bool validateData(const ofJson& value, std::string& error) const;
     bool fail(const std::string& message);

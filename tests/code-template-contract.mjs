@@ -35,6 +35,10 @@ assert.match(implementation, /value is above maximum/);
 assert.match(implementation, /value is not an allowed option/);
 assert.match(implementation, /color channels must be finite/);
 assert.match(implementation, /control\.validateValue\(value\.at\(control\.id\), "\/" \+ control\.id/);
+assert.match(implementation, /actionStartSeconds\(const ActionDescriptor& action\)/);
+assert.match(implementation, /actionDurationSeconds\(const ActionDescriptor& action\)/);
+assert.match(implementation, /startControlIds/);
+assert.match(implementation, /durationControlId/);
 assert.doesNotMatch(implementation, /ofGetElapsedTime|ofGetLastFrameTime|ofRandom\s*\(/);
 assert.doesNotMatch(header + implementation, /ImGui|ADBE|After Effects/);
 

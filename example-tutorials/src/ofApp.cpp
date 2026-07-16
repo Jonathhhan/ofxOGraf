@@ -10,11 +10,7 @@ void ofApp::setup() {
 
 void ofApp::loadTutorial(std::size_t index) {
     if (index >= tutorials.size()) return;
-#ifdef __EMSCRIPTEN__
-    const auto path = ofToDataPath(tutorials[index].file);
-#else
-    const auto path = "../../examples/" + tutorials[index].file;
-#endif
+    const auto path = ofToDataPath(tutorials[index].file, true);
     const auto buffer = ofBufferFromFile(path);
     if (buffer.size() == 0) {
         error = "Could not read " + path;

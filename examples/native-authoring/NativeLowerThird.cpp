@@ -18,6 +18,10 @@ bool booleanControl(const ofJson& data, const char* id, bool fallback) {
     const auto found = data.find(id);
     return found != data.end() && found->is_boolean() ? found->get<bool>() : fallback;
 }
+std::string stringControl(const ofJson& data, const char* id, std::string fallback) {
+    const auto found = data.find(id);
+    return found != data.end() && found->is_string() ? found->get<std::string>() : fallback;
+}
 
 glm::vec2 vectorControl(const ofJson& data, const char* id, glm::vec2 fallback) {
     const auto found = data.find(id);
@@ -31,9 +35,18 @@ glm::vec2 unitDirection(glm::vec2 value, glm::vec2 fallback) {
     return length > 0.0001f ? value / length : fallback;
 }
 
-double easedProgress(double progress, double influence) {
+double easedProgress(double progress, double influence, const std::string& mode,
+                     double overshoot, bool exiting) {
     progress = ofClamp(progress, 0.0, 1.0);
+    if (mode == "linear") return progress;
     const double smooth = progress * progress * (3.0 - 2.0 * progress);
+    if (mode == "smooth") return smooth;
+    if (mode == "back") {
+        const double strength = std::max(0.0, overshoot);
+        if (exiting) return (strength + 1.0) * progress * progress * progress - strength * progress * progress;
+        const double shifted = progress - 1.0;
+        return 1.0 + (strength + 1.0) * shifted * shifted * shifted + strength * shifted * shifted;
+    }
     return ofLerp(progress, smooth, ofClamp(influence / 100.0, 0.0, 1.0));
 }
 
@@ -58,7 +71,7 @@ TemplateDefinition NativeLowerThird::definition() const {
         {{"left", "Left"}, {"center", "Center"}, {"right", "Right"}},
         "Content", "Horizontal text alignment inside the panel."});
 
-        const LowerThirdMotion defaults;
+    const LowerThirdMotion defaults;
 
     // Keep these ids and defaults portable: the descriptor drives the HTML
     // Essential Controls panel while native hosts can use the same data patch.
@@ -84,6 +97,26 @@ TemplateDefinition NativeLowerThird::definition() const {
         "motion-entry-influence", "Entry Bezier influence", defaults.entryEase.influence, 0.0, 100.0, 1.0, {}, "Motion", "Ease strength for the entrance segment."});
     value.addControl(TypedControlDescriptor<double>{
         "motion-exit-influence", "Exit Bezier influence", defaults.exitEase.influence, 0.0, 100.0, 1.0, {}, "Motion", "Ease strength for the exit segment."});
+    value.addControl(TypedControlDescriptor<std::string>{
+        "motion-entry-easing", "Entry easing", "influence", {}, {}, {},
+        {{"influence", "Influence"}, {"linear", "Linear"}, {"smooth", "Smooth"}, {"back", "Back / overshoot"}},
+        "Motion", "Progress profile used during the entrance."});
+    value.addControl(TypedControlDescriptor<std::string>{
+        "motion-exit-easing", "Exit easing", "influence", {}, {}, {},
+        {{"influence", "Influence"}, {"linear", "Linear"}, {"smooth", "Smooth"}, {"back", "Back / anticipation"}},
+        "Motion", "Progress profile used during the exit."});
+    value.addControl(TypedControlDescriptor<double>{
+        "motion-entry-overshoot", "Entry overshoot", 1.7, 0.0, 3.0, 0.1, {}, "Motion", "Back-easing overshoot strength for the entrance."});
+    value.addControl(TypedControlDescriptor<double>{
+        "motion-exit-overshoot", "Exit anticipation", 1.7, 0.0, 3.0, 0.1, {}, "Motion", "Back-easing anticipation strength for the exit."});
+    value.addControl(TypedControlDescriptor<double>{
+        "motion-entry-scale", "Entry scale", 1.0, 0.1, 3.0, 0.05, {}, "Motion", "Panel scale at the beginning of the entrance."});
+    value.addControl(TypedControlDescriptor<double>{
+        "motion-exit-scale", "Exit scale", 1.0, 0.1, 3.0, 0.05, {}, "Motion", "Panel scale at the end of the exit."});
+    value.addControl(TypedControlDescriptor<double>{
+        "motion-entry-rotation", "Entry rotation", 0.0, -180.0, 180.0, 1.0, {}, "Motion", "Panel rotation in degrees at the beginning of the entrance."});
+    value.addControl(TypedControlDescriptor<double>{
+        "motion-exit-rotation", "Exit rotation", 0.0, -180.0, 180.0, 1.0, {}, "Motion", "Panel rotation in degrees at the end of the exit."});
     value.addControl(TypedControlDescriptor<bool>{
         "motion-fade-in", "Fade in", defaults.fadeIn, {}, {}, {}, {}, "Motion", "Fade opacity during entrance."});
     value.addControl(TypedControlDescriptor<bool>{
@@ -93,6 +126,12 @@ TemplateDefinition NativeLowerThird::definition() const {
         {"in", "Animate in", ActionKind::In, ActionPlayback::Once, 0.0, defaults.entryDuration},
         {"update", "Update data", ActionKind::Update, ActionPlayback::Once, defaults.entryDuration, 0.0},
         {"out", "Animate out", ActionKind::Out, ActionPlayback::Once, defaults.entryDuration + defaults.holdDuration, defaults.exitDuration}
+    };
+    value.actions[0].metadata = {{"durationControlId", "motion-entry-duration"}};
+    value.actions[1].metadata = {{"startControlIds", {"motion-entry-duration"}}};
+    value.actions[2].metadata = {
+        {"startControlIds", {"motion-entry-duration", "motion-hold-duration"}},
+        {"durationControlId", "motion-exit-duration"}
     };
     value.metadata = {{"version", "0.1.0"}, {"source", {{"kind", "code"}, {"factory", "createNativeLowerThird"}}},
                       {"targets", {"native", "wasm", "ograf"}}, {"alpha", true},
@@ -114,17 +153,29 @@ void NativeLowerThird::onDraw(const FrameContext& frame) {
     const double holdDuration = std::max(0.0, numberControl(data, "motion-hold-duration", defaults.holdDuration));
     const double exitDuration = std::max(0.05, numberControl(data, "motion-exit-duration", defaults.exitDuration));
     const double exitStart = entryDuration + holdDuration;
-    const double entryProgress = easedProgress(frame.timeSeconds / entryDuration,
-                                                numberControl(data, "motion-entry-influence", defaults.entryEase.influence));
-    const double exitProgress = easedProgress((frame.timeSeconds - exitStart) / exitDuration,
-                                               numberControl(data, "motion-exit-influence", defaults.exitEase.influence));
+    const double entryProgress = easedProgress(
+        frame.timeSeconds / entryDuration,
+        numberControl(data, "motion-entry-influence", defaults.entryEase.influence),
+        stringControl(data, "motion-entry-easing", "influence"),
+        numberControl(data, "motion-entry-overshoot", 1.7), false);
+    const double exitProgress = easedProgress(
+        (frame.timeSeconds - exitStart) / exitDuration,
+        numberControl(data, "motion-exit-influence", defaults.exitEase.influence),
+        stringControl(data, "motion-exit-easing", "influence"),
+        numberControl(data, "motion-exit-overshoot", 1.7), true);
     glm::vec2 offset{0.0f, 0.0f};
     float alpha = 1.0f;
+    float motionScale = 1.0f;
+    float motionRotation = 0.0f;
     if (frame.timeSeconds < entryDuration) {
         offset = entryDirection * static_cast<float>(numberControl(data, "motion-entry-travel", defaults.entryDistance) * (1.0 - entryProgress));
+        motionScale = static_cast<float>(ofLerp(numberControl(data, "motion-entry-scale", 1.0), 1.0, entryProgress));
+        motionRotation = static_cast<float>(ofLerp(numberControl(data, "motion-entry-rotation", 0.0), 0.0, entryProgress));
         if (booleanControl(data, "motion-fade-in", defaults.fadeIn)) alpha = static_cast<float>(entryProgress);
     } else if (frame.timeSeconds >= exitStart) {
         offset = exitDirection * static_cast<float>(numberControl(data, "motion-exit-travel", defaults.exitDistance) * exitProgress);
+        motionScale = static_cast<float>(ofLerp(1.0, numberControl(data, "motion-exit-scale", 1.0), exitProgress));
+        motionRotation = static_cast<float>(ofLerp(0.0, numberControl(data, "motion-exit-rotation", 0.0), exitProgress));
         if (booleanControl(data, "motion-fade-out", defaults.fadeOut)) alpha = static_cast<float>(1.0 - exitProgress);
     }
     alpha = ofClamp(alpha, 0.0f, 1.0f);
@@ -137,6 +188,10 @@ void NativeLowerThird::onDraw(const FrameContext& frame) {
     ofPushMatrix();
     ofTranslate(offsetX, offsetY);
     ofScale(scale, scale);
+    ofTranslate(position.x + offset.x, position.y + offset.y);
+    ofRotateDeg(motionRotation);
+    ofScale(motionScale, motionScale);
+    ofTranslate(-(position.x + offset.x), -(position.y + offset.y));
     ofPushStyle();
     ofEnableAlphaBlending();
     ofSetColor(8, 24, 56, static_cast<int>(230.0f * alpha));

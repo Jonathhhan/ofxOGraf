@@ -62,7 +62,8 @@
                                      ],
                          "group":  "Content",
                          "description":  "Horizontal text alignment inside the panel."
-                     },                     {
+                     },
+                     {
                          "id":  "motion-position",
                          "label":  "Banderole position",
                          "type":  "vector2",
@@ -184,6 +185,99 @@
                          "description":  "Ease strength for the exit segment."
                      },
                      {
+                         "id":  "motion-entry-easing",
+                         "label":  "Entry easing",
+                         "type":  "string",
+                         "default":  "influence",
+                         "options":  [
+                                         { "value":  "influence", "label":  "Influence" },
+                                         { "value":  "linear", "label":  "Linear" },
+                                         { "value":  "smooth", "label":  "Smooth" },
+                                         { "value":  "back", "label":  "Back / overshoot" }
+                                     ],
+                         "group":  "Motion",
+                         "description":  "Progress profile used during the entrance."
+                     },
+                     {
+                         "id":  "motion-exit-easing",
+                         "label":  "Exit easing",
+                         "type":  "string",
+                         "default":  "influence",
+                         "options":  [
+                                         { "value":  "influence", "label":  "Influence" },
+                                         { "value":  "linear", "label":  "Linear" },
+                                         { "value":  "smooth", "label":  "Smooth" },
+                                         { "value":  "back", "label":  "Back / anticipation" }
+                                     ],
+                         "group":  "Motion",
+                         "description":  "Progress profile used during the exit."
+                     },
+                     {
+                         "id":  "motion-entry-overshoot",
+                         "label":  "Entry overshoot",
+                         "type":  "number",
+                         "default":  1.7,
+                         "min":  0,
+                         "max":  3,
+                         "step":  0.1,
+                         "group":  "Motion",
+                         "description":  "Back-easing overshoot strength for the entrance."
+                     },
+                     {
+                         "id":  "motion-exit-overshoot",
+                         "label":  "Exit anticipation",
+                         "type":  "number",
+                         "default":  1.7,
+                         "min":  0,
+                         "max":  3,
+                         "step":  0.1,
+                         "group":  "Motion",
+                         "description":  "Back-easing anticipation strength for the exit."
+                     },                     {
+                         "id":  "motion-entry-scale",
+                         "label":  "Entry scale",
+                         "type":  "number",
+                         "default":  1,
+                         "min":  0.1,
+                         "max":  3,
+                         "step":  0.05,
+                         "group":  "Motion",
+                         "description":  "Panel scale at the beginning of the entrance."
+                     },
+                     {
+                         "id":  "motion-exit-scale",
+                         "label":  "Exit scale",
+                         "type":  "number",
+                         "default":  1,
+                         "min":  0.1,
+                         "max":  3,
+                         "step":  0.05,
+                         "group":  "Motion",
+                         "description":  "Panel scale at the end of the exit."
+                     },
+                     {
+                         "id":  "motion-entry-rotation",
+                         "label":  "Entry rotation",
+                         "type":  "number",
+                         "default":  0,
+                         "min":  -180,
+                         "max":  180,
+                         "step":  1,
+                         "group":  "Motion",
+                         "description":  "Panel rotation in degrees at the beginning of the entrance."
+                     },
+                     {
+                         "id":  "motion-exit-rotation",
+                         "label":  "Exit rotation",
+                         "type":  "number",
+                         "default":  0,
+                         "min":  -180,
+                         "max":  180,
+                         "step":  1,
+                         "group":  "Motion",
+                         "description":  "Panel rotation in degrees at the end of the exit."
+                     },
+                     {
                          "id":  "motion-fade-in",
                          "label":  "Fade in",
                          "type":  "boolean",
@@ -210,7 +304,10 @@
                         "kind":  "in",
                         "playback":  "once",
                         "start":  0,
-                        "duration":  0.65
+                        "duration":  0.65,
+                        "metadata":  {
+                                         "durationControlId":  "motion-entry-duration"
+                                     }
                     },
                     {
                         "id":  "update",
@@ -218,7 +315,12 @@
                         "kind":  "update",
                         "playback":  "once",
                         "start":  0.65,
-                        "duration":  0
+                        "duration":  0,
+                        "metadata":  {
+                                         "startControlIds":  [
+                                                                 "motion-entry-duration"
+                                                             ]
+                                     }
                     },
                     {
                         "id":  "out",
@@ -226,7 +328,14 @@
                         "kind":  "out",
                         "playback":  "once",
                         "start":  4.1,
-                        "duration":  0.9
+                        "duration":  0.9,
+                        "metadata":  {
+                                         "startControlIds":  [
+                                                                 "motion-entry-duration",
+                                                                 "motion-hold-duration"
+                                                             ],
+                                         "durationControlId":  "motion-exit-duration"
+                                     }
                     }
                 ],
     "metadata":  {

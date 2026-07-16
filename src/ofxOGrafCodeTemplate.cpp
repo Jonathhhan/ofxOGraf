@@ -356,7 +356,7 @@ bool CodeTemplateHost::play(const std::string& actionId) {
     if (!actionId.empty() && !action) { errorMessage = "Unknown action: " + actionId; return false; }
 
     currentActionId = action ? action->id : std::string();
-    if (action) currentSeconds = action->startSeconds;
+    if (action) currentSeconds = actionStartSeconds(*action);
     else if (currentSeconds >= templateDefinition.durationSeconds) currentSeconds = 0.0;
     hostState = CodeTemplateState::Playing;
     try {
@@ -378,8 +378,8 @@ bool CodeTemplateHost::update(double deltaSeconds) {
     if (hostState == CodeTemplateState::Playing) {
         const ActionDescriptor* action = currentAction();
         currentSeconds += deltaSeconds;
-        const double start = action ? action->startSeconds : 0.0;
-        const double end = action ? action->endSeconds() : templateDefinition.durationSeconds;
+        const double start = action ? actionStartSeconds(*action) : 0.0;
+        const double end = action ? start + actionDurationSeconds(*action) : templateDefinition.durationSeconds;
         const ActionPlayback playback = action ? action->playback : ActionPlayback::Once;
         if (currentSeconds >= end) {
             if (playback == ActionPlayback::Loop && end > start) {
@@ -507,6 +507,26 @@ const ActionDescriptor* CodeTemplateHost::findAction(const std::string& id) cons
     return found == templateDefinition.actions.end() ? nullptr : &*found;
 }
 
+double CodeTemplateHost::actionStartSeconds(const ActionDescriptor& action) const {
+    const auto controlIds = action.metadata.find("startControlIds");
+    if (controlIds == action.metadata.end() || !controlIds->is_array()) return action.startSeconds;
+    double result = 0.0;
+    for (const auto& idValue : *controlIds) {
+        if (!idValue.is_string()) return action.startSeconds;
+        const auto value = controlData.find(idValue.get<std::string>());
+        if (value == controlData.end() || !value->is_number()) return action.startSeconds;
+        result += std::max(0.0, value->get<double>());
+    }
+    return result;
+}
+
+double CodeTemplateHost::actionDurationSeconds(const ActionDescriptor& action) const {
+    const std::string controlId = action.metadata.value("durationControlId", "");
+    if (controlId.empty()) return action.durationSeconds;
+    const auto value = controlData.find(controlId);
+    return value != controlData.end() && value->is_number()
+        ? std::max(0.0, value->get<double>()) : action.durationSeconds;
+}
 FrameContext CodeTemplateHost::makeFrame(double deltaSeconds, bool seeking) const {
     FrameContext frame;
     frame.timeSeconds = currentSeconds;
@@ -518,9 +538,11 @@ FrameContext CodeTemplateHost::makeFrame(double deltaSeconds, bool seeking) cons
     frame.playing = hostState == CodeTemplateState::Playing;
     frame.controlData = &controlData;
     if (const auto* action = currentAction()) {
-        frame.actionTimeSeconds = ofClamp(currentSeconds - action->startSeconds, 0.0, action->durationSeconds);
-        frame.normalizedActionTime = action->durationSeconds > 0.0
-            ? frame.actionTimeSeconds / action->durationSeconds : 1.0;
+        const double start = actionStartSeconds(*action);
+        const double duration = actionDurationSeconds(*action);
+        frame.actionTimeSeconds = ofClamp(currentSeconds - start, 0.0, duration);
+        frame.normalizedActionTime = duration > 0.0
+            ? frame.actionTimeSeconds / duration : 1.0;
     } else {
         frame.actionTimeSeconds = currentSeconds;
         frame.normalizedActionTime = templateDefinition.durationSeconds > 0.0

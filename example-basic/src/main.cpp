@@ -2,6 +2,7 @@
 #include "ofApp.h"
 #include "../../examples/native-authoring/NativeLowerThird.h"
 #include <array>
+#include <cmath>
 #include <iostream>
 #include <set>
 #include <string>
@@ -185,12 +186,44 @@ int runCodeTemplateControlsContract() {
         std::cerr << "LOAD FAILED " << host.lastError() << std::endl;
         return 1;
     }
-    const bool validAccepted = host.updateData({{"motion-entry-travel", 1200.0}});
+    const bool validAccepted = host.updateData({
+        {"motion-entry-travel", 1200.0},
+        {"motion-entry-duration", 1.2},
+        {"motion-entry-easing", "back"},
+        {"motion-entry-overshoot", 2.1},
+        {"motion-entry-scale", 0.8},
+        {"motion-entry-rotation", -12.0},
+        {"motion-exit-scale", 1.15},
+        {"motion-exit-rotation", 8.0}
+    });
     const ofJson validState = host.data();
+    const bool dynamicInStarted = host.play("in");
+    const bool firstAdvance = host.update(0.7);
+    const bool dynamicInStillPlaying = firstAdvance && host.state() == ofxOGraf::CodeTemplateState::Playing;
+    const bool secondAdvance = host.update(0.5);
+    const bool dynamicInCompleted = secondAdvance && host.state() == ofxOGraf::CodeTemplateState::Stopped;
+    const bool dynamicOutStarted = host.play("out") &&
+        std::abs(host.timeSeconds() - (1.2 + 3.45)) < 1e-9;
+    host.stop();
     const bool rangeAccepted = host.updateData({{"motion-entry-travel", 5000.0}});
     const std::string rangeError = host.lastError();
     const bool rangeRejected = !rangeAccepted &&
         rangeError.find("/motion-entry-travel: value is above maximum") != std::string::npos &&
+        host.data() == validState;
+    const bool scaleAccepted = host.updateData({{"motion-entry-scale", 4.0}});
+    const std::string scaleError = host.lastError();
+    const bool scaleRejected = !scaleAccepted &&
+        scaleError.find("/motion-entry-scale: value is above maximum") != std::string::npos &&
+        host.data() == validState;
+    const bool easingAccepted = host.updateData({{"motion-entry-easing", "spring"}});
+    const std::string easingError = host.lastError();
+    const bool easingRejected = !easingAccepted &&
+        easingError.find("/motion-entry-easing: value is not an allowed option") != std::string::npos &&
+        host.data() == validState;
+    const bool overshootAccepted = host.updateData({{"motion-entry-overshoot", 4.0}});
+    const std::string overshootError = host.lastError();
+    const bool overshootRejected = !overshootAccepted &&
+        overshootError.find("/motion-entry-overshoot: value is above maximum") != std::string::npos &&
         host.data() == validState;
     const bool optionAccepted = host.updateData({{"alignment", "diagonal"}});
     const std::string optionError = host.lastError();
@@ -201,15 +234,21 @@ int runCodeTemplateControlsContract() {
     const std::string colorError = host.lastError();
     const bool colorRejected = !colorAccepted &&
         colorError.find("/accent-color: color channels") != std::string::npos &&
-        host.data() == validState;    const bool passed = validAccepted && rangeRejected && optionRejected && colorRejected;
+        host.data() == validState;
+    const bool dynamicTiming = dynamicInStarted && dynamicInStillPlaying && dynamicInCompleted && dynamicOutStarted;
+    const bool passed = validAccepted && dynamicTiming && rangeRejected && scaleRejected &&
+        easingRejected && overshootRejected && optionRejected && colorRejected;
     std::cout << (passed ? "PASS" : "FAIL") << " code-template controls"
               << " valid=" << validAccepted
+              << " timing=" << dynamicTiming
               << " range=" << rangeRejected << " [" << rangeError << "]"
+              << " scale=" << scaleRejected << " [" << scaleError << "]"
+              << " easing=" << easingRejected << " [" << easingError << "]"
+              << " overshoot=" << overshootRejected << " [" << overshootError << "]"
               << " option=" << optionRejected << " [" << optionError << "]"
               << " color=" << colorRejected << " [" << colorError << "]" << std::endl;
     return passed ? 0 : 1;
 }
-
 #endif
 static std::shared_ptr<ofApp> appInstance;
 static bool codeTemplateActive = false;

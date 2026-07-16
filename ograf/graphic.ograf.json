@@ -64,7 +64,8 @@
                                                                      "right"
                                                                  ],
                                                         "default":  "left"
-                                                    },                                      "motion-position":  {
+                                                    },
+                                      "motion-position":  {
                                                               "type":  "array",
                                                               "title":  "Banderole position",
                                                               "items":  {
@@ -165,6 +166,59 @@
                                                                     "maximum":  100,
                                                                     "default":  0
                                                                 },
+                                      "motion-entry-easing":  {
+                                                                    "type":  "string",
+                                                                    "title":  "Entry easing",
+                                                                    "enum":  [ "influence", "linear", "smooth", "back" ],
+                                                                    "default":  "influence"
+                                                                },
+                                      "motion-exit-easing":  {
+                                                                   "type":  "string",
+                                                                   "title":  "Exit easing",
+                                                                   "enum":  [ "influence", "linear", "smooth", "back" ],
+                                                                   "default":  "influence"
+                                                               },
+                                      "motion-entry-overshoot":  {
+                                                                       "type":  "number",
+                                                                       "title":  "Entry overshoot",
+                                                                       "minimum":  0,
+                                                                       "maximum":  3,
+                                                                       "default":  1.7
+                                                                   },
+                                      "motion-exit-overshoot":  {
+                                                                      "type":  "number",
+                                                                      "title":  "Exit anticipation",
+                                                                      "minimum":  0,
+                                                                      "maximum":  3,
+                                                                      "default":  1.7
+                                                                  },                                      "motion-entry-scale":  {
+                                                                   "type":  "number",
+                                                                   "title":  "Entry scale",
+                                                                   "minimum":  0.1,
+                                                                   "maximum":  3,
+                                                                   "default":  1
+                                                               },
+                                      "motion-exit-scale":  {
+                                                                  "type":  "number",
+                                                                  "title":  "Exit scale",
+                                                                  "minimum":  0.1,
+                                                                  "maximum":  3,
+                                                                  "default":  1
+                                                              },
+                                      "motion-entry-rotation":  {
+                                                                      "type":  "number",
+                                                                      "title":  "Entry rotation",
+                                                                      "minimum":  -180,
+                                                                      "maximum":  180,
+                                                                      "default":  0
+                                                                  },
+                                      "motion-exit-rotation":  {
+                                                                     "type":  "number",
+                                                                     "title":  "Exit rotation",
+                                                                     "minimum":  -180,
+                                                                     "maximum":  180,
+                                                                     "default":  0
+                                                                 },
                                       "motion-fade-in":  {
                                                              "type":  "boolean",
                                                              "title":  "Fade in",
