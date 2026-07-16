@@ -32,7 +32,13 @@ if ($shellPaths.Count -gt 0) {
 }
 $env:PATH = "$emscriptenDir;$EmsdkRoot;$env:PATH"
 if (![string]::IsNullOrWhiteSpace($env:OF_ROOT)) {
-    $env:OF_ROOT = $env:OF_ROOT -replace '\\', '/'
+    $normalizedOfRoot = $env:OF_ROOT -replace '\\', '/'
+    if ($normalizedOfRoot -match '^([A-Za-z]):/(.+)$') {
+        $drive = $matches[1].ToLowerInvariant()
+        $rest = $matches[2]
+        $normalizedOfRoot = "/$drive/$rest"
+    }
+    $env:OF_ROOT = $normalizedOfRoot
 }
 Set-Location $projectDir
 # GNU Make invokes the MSYS shell, which otherwise strips the backslashes from
