@@ -51,6 +51,8 @@ jobs:
           node tests/package-contract.mjs
           node tests/package-integrity-contract.mjs
           node tests/scene-migration-contract.mjs
+          node tests/preflight-contract.mjs
+          node tests/structured-controls-contract.mjs
           node --check ograf/OfBroadcastGraphic.js
           node --check ograf/EssentialControls.js
 
