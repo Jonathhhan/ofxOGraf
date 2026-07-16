@@ -63,8 +63,8 @@ jobs:
     name: Emscripten build
     runs-on: ubuntu-22.04
     env:
-      OF_VERSION: '0.12.0'
-      # emsdk version tested with openFrameworks 0.12.0.
+      OF_VERSION: '0.12.1'
+      # emsdk version tested with openFrameworks 0.12.1.
       EMSDK_VERSION: '3.1.56'
       OF_ROOT: /opt/openframeworks
 
@@ -96,10 +96,10 @@ jobs:
         if: steps.of-cache.outputs.cache-hit != 'true'
         run: |
           wget -q \
-            "https://github.com/openframeworks/openFrameworks/releases/download/${{ env.OF_VERSION }}/of_v${{ env.OF_VERSION }}_linux64gcc6_release.tar.gz" \
+            "https://github.com/openframeworks/openFrameworks/releases/download/${{ env.OF_VERSION }}/of_v${{ env.OF_VERSION }}_linux64_gcc6_release.tar.gz" \
             -O /tmp/of.tar.gz
           tar -xzf /tmp/of.tar.gz -C /tmp
-          mv "/tmp/of_v${{ env.OF_VERSION }}_linux64gcc6_release" "${{ env.OF_ROOT }}"
+          mv "/tmp/of_v${{ env.OF_VERSION }}_linux64_gcc6_release" "${{ env.OF_ROOT }}"
 
       - name: Install openFrameworks Linux dependencies
         if: steps.of-cache.outputs.cache-hit != 'true'
