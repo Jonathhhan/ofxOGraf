@@ -91,11 +91,8 @@ jobs:
           ASSET_JSON=$(curl -sf \
             -H "Authorization: token ${{ github.token }}" \
             "https://api.github.com/repos/openframeworks/openFrameworks/releases/tags/nightly")
-          ASSET_URL=$(echo "$ASSET_JSON" | python3 -c "
-import sys, json
-assets = json.load(sys.stdin)['assets']
-print(next(a['browser_download_url'] for a in assets if 'linux64_gcc6' in a['name']))
-")
+          ASSET_URL=$(echo "$ASSET_JSON" | python3 -c \
+            "import sys,json; assets=json.load(sys.stdin)['assets']; print(next(a['browser_download_url'] for a in assets if 'linux64_gcc6' in a['name']))")
           OF_DATE=$(echo "$ASSET_URL" | grep -oP '\d{8}')
           echo "OF_ASSET_URL=$ASSET_URL"           >> "$GITHUB_ENV"
           echo "OF_DATE=$OF_DATE"                  >> "$GITHUB_ENV"
