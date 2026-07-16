@@ -137,7 +137,44 @@ jobs:
           ls -lh "$DIST_DIR"
 
       # ------------------------------------------------------------------
-      # 5. Upload ograf/ as the GitHub Pages artifact
+      # 5. Smoke test with emrun
+      #    emrun serves the staged ograf/ directory on localhost and
+      #    verifies that the WASM, the JS module, and the index page are
+      #    all reachable before the artifact is uploaded.
+      # ------------------------------------------------------------------
+      - name: Smoke test with emrun
+        working-directory: ${{ github.workspace }}/ograf
+        run: |
+          # Start emrun in the background (--no_browser avoids launching a
+          # desktop browser; emrun is already on PATH after setup-emsdk).
+          emrun --no_browser --port 8080 index.html &
+          EMRUN_PID=$!
+
+          # Poll until the server is up (up to 15 seconds).
+          for i in $(seq 1 15); do
+            sleep 1
+            if curl -sf http://localhost:8080/ > /dev/null 2>&1; then
+              echo "emrun server is up after ${i}s"
+              break
+            fi
+          done
+
+          # Verify the key files are served without error.
+          echo "Checking index.html..."
+          curl -sf http://localhost:8080/ | grep -q "of-broadcast-graphic"
+
+          echo "Checking ofxOGraf.js..."
+          curl -sf http://localhost:8080/dist/ofxOGraf.js | head -c 128 | grep -q "createOfxOGrafModule"
+
+          echo "Checking ofxOGraf.wasm (binary, check magic bytes)..."
+          curl -sf http://localhost:8080/dist/ofxOGraf.wasm --output /tmp/smoke.wasm
+          xxd /tmp/smoke.wasm | head -1 | grep -q "0061 736d"
+
+          echo "Smoke test passed."
+          kill "$EMRUN_PID" 2>/dev/null || true
+
+      # ------------------------------------------------------------------
+      # 6. Upload ograf/ as the GitHub Pages artifact
       # ------------------------------------------------------------------
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
