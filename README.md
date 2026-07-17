@@ -88,6 +88,22 @@ scripts\build-ograf.ps1
 
 This keeps the classic localhost preview separate from the OGraf ES-module build, stages `ograf/dist/ofxOGraf.{js,wasm,data}`, and creates `build/ofxOGraf-graphic.zip`. The OGraf module factory is `createOfxOGrafModule`.
 
+To compile the openFrameworks examples for browser preview:
+
+```powershell
+scripts\build-emscripten-examples.ps1
+```
+
+This builds `example-basic`, `example-tutorials`, and `example-imgui` into `bin\em\...` with `index.html`, `index.js`, and `index.wasm` outputs.
+
+To build and host a specific example locally:
+
+```powershell
+scripts\build-emscripten-examples.ps1 -Examples example-tutorials -Serve -ServeExample example-tutorials -Port 8080
+```
+
+Then open `http://localhost:8080/` in your browser.
+
 ## OGraf package
 
 Package the contents of `ograf/`, including the generated `dist` artifacts and every scene asset. Serve the directory over HTTP for local preview; ES modules and WASM generally do not work reliably from `file://`.
