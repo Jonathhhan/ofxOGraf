@@ -577,7 +577,13 @@ bool CodeTemplateHost::fail(const std::string& message) {
 
 void CodeTemplateHost::completePlayback() {
     hostState = CodeTemplateState::Stopped;
-    instance->onStop(true, makeFrame(0.0, false));
+    try {
+        instance->onStop(true, makeFrame(0.0, false));
+    } catch (const std::exception& error) {
+        fail(std::string("Template stop callback failed: ") + error.what());
+    } catch (...) {
+        fail("Template stop callback failed with an unknown exception");
+    }
 }
 
 } // namespace ofxOGraf

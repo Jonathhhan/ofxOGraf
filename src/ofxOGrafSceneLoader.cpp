@@ -1,7 +1,6 @@
 #include "ofxOGrafSceneLoader.h"
 #include "ofFileUtils.h"
 #include <stdexcept>
-#include <algorithm>
 #include <sstream>
 #include <unordered_map>
 
