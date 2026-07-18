@@ -137,8 +137,8 @@ jobs:
 
       - name: Build openFrameworks Emscripten core
         if: steps.of-cache.outputs.cache-hit != 'true'
-        working-directory: ${{ env.OF_ROOT }}/libs/openFrameworksCompiled/project/emscripten
-        run: emmake make -j4
+        working-directory: ${{ env.OF_ROOT }}/libs/openFrameworksCompiled/project
+        run: emmake make -j4 PLATFORM_OS=emscripten
 
       # ------------------------------------------------------------------
       # 4. Place addon and compile example-basic for OGraf (ESM + WASM)
