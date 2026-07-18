@@ -34,23 +34,17 @@
       of-essential-controls { height: auto; border: 0; border-top: 1px solid #30343d; }
     }
   </style>
-  <script type="importmap">
-    {
-      "imports": {
-        "./dist/ofxOGraf.js": "./dist/ofxOGraf.js?v=20260718-3"
-      }
-    }
-  </script>
 </head>
 <body>
   <main>
-    <section class="stage"><of-broadcast-graphic id="graphic" code-template="native-lower-third" template-definition="./template-definition.json?v=20260718-3"></of-broadcast-graphic></section>
+    <section class="stage"><of-broadcast-graphic id="graphic" code-template="native-lower-third" template-definition="./template-definition.json?v=20260719-4"></of-broadcast-graphic></section>
     <of-essential-controls for="graphic"></of-essential-controls>
     <output id="status" role="status" aria-live="polite">Loading openFrameworks/WASM…</output>
   </main>
   <script type="module">
     const status = document.querySelector("#status");
-    const buildVersion = "20260718-3";
+    const buildVersion = "20260719-4";
+    let stage = "startup";
 
     function showStatus(message, error = false) {
       status.textContent = message;
@@ -59,25 +53,31 @@
       else console.info(message);
     }
 
+    function errorText(error) {
+      return error?.stack || `${error?.name || "Error"}: ${error?.message || String(error)}`;
+    }
+
     window.addEventListener("error", event => {
-      showStatus(`Browser error: ${event.message}\n${event.filename || ""}:${event.lineno || 0}`, true);
+      showStatus(`Build ${buildVersion}\nStage: ${stage}\nBrowser error: ${event.message}\n${event.filename || "unknown file"}:${event.lineno || 0}:${event.colno || 0}`, true);
     });
 
     window.addEventListener("unhandledrejection", event => {
-      const reason = event.reason?.stack || event.reason?.message || String(event.reason);
-      showStatus(`Unhandled promise rejection:\n${reason}`, true);
+      showStatus(`Build ${buildVersion}\nStage: ${stage}\nUnhandled rejection:\n${errorText(event.reason)}`, true);
     });
 
     try {
-      const [{ default: OfBroadcastGraphic }] = await Promise.all([
-        import(`./OfBroadcastGraphic.js?v=${buildVersion}`),
-        import(`./EssentialControls.js?v=${buildVersion}`)
-      ]);
+      stage = "import EssentialControls.js";
+      await import(`./EssentialControls.js?v=${buildVersion}`);
 
+      stage = "import OfBroadcastGraphic.js and its dependencies";
+      const { default: OfBroadcastGraphic } = await import(`./OfBroadcastGraphic.js?v=${buildVersion}`);
+
+      stage = "register custom element";
       if (!customElements.get("of-broadcast-graphic")) {
         customElements.define("of-broadcast-graphic", OfBroadcastGraphic);
       }
 
+      stage = "load template JSON and initialize Emscripten";
       const graphic = document.querySelector("#graphic");
       const loaded = await graphic.load({
         data: {
@@ -97,15 +97,17 @@
         throw new Error(`Preview load failed (${loaded.statusCode}): ${loaded.statusMessage}`);
       }
 
+      stage = "play named action";
       const played = await graphic.playNamedAction({ actionId: "in" });
       if (played.statusCode !== 200) {
         throw new Error(`Preview action failed (${played.statusCode}): ${played.statusMessage}`);
       }
 
+      stage = "ready";
       const diagnostics = graphic.module?.renderFrameDiagnostics?.();
       showStatus(diagnostics ? `Preview ready\nBuild ${buildVersion}\n${diagnostics}` : `Preview ready\nBuild ${buildVersion}`);
     } catch (error) {
-      showStatus(`Build ${buildVersion}\n${error?.stack || error?.message || String(error)}`, true);
+      showStatus(`Build ${buildVersion}\nStage: ${stage}\n${errorText(error)}`, true);
     }
   </script>
 </body>
