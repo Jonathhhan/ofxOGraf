@@ -121,6 +121,16 @@ jobs:
         if: steps.of-cache.outputs.cache-hit != 'true'
         run: |
           sed -i 's/\<xorgproto\>/x11proto-dev/g' "${{ env.OF_ROOT }}/scripts/linux/debian/install_dependencies.sh"
+
+      - name: Repair Ubuntu package state
+        if: steps.of-cache.outputs.cache-hit != 'true'
+        run: |
+          set -euxo pipefail
+          sudo apt-get update
+          sudo dpkg --configure -a
+          sudo apt-get install -y --fix-broken
+          sudo apt-get install -y libunwind-dev
+
       - name: Install openFrameworks Linux dependencies
         if: steps.of-cache.outputs.cache-hit != 'true'
         run: sudo "${{ env.OF_ROOT }}/scripts/linux/debian/install_dependencies.sh"
