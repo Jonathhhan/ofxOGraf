@@ -6,11 +6,26 @@
   <title>ofxOGraf Essential Graphics preview</title>
   <style>
     * { box-sizing: border-box; }
-    html, body { margin: 0; min-height: 100%; background: #101216; }
+    html, body { margin: 0; min-height: 100%; background: #101216; color: #fff; }
     main { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) 320px; }
     .stage { display: grid; place-items: center; min-width: 0; padding: 24px; overflow: hidden; }
-    of-broadcast-graphic { display: block; width: min(100%, 160vh); aspect-ratio: 16 / 9; background: transparent; box-shadow: 0 18px 70px #0008; }
+    of-broadcast-graphic { display: block; width: min(100%, 160vh); aspect-ratio: 16 / 9; background: #181b21; box-shadow: 0 18px 70px #0008; }
     of-essential-controls { height: 100vh; overflow: auto; border-left: 1px solid #30343d; }
+    #status {
+      position: fixed;
+      left: 12px;
+      bottom: 12px;
+      z-index: 1000;
+      max-width: calc(100vw - 24px);
+      padding: 8px 12px;
+      border-radius: 5px;
+      color: #fff;
+      background: #20242cdd;
+      font: 13px/1.4 system-ui, sans-serif;
+      white-space: pre-wrap;
+      overflow-wrap: anywhere;
+    }
+    #status[data-error="true"] { background: #9e1b32ee; }
     @media (max-width: 800px) {
       main { grid-template-columns: 1fr; }
       of-essential-controls { height: auto; border: 0; border-top: 1px solid #30343d; }
@@ -21,28 +36,65 @@
   <main>
     <section class="stage"><of-broadcast-graphic id="graphic" code-template="native-lower-third" template-definition="./template-definition.json"></of-broadcast-graphic></section>
     <of-essential-controls for="graphic"></of-essential-controls>
-    <output id="status" role="status" aria-live="polite"></output>
+    <output id="status" role="status" aria-live="polite">Loading openFrameworks/WASM…</output>
   </main>
   <script type="module">
-    import OfBroadcastGraphic from "./OfBroadcastGraphic.js";
-    import "./EssentialControls.js";
-    customElements.define("of-broadcast-graphic", OfBroadcastGraphic);
-    const graphic = document.querySelector("#graphic");
     const status = document.querySelector("#status");
-    const loaded = await graphic.load({
-      data: { headline: "ofxOGraf", subtitle: "Broadcast graphics", "accent-color": [1, 0.8, 0, 1] },
-      renderType: "realtime",
-      renderCharacteristics: { resolution: { width: 1920, height: 1080 }, frameRate: 50 }
+
+    function showStatus(message, error = false) {
+      status.textContent = message;
+      status.dataset.error = String(error);
+      if (error) console.error(message);
+      else console.info(message);
+    }
+
+    window.addEventListener("error", event => {
+      showStatus(`Browser error: ${event.message}\n${event.filename || ""}:${event.lineno || 0}`, true);
     });
-    if (loaded.statusCode !== 200) {
-      status.textContent = `Preview failed (${loaded.statusCode}): ${loaded.statusMessage}`;
-      console.error(status.textContent);
-    } else {
-      // Hold the preview on an editorially useful frame. Awaiting playAction()
-      // waits for the whole segment, which naturally leaves a fade-out lower
-      // third invisible at the end of its animation.
-      await graphic.goToTime({ timestamp: 1000 });
-      status.textContent = "Preview ready";
+
+    window.addEventListener("unhandledrejection", event => {
+      const reason = event.reason?.stack || event.reason?.message || String(event.reason);
+      showStatus(`Unhandled promise rejection:\n${reason}`, true);
+    });
+
+    try {
+      const [{ default: OfBroadcastGraphic }] = await Promise.all([
+        import("./OfBroadcastGraphic.js"),
+        import("./EssentialControls.js")
+      ]);
+
+      if (!customElements.get("of-broadcast-graphic")) {
+        customElements.define("of-broadcast-graphic", OfBroadcastGraphic);
+      }
+
+      const graphic = document.querySelector("#graphic");
+      const loaded = await graphic.load({
+        data: {
+          headline: "ofxOGraf",
+          subtitle: "Broadcast graphics",
+          "accent-color": [1, 0.8, 0, 1]
+        },
+        renderType: "realtime",
+        renderCharacteristics: {
+          resolution: { width: 1920, height: 1080 },
+          frameRate: 50,
+          capabilities: ["webgl2", "alpha-canvas"]
+        }
+      });
+
+      if (loaded.statusCode !== 200) {
+        throw new Error(`Preview load failed (${loaded.statusCode}): ${loaded.statusMessage}`);
+      }
+
+      const played = await graphic.playNamedAction({ actionId: "in" });
+      if (played.statusCode !== 200) {
+        throw new Error(`Preview action failed (${played.statusCode}): ${played.statusMessage}`);
+      }
+
+      const diagnostics = graphic.module?.renderFrameDiagnostics?.();
+      showStatus(diagnostics ? `Preview ready\n${diagnostics}` : "Preview ready");
+    } catch (error) {
+      showStatus(error?.stack || error?.message || String(error), true);
     }
   </script>
 </body>
