@@ -18,15 +18,11 @@ permissions:
   pages: write
   id-token: write
 
-# Only one Pages deployment at a time; do not cancel in-progress deploys.
 concurrency:
   group: pages
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
-  # -----------------------------------------------------------------------
-  # Fast job: Node.js contract tests — no C++ compilation required.
-  # -----------------------------------------------------------------------
   test:
     name: JavaScript contract tests
     runs-on: ubuntu-latest
@@ -56,36 +52,25 @@ jobs:
           node --check ograf/OfBroadcastGraphic.js
           node --check ograf/EssentialControls.js
 
-  # -----------------------------------------------------------------------
-  # Emscripten build — produces ofxOGraf.{js,wasm} for the browser.
-  # -----------------------------------------------------------------------
   build:
     name: Emscripten build
     runs-on: ubuntu-22.04
     env:
-      # emsdk version matching openFrameworks nightly CI.
       EMSDK_VERSION: '5.0.7'
       OF_ROOT: /opt/openframeworks
 
     steps:
       - uses: actions/checkout@v4
 
-      # ------------------------------------------------------------------
-      # 1. Emscripten SDK
-      # ------------------------------------------------------------------
+      - name: Configure GitHub Pages
+        uses: actions/configure-pages@v5
+
       - name: Set up emsdk
         uses: mymindstorm/setup-emsdk@v14
         with:
           version: ${{ env.EMSDK_VERSION }}
           actions-cache-folder: emsdk-cache
 
-      # ------------------------------------------------------------------
-      # 2. Resolve the nightly release asset URL and date stamp.
-      #    The nightly tarball name changes daily (e.g.
-      #    of_v20260716_linux64_gcc6_release.tar.gz), so we query the
-      #    GitHub API once to get the exact URL and use the date as the
-      #    cache key so the cache busts automatically each new nightly.
-      # ------------------------------------------------------------------
       - name: Resolve openFrameworks nightly asset
         run: |
           ASSET_JSON=$(curl -sf \
@@ -94,15 +79,10 @@ jobs:
           ASSET_URL=$(echo "$ASSET_JSON" | python3 -c \
             "import sys,json; assets=json.load(sys.stdin)['assets']; print(next(a['browser_download_url'] for a in assets if 'linux64_gcc6' in a['name']))")
           OF_DATE=$(echo "$ASSET_URL" | grep -oP '\d{8}')
-          echo "OF_ASSET_URL=$ASSET_URL"           >> "$GITHUB_ENV"
-          echo "OF_DATE=$OF_DATE"                  >> "$GITHUB_ENV"
+          echo "OF_ASSET_URL=$ASSET_URL" >> "$GITHUB_ENV"
+          echo "OF_DATE=$OF_DATE" >> "$GITHUB_ENV"
           echo "OF_DIRNAME=of_v${OF_DATE}_linux64_gcc6_release" >> "$GITHUB_ENV"
 
-      # ------------------------------------------------------------------
-      # 3. openFrameworks (download + Linux dependencies + Emscripten core)
-      #    The entire /opt/openframeworks tree is cached under a key that
-      #    includes the nightly date so it busts once per new nightly.
-      # ------------------------------------------------------------------
       - name: Cache openFrameworks installation
         uses: actions/cache@v4
         id: of-cache
@@ -140,87 +120,71 @@ jobs:
         working-directory: ${{ env.OF_ROOT }}/libs/openFrameworksCompiled/project
         run: emmake make -j4 PLATFORM_OS=emscripten
 
-      # ------------------------------------------------------------------
-      # 4. Place addon and compile example-basic for OGraf (ESM + WASM)
-      # ------------------------------------------------------------------
       - name: Place addon into OF addons tree
         run: |
+          rm -rf "${{ env.OF_ROOT }}/addons/ofxOGraf"
           mkdir -p "${{ env.OF_ROOT }}/addons/ofxOGraf"
-          cp -r "${{ github.workspace }}/." "${{ env.OF_ROOT }}/addons/ofxOGraf/"
+          cp -a "${{ github.workspace }}/." "${{ env.OF_ROOT }}/addons/ofxOGraf/"
 
       - name: Build example-basic (OGraf Emscripten target)
         working-directory: ${{ env.OF_ROOT }}/addons/ofxOGraf/example-basic
         run: emmake make -j4 APPNAME=ofxOGraf OGRAF_BUILD=1 PLATFORM_OS=emscripten
 
-      # ------------------------------------------------------------------
-      # 5. Stage WASM artifacts into ograf/dist/ for Pages deployment
-      # ------------------------------------------------------------------
-      - name: Stage WASM artifacts
+      - name: Stage and validate WASM artifacts
         run: |
+          set -euxo pipefail
           ARTIFACT_DIR="${{ env.OF_ROOT }}/addons/ofxOGraf/example-basic/bin/em/ofxOGraf"
           DIST_DIR="${{ github.workspace }}/ograf/dist"
           mkdir -p "$DIST_DIR"
-          cp "$ARTIFACT_DIR/index.js"   "$DIST_DIR/ofxOGraf.js"
+          cp "$ARTIFACT_DIR/index.js" "$DIST_DIR/ofxOGraf.js"
           cp "$ARTIFACT_DIR/index.wasm" "$DIST_DIR/ofxOGraf.wasm"
           if [ -f "$ARTIFACT_DIR/index.data" ]; then
             cp "$ARTIFACT_DIR/index.data" "$DIST_DIR/ofxOGraf.data"
           fi
-          echo "Staged artifacts:"
+
+          test -s "$DIST_DIR/ofxOGraf.js"
+          test -s "$DIST_DIR/ofxOGraf.wasm"
+          grep -q "createOfxOGrafModule" "$DIST_DIR/ofxOGraf.js"
+          xxd -l 4 -p "$DIST_DIR/ofxOGraf.wasm" | grep -q '^0061736d$'
           ls -lh "$DIST_DIR"
 
-      # ------------------------------------------------------------------
-      # 6. Smoke test with emrun
-      #    emrun serves the staged ograf/ directory on localhost and
-      #    verifies that the WASM, the JS module, and the index page are
-      #    all reachable before the artifact is uploaded.
-      # ------------------------------------------------------------------
-      - name: Smoke test with emrun
+      - name: Smoke test static payload with emrun
         working-directory: ${{ github.workspace }}/ograf
         run: |
-          # Start emrun in the background (--no_browser avoids launching a
-          # desktop browser; emrun is already on PATH after setup-emsdk).
-          emrun --no_browser --port 8080 index.html &
+          set -euxo pipefail
+          emrun --no_browser --port 8080 index.html > /tmp/emrun.log 2>&1 &
           EMRUN_PID=$!
+          trap 'kill "$EMRUN_PID" 2>/dev/null || true' EXIT
 
-          # Poll until the server is up (up to 15 seconds).
-          for i in $(seq 1 15); do
-            sleep 1
-            if curl -sf http://localhost:8080/ > /dev/null 2>&1; then
-              echo "emrun server is up after ${i}s"
+          READY=0
+          for i in $(seq 1 20); do
+            if curl -sf http://127.0.0.1:8080/ >/dev/null; then
+              READY=1
               break
             fi
+            sleep 1
           done
+          if [ "$READY" -ne 1 ]; then
+            cat /tmp/emrun.log
+            exit 1
+          fi
 
-          # Verify the key files are served without error.
-          echo "Checking index.html..."
-          curl -sf http://localhost:8080/ | grep -q "of-broadcast-graphic"
+          curl -sf http://127.0.0.1:8080/ | grep -q "Loading openFrameworks/WASM"
+          curl -sfI http://127.0.0.1:8080/OfBroadcastGraphic.js
+          curl -sfI http://127.0.0.1:8080/template-definition.json
+          curl -sfI http://127.0.0.1:8080/dist/ofxOGraf.js
+          curl -sfI http://127.0.0.1:8080/dist/ofxOGraf.wasm
 
-          echo "Checking ofxOGraf.js..."
-          curl -sf http://localhost:8080/dist/ofxOGraf.js | head -c 128 | grep -q "createOfxOGrafModule"
-
-          echo "Checking ofxOGraf.wasm (binary, check magic bytes)..."
-          curl -sf http://localhost:8080/dist/ofxOGraf.wasm --output /tmp/smoke.wasm
-          xxd /tmp/smoke.wasm | head -1 | grep -q "0061 736d"
-
-          echo "Smoke test passed."
-          kill "$EMRUN_PID" 2>/dev/null || true
-
-      # ------------------------------------------------------------------
-      # 7. Upload ograf/ as the GitHub Pages artifact
-      # ------------------------------------------------------------------
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ograf/
 
-  # -----------------------------------------------------------------------
-  # Deploy to GitHub Pages — only on pushes to main (not PRs).
-  # -----------------------------------------------------------------------
   deploy:
     name: Deploy to GitHub Pages
-    needs: build
+    needs: [test, build]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
+    if: github.event_name != 'pull_request'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
