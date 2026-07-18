@@ -151,6 +151,7 @@ jobs:
           test -s "$DIST_DIR/ofxOGraf.js"
           test -s "$DIST_DIR/ofxOGraf.wasm"
           grep -q "createOfxOGrafModule" "$DIST_DIR/ofxOGraf.js"
+          node --check "$DIST_DIR/ofxOGraf.js"
           xxd -l 4 -p "$DIST_DIR/ofxOGraf.wasm" | grep -q '^0061736d$'
           ls -lh "$DIST_DIR"
 
