@@ -39,7 +39,8 @@ export default class CssTextOverlay {
             const asset = assets.get(overlay.fontAssetId);
             if (asset?.kind !== "font" || !asset.uri) continue;
             const family = overlay.style?.fontFamily || `ofxograf-${overlay.fontAssetId}`;
-            requested.set(overlay.fontAssetId, new FontFace(family, `url(${JSON.stringify(`./data/${asset.uri}`)})`));
+            const fontUrl = "./data/" + asset.uri;
+            requested.set(overlay.fontAssetId, new FontFace(family, "url(" + JSON.stringify(fontUrl) + ")"));
             this.fontFamilies.set(overlay.fontAssetId, family);
         }
         await Promise.all([...requested.values()].map(async font => {
@@ -86,3 +87,4 @@ export default class CssTextOverlay {
         this.elements = [];
         this.composition = null;
     }
+}
