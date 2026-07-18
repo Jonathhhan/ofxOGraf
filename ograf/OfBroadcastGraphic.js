@@ -1,6 +1,6 @@
 import createOfxOGrafModule from "./dist/ofxOGraf.js";
 import { negotiateTemplateCapabilities, templateAbiFingerprint } from "./TemplateAbi.js";
-import CssTextOverlay from "./CssTextOverlay.js";
+import CssTextOverlay from "./CssTextOverlay-v2.js";
 
 export default class OfBroadcastGraphic extends HTMLElement {
     constructor() {
@@ -14,8 +14,6 @@ export default class OfBroadcastGraphic extends HTMLElement {
         this.stepCount = 1;
         this.schedule = [];
         this.appliedScheduleIndex = 0;
-        // ofxEmscripten resolves its WebGL target through document.querySelector("#canvas").
-        // Keep the target in light DOM until the window addon accepts a canvas reference.
         this.canvas = document.createElement("canvas");
         this.canvas.id = "canvas";
         this.canvas.width = 1920;
@@ -44,8 +42,6 @@ export default class OfBroadcastGraphic extends HTMLElement {
                 statusMessage: `Renderer capabilities unavailable: ${capabilityCheck.missing.join(", ")}`
             };
         }
-
-        // The drawing buffer must be sized before Emscripten creates WebGL.
         const resolution = renderCharacteristics.resolution || composition;
         this.canvas.width = resolution.width || composition.width;
         this.canvas.height = resolution.height || composition.height;
@@ -75,8 +71,6 @@ export default class OfBroadcastGraphic extends HTMLElement {
             }
         }
         this.scene = scene;
-        // Set the backend before applying defaults: code templates and scene
-        // graphics use different exported WASM bindings.
         this.backend = templateId ? "code-template" : "scene";
         const loaded = templateId ? this.module.loadCodeTemplate(templateId, JSON.stringify(data)) :
             this.module.loadGraphic(JSON.stringify(scene));
@@ -122,9 +116,6 @@ export default class OfBroadcastGraphic extends HTMLElement {
         return { statusCode: 200, statusMessage: "OK", currentStep: this.currentStep };
     }
 
-    // Code-template actions carry stable public ids (for example "in" and
-    // "out"). Authoring UIs can invoke them directly without inferring a
-    // segment from OGraf's generic step index.
     async playNamedAction({ actionId, skipAnimation = false } = {}) {
         this.ensureLoaded();
         if (this.backend !== "code-template") {
@@ -139,6 +130,7 @@ export default class OfBroadcastGraphic extends HTMLElement {
         this.dispatchState("ograf-action-complete");
         return { statusCode: 200, statusMessage: "OK", actionId };
     }
+
     async updateAction({ data = {}, skipAnimation = false } = {}) {
         this.ensureLoaded();
         const candidate = this.mergePatch(this.data, data);
@@ -179,11 +171,11 @@ export default class OfBroadcastGraphic extends HTMLElement {
         if (this.lastTimestamp !== undefined && timestamp < this.lastTimestamp) {
             this.data = structuredClone(this.initialData);
             if (!this.updateRuntime(this.data, true)) {
-            const message = this.module.getLastError?.() || "Could not apply template defaults";
-            this.module.exit?.();
-            this.module = null;
-            return { statusCode: 422, statusMessage: message };
-        }
+                const message = this.module.getLastError?.() || "Could not apply template defaults";
+                this.module.exit?.();
+                this.module = null;
+                return { statusCode: 422, statusMessage: message };
+            }
             this.currentStep = undefined;
             this.appliedScheduleIndex = 0;
         }
@@ -231,6 +223,7 @@ export default class OfBroadcastGraphic extends HTMLElement {
             poll();
         });
     }
+
     playRuntime(step, skipAnimation) {
         if (this.backend === "code-template") return this.module.playCodeTemplate("", skipAnimation);
         return this.module.playGraphic(step, skipAnimation);
@@ -255,7 +248,6 @@ export default class OfBroadcastGraphic extends HTMLElement {
         if (this.backend === "code-template") return this.module.isCodeTemplateActionComplete(name);
         return this.module.isActionComplete(name);
     }
-
 
     async waitForRuntimeReady(maxFrames = 120) {
         if (typeof this.module?.isRuntimeReady !== "function") return false;
