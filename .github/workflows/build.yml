@@ -120,9 +120,7 @@ jobs:
       - name: Patch OF dependency script for runner packages
         if: steps.of-cache.outputs.cache-hit != 'true'
         run: |
-          if ! apt-cache show xorgproto >/dev/null 2>&1; then
-            sed -i 's/\<xorgproto\>/x11proto-dev/g' "${{ env.OF_ROOT }}/scripts/linux/debian/install_dependencies.sh"
-          fi
+          sed -i 's/\<xorgproto\>/x11proto-dev/g' "${{ env.OF_ROOT }}/scripts/linux/debian/install_dependencies.sh"
 
       - name: Install openFrameworks Linux dependencies
         if: steps.of-cache.outputs.cache-hit != 'true'
