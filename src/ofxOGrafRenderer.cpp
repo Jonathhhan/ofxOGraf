@@ -283,6 +283,23 @@ void Renderer::drawText(const Layer& layer, double time) {
     const float size = value.value("fontSize", 32.0f);
     const std::string fontName = value.value("font", value.value("fontFamily", ""));
     ofTrueTypeFont* font = assets.font(fontName, size);
+#ifdef __EMSCRIPTEN__
+    // The Emscripten font atlas covers ASCII only. Non-ASCII characters render
+    // as boxes; warn once per unique layer so authors can detect the issue.
+    {
+        const std::string warnKey = layer.name + "@" + fontName;
+        if (warnedNonAscii.find(warnKey) == warnedNonAscii.end()) {
+            bool hasNonAscii = false;
+            for (unsigned char c : text) { if (c > 127) { hasNonAscii = true; break; } }
+            if (hasNonAscii) {
+                warnedNonAscii.insert(warnKey);
+                ofLogWarning("ofxOGraf") << "Layer '" << layer.name << "': text contains non-ASCII characters"
+                    " that will render as boxes on Emscripten (font '" << fontName << "')."
+                    " Pre-bake or use ASCII-only text for WebGL targets.";
+            }
+        }
+    }
+#endif
     ofFloatColor fill = value.contains("fillColor") ? color(value["fillColor"]) : ofFloatColor::white;
     ofFloatColor stroke = value.contains("strokeColor") ? color(value["strokeColor"]) : ofFloatColor::black;
     if (hasColorOverride) fill = colorOverride;
