@@ -122,9 +122,15 @@ jobs:
 
       - name: Place addon into OF addons tree
         run: |
-          rm -rf "${{ env.OF_ROOT }}/addons/ofxOGraf"
-          mkdir -p "${{ env.OF_ROOT }}/addons/ofxOGraf"
-          cp -a "${{ github.workspace }}/." "${{ env.OF_ROOT }}/addons/ofxOGraf/"
+          set -euxo pipefail
+          DEST="${{ env.OF_ROOT }}/addons/ofxOGraf"
+          rm -rf "$DEST"
+          mkdir -p "$DEST"
+          tar \
+            --exclude='./.git' \
+            --exclude='./.git/**' \
+            -C "${{ github.workspace }}" -cf - . | tar -C "$DEST" -xf -
+          test ! -e "$DEST/.git"
 
       - name: Build example-basic (OGraf Emscripten target)
         working-directory: ${{ env.OF_ROOT }}/addons/ofxOGraf/example-basic
