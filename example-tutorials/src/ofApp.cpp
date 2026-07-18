@@ -39,16 +39,20 @@ void ofApp::draw() {
         preview.drawFit(0, 0, ofGetWidth(), ofGetHeight(), true);
     }
 
+    constexpr float UiScale = 2.0f;
     ofPushStyle();
+    ofPushMatrix();
+    ofScale(UiScale, UiScale);
     ofSetColor(255);
     ofDrawBitmapStringHighlight(
         "1 Lower Third   2 Bug   3 Ticker   4 Score Bug   R Replay\n"
         "Current: " + tutorials[current].name,
-        18, 28, ofColor(0, 0, 0, 190), ofColor::white);
+        12, 18, ofColor(0, 0, 0, 210), ofColor::white);
     if (!error.empty()) {
         ofSetColor(255, 90, 90);
-        ofDrawBitmapStringHighlight(error, 18, 68);
+        ofDrawBitmapStringHighlight(error, 12, 48);
     }
+    ofPopMatrix();
     ofPopStyle();
 }
 
