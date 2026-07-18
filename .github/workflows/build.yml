@@ -136,29 +136,42 @@ jobs:
         working-directory: ${{ env.OF_ROOT }}/addons/ofxOGraf/example-basic
         run: emmake make -j4 APPNAME=ofxOGraf OGRAF_BUILD=1 PLATFORM_OS=emscripten
 
-      - name: Stage and validate WASM artifacts
+      - name: Stage and validate immutable WASM artifacts
         run: |
           set -euxo pipefail
           ARTIFACT_DIR="${{ env.OF_ROOT }}/addons/ofxOGraf/example-basic/bin/em/ofxOGraf"
           DIST_DIR="${{ github.workspace }}/ograf/dist"
+          VERSION="${GITHUB_SHA}"
+          JS_NAME="ofxOGraf-${VERSION}.js"
+          WASM_NAME="ofxOGraf-${VERSION}.wasm"
+          DATA_NAME="ofxOGraf-${VERSION}.data"
+
+          rm -rf "$DIST_DIR"
           mkdir -p "$DIST_DIR"
-          cp "$ARTIFACT_DIR/index.js" "$DIST_DIR/ofxOGraf.js"
-          cp "$ARTIFACT_DIR/index.wasm" "$DIST_DIR/ofxOGraf.wasm"
+          cp "$ARTIFACT_DIR/index.js" "$DIST_DIR/$JS_NAME"
+          cp "$ARTIFACT_DIR/index.wasm" "$DIST_DIR/$WASM_NAME"
           if [ -f "$ARTIFACT_DIR/index.data" ]; then
-            cp "$ARTIFACT_DIR/index.data" "$DIST_DIR/ofxOGraf.data"
+            cp "$ARTIFACT_DIR/index.data" "$DIST_DIR/$DATA_NAME"
           fi
 
-          test -s "$DIST_DIR/ofxOGraf.js"
-          test -s "$DIST_DIR/ofxOGraf.wasm"
-          grep -q "createOfxOGrafModule" "$DIST_DIR/ofxOGraf.js"
-          node --check "$DIST_DIR/ofxOGraf.js"
-          xxd -l 4 -p "$DIST_DIR/ofxOGraf.wasm" | grep -q '^0061736d$'
+          sed -i "s#\"./dist/ofxOGraf.js\"#\"./dist/$JS_NAME\"#" "${{ github.workspace }}/ograf/OfBroadcastGraphic.js"
+          sed -i "s#./dist/ofxOGraf.wasm#./dist/$WASM_NAME#g" "${{ github.workspace }}/ograf/OfBroadcastGraphic.js"
+          sed -i "s#./dist/ofxOGraf.data#./dist/$DATA_NAME#g" "${{ github.workspace }}/ograf/OfBroadcastGraphic.js"
+
+          test -s "$DIST_DIR/$JS_NAME"
+          test -s "$DIST_DIR/$WASM_NAME"
+          grep -q "createOfxOGrafModule" "$DIST_DIR/$JS_NAME"
+          node --check "$DIST_DIR/$JS_NAME"
+          node --check "${{ github.workspace }}/ograf/OfBroadcastGraphic.js"
+          xxd -l 4 -p "$DIST_DIR/$WASM_NAME" | grep -q '^0061736d$'
+          grep -q "$JS_NAME" "${{ github.workspace }}/ograf/OfBroadcastGraphic.js"
           ls -lh "$DIST_DIR"
 
       - name: Smoke test static payload with emrun
         working-directory: ${{ github.workspace }}/ograf
         run: |
           set -euxo pipefail
+          VERSION="${GITHUB_SHA}"
           emrun --no_browser --port 8080 index.html > /tmp/emrun.log 2>&1 &
           EMRUN_PID=$!
           trap 'kill "$EMRUN_PID" 2>/dev/null || true' EXIT
@@ -177,10 +190,10 @@ jobs:
           fi
 
           curl -sf http://127.0.0.1:8080/ | grep -q "Loading openFrameworks/WASM"
-          curl -sfI http://127.0.0.1:8080/OfBroadcastGraphic.js
+          curl -sf http://127.0.0.1:8080/OfBroadcastGraphic.js | grep -q "ofxOGraf-${VERSION}.js"
           curl -sfI http://127.0.0.1:8080/template-definition.json
-          curl -sfI http://127.0.0.1:8080/dist/ofxOGraf.js
-          curl -sfI http://127.0.0.1:8080/dist/ofxOGraf.wasm
+          curl -sfI "http://127.0.0.1:8080/dist/ofxOGraf-${VERSION}.js"
+          curl -sfI "http://127.0.0.1:8080/dist/ofxOGraf-${VERSION}.wasm"
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
