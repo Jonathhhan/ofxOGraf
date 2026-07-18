@@ -138,6 +138,21 @@ jobs:
         working-directory: ${{ env.OF_ROOT }}/addons/ofxOGraf/example-basic
         run: emmake make -j4 APPNAME=ofxOGraf OGRAF_BUILD=1 PLATFORM_OS=emscripten
 
+      - name: Stage tutorial scene data
+        run: |
+          set -euxo pipefail
+          DATA_DIR="${{ env.OF_ROOT }}/addons/ofxOGraf/example-tutorials/bin/data"
+          EXAMPLES_DIR="${{ env.OF_ROOT }}/addons/ofxOGraf/examples"
+          mkdir -p "$DATA_DIR"
+          cp "$EXAMPLES_DIR/ograf-dev-lower-third.scene.json" "$DATA_DIR/"
+          cp "$EXAMPLES_DIR/ograf-dev-bug.scene.json" "$DATA_DIR/"
+          cp "$EXAMPLES_DIR/ograf-dev-ticker.scene.json" "$DATA_DIR/"
+          cp "$EXAMPLES_DIR/ograf-dev-score-bug.scene.json" "$DATA_DIR/"
+          test -s "$DATA_DIR/ograf-dev-lower-third.scene.json"
+          test -s "$DATA_DIR/ograf-dev-bug.scene.json"
+          test -s "$DATA_DIR/ograf-dev-ticker.scene.json"
+          test -s "$DATA_DIR/ograf-dev-score-bug.scene.json"
+
       - name: Build example-tutorials (Emscripten target)
         working-directory: ${{ env.OF_ROOT }}/addons/ofxOGraf/example-tutorials
         run: emmake make -j4 APPNAME=example-tutorials PLATFORM_OS=emscripten
