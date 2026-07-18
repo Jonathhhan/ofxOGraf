@@ -117,6 +117,10 @@ jobs:
           tar -xzf /tmp/of.tar.gz -C /tmp
           mv "/tmp/${{ env.OF_DIRNAME }}" "${{ env.OF_ROOT }}"
 
+      - name: Patch OF dependency script for runner packages
+        if: steps.of-cache.outputs.cache-hit != 'true'
+        run: |
+          sed -i 's/\<xorgproto\>/x11proto-dev/g' "${{ env.OF_ROOT }}/scripts/linux/debian/install_dependencies.sh"
       - name: Install openFrameworks Linux dependencies
         if: steps.of-cache.outputs.cache-hit != 'true'
         run: sudo "${{ env.OF_ROOT }}/scripts/linux/debian/install_dependencies.sh"
