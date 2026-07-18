@@ -14,6 +14,8 @@ export default class OfBroadcastGraphic extends HTMLElement {
         this.stepCount = 1;
         this.schedule = [];
         this.appliedScheduleIndex = 0;
+        // ofxEmscripten resolves its WebGL target through document.querySelector("#canvas").
+        // Keep the target in light DOM until the window addon accepts a canvas reference.
         this.canvas = document.createElement("canvas");
         this.canvas.id = "canvas";
         this.canvas.width = 1920;
