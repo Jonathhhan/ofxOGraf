@@ -1,7 +1,7 @@
 name: Build and Deploy to GitHub Pages
 
-# Builds the Emscripten/WebAssembly target and publishes the ograf/ web
-# component to GitHub Pages so it can run directly in the browser.
+# Builds the Emscripten/WebAssembly targets and publishes the browser preview
+# plus the tutorial example to GitHub Pages.
 #
 # Prerequisites (one-time repository setup):
 #   Settings → Pages → Source: GitHub Actions
@@ -51,6 +51,8 @@ jobs:
           node tests/structured-controls-contract.mjs
           node --check ograf/OfBroadcastGraphic.js
           node --check ograf/EssentialControls.js
+          node --check ograf/TemplateAbi.js
+          node --check ograf/CssTextOverlay-v2.js
 
   build:
     name: Emscripten build
@@ -136,6 +138,10 @@ jobs:
         working-directory: ${{ env.OF_ROOT }}/addons/ofxOGraf/example-basic
         run: emmake make -j4 APPNAME=ofxOGraf OGRAF_BUILD=1 PLATFORM_OS=emscripten
 
+      - name: Build example-tutorials (Emscripten target)
+        working-directory: ${{ env.OF_ROOT }}/addons/ofxOGraf/example-tutorials
+        run: emmake make -j4 APPNAME=example-tutorials PLATFORM_OS=emscripten
+
       - name: Stage and validate immutable WASM artifacts
         run: |
           set -euxo pipefail
@@ -167,6 +173,26 @@ jobs:
           grep -q "$JS_NAME" "${{ github.workspace }}/ograf/OfBroadcastGraphic.js"
           ls -lh "$DIST_DIR"
 
+      - name: Stage and validate tutorial site
+        run: |
+          set -euxo pipefail
+          SOURCE_DIR="${{ env.OF_ROOT }}/addons/ofxOGraf/example-tutorials/bin/em/example-tutorials"
+          TARGET_DIR="${{ github.workspace }}/ograf/tutorials"
+
+          rm -rf "$TARGET_DIR"
+          mkdir -p "$TARGET_DIR"
+          cp -a "$SOURCE_DIR"/. "$TARGET_DIR"/
+
+          test -s "$TARGET_DIR/index.html"
+          test -s "$TARGET_DIR/index.js"
+          test -s "$TARGET_DIR/index.wasm"
+          node --check "$TARGET_DIR/index.js"
+          xxd -l 4 -p "$TARGET_DIR/index.wasm" | grep -q '^0061736d$'
+          if grep -q 'index.data' "$TARGET_DIR/index.js"; then
+            test -s "$TARGET_DIR/index.data"
+          fi
+          ls -lh "$TARGET_DIR"
+
       - name: Smoke test static payload with emrun
         working-directory: ${{ github.workspace }}/ograf
         run: |
@@ -194,6 +220,12 @@ jobs:
           curl -sfI http://127.0.0.1:8080/template-definition.json
           curl -sfI "http://127.0.0.1:8080/dist/ofxOGraf-${VERSION}.js"
           curl -sfI "http://127.0.0.1:8080/dist/ofxOGraf-${VERSION}.wasm"
+          curl -sf http://127.0.0.1:8080/tutorials/ | grep -qi '<canvas\|emscripten\|example-tutorials'
+          curl -sfI http://127.0.0.1:8080/tutorials/index.js
+          curl -sfI http://127.0.0.1:8080/tutorials/index.wasm
+          if [ -f tutorials/index.data ]; then
+            curl -sfI http://127.0.0.1:8080/tutorials/index.data
+          fi
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
