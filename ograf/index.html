@@ -14,101 +14,43 @@
     .stage { display: grid; place-items: center; min-width: 0; padding: 24px; overflow: hidden; }
     of-broadcast-graphic { display: block; width: min(100%, 160vh); aspect-ratio: 16 / 9; background: #181b21; box-shadow: 0 18px 70px #0008; }
     of-essential-controls { height: 100vh; overflow: auto; border-left: 1px solid #30343d; }
-    #status {
-      position: fixed;
-      left: 12px;
-      bottom: 12px;
-      z-index: 1000;
-      max-width: calc(100vw - 24px);
-      padding: 8px 12px;
-      border-radius: 5px;
-      color: #fff;
-      background: #20242cdd;
-      font: 13px/1.4 system-ui, sans-serif;
-      white-space: pre-wrap;
-      overflow-wrap: anywhere;
-    }
+    #status { position: fixed; left: 12px; bottom: 12px; z-index: 1000; max-width: calc(100vw - 24px); padding: 8px 12px; border-radius: 5px; color: #fff; background: #20242cdd; font: 13px/1.4 system-ui, sans-serif; white-space: pre-wrap; overflow-wrap: anywhere; }
     #status[data-error="true"] { background: #9e1b32ee; }
-    @media (max-width: 800px) {
-      main { grid-template-columns: 1fr; }
-      of-essential-controls { height: auto; border: 0; border-top: 1px solid #30343d; }
-    }
+    @media (max-width: 800px) { main { grid-template-columns: 1fr; } of-essential-controls { height: auto; border: 0; border-top: 1px solid #30343d; } }
   </style>
 </head>
 <body>
   <main>
-    <section class="stage"><of-broadcast-graphic id="graphic" code-template="native-lower-third" template-definition="./template-definition.json?v=20260719-5"></of-broadcast-graphic></section>
+    <section class="stage"><of-broadcast-graphic id="graphic" code-template="native-lower-third" template-definition="./template-definition.json?v=20260719-6"></of-broadcast-graphic></section>
     <of-essential-controls for="graphic"></of-essential-controls>
     <output id="status" role="status" aria-live="polite">Loading openFrameworks/WASM…</output>
   </main>
   <script type="module">
     const status = document.querySelector("#status");
-    const buildVersion = "20260719-5";
+    const buildVersion = "20260719-6";
     let stage = "startup";
-
-    function showStatus(message, error = false) {
-      status.textContent = message;
-      status.dataset.error = String(error);
-      if (error) console.error(message);
-      else console.info(message);
-    }
-
-    function errorText(error) {
-      return error?.stack || `${error?.name || "Error"}: ${error?.message || String(error)}`;
-    }
-
-    window.addEventListener("error", event => {
-      showStatus(`Build ${buildVersion}\nStage: ${stage}\nBrowser error: ${event.message}\n${event.filename || "unknown file"}:${event.lineno || 0}:${event.colno || 0}`, true);
-    });
-
-    window.addEventListener("unhandledrejection", event => {
-      showStatus(`Build ${buildVersion}\nStage: ${stage}\nUnhandled rejection:\n${errorText(event.reason)}`, true);
-    });
-
+    function showStatus(message, error = false) { status.textContent = message; status.dataset.error = String(error); if (error) console.error(message); else console.info(message); }
+    function errorText(error) { return error?.stack || `${error?.name || "Error"}: ${error?.message || String(error)}`; }
+    window.addEventListener("error", event => { showStatus(`Build ${buildVersion}\nStage: ${stage}\nBrowser error: ${event.message}\n${event.filename || "unknown file"}:${event.lineno || 0}:${event.colno || 0}`, true); });
+    window.addEventListener("unhandledrejection", event => { showStatus(`Build ${buildVersion}\nStage: ${stage}\nUnhandled rejection:\n${errorText(event.reason)}`, true); });
     try {
       stage = "import EssentialControls.js";
       await import(`./EssentialControls.js?v=${buildVersion}`);
-
       stage = "import TemplateAbi.js";
       await import(`./TemplateAbi.js?v=${buildVersion}`);
-
-      stage = "import CssTextOverlay.js";
-      await import(`./CssTextOverlay.js?v=${buildVersion}`);
-
+      stage = "import CssTextOverlay-v2.js";
+      await import(`./CssTextOverlay-v2.js?v=${buildVersion}`);
       stage = "import OfBroadcastGraphic.js and generated Emscripten module";
       const { default: OfBroadcastGraphic } = await import(`./OfBroadcastGraphic.js?v=${buildVersion}`);
-
       stage = "register custom element";
-      if (!customElements.get("of-broadcast-graphic")) {
-        customElements.define("of-broadcast-graphic", OfBroadcastGraphic);
-      }
-
+      if (!customElements.get("of-broadcast-graphic")) customElements.define("of-broadcast-graphic", OfBroadcastGraphic);
       stage = "load template JSON and initialize Emscripten";
       const graphic = document.querySelector("#graphic");
-      const loaded = await graphic.load({
-        data: {
-          headline: "ofxOGraf",
-          subtitle: "Broadcast graphics",
-          "accent-color": [1, 0.8, 0, 1]
-        },
-        renderType: "realtime",
-        renderCharacteristics: {
-          resolution: { width: 1920, height: 1080 },
-          frameRate: 50,
-          capabilities: ["webgl2", "alpha-canvas"]
-        }
-      });
-
-      if (loaded.statusCode !== 200) {
-        throw new Error(`Preview load failed (${loaded.statusCode}): ${loaded.statusMessage}`);
-      }
-
+      const loaded = await graphic.load({ data: { headline: "ofxOGraf", subtitle: "Broadcast graphics", "accent-color": [1, 0.8, 0, 1] }, renderType: "realtime", renderCharacteristics: { resolution: { width: 1920, height: 1080 }, frameRate: 50, capabilities: ["webgl2", "alpha-canvas"] } });
+      if (loaded.statusCode !== 200) throw new Error(`Preview load failed (${loaded.statusCode}): ${loaded.statusMessage}`);
       stage = "play named action";
       const played = await graphic.playNamedAction({ actionId: "in" });
-      if (played.statusCode !== 200) {
-        throw new Error(`Preview action failed (${played.statusCode}): ${played.statusMessage}`);
-      }
-
+      if (played.statusCode !== 200) throw new Error(`Preview action failed (${played.statusCode}): ${played.statusMessage}`);
       stage = "ready";
       const diagnostics = graphic.module?.renderFrameDiagnostics?.();
       showStatus(diagnostics ? `Preview ready\nBuild ${buildVersion}\n${diagnostics}` : `Preview ready\nBuild ${buildVersion}`);
