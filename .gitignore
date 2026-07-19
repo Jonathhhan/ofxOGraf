@@ -18,5 +18,15 @@ example-imgui/bin/*
 !example-imgui/bin/data/
 example-imgui/bin/data/*
 !example-imgui/bin/data/scene.json
+
+# The browser tutorial packages these files into index.data. Keep its font
+# assets tracked even though generated bin directories are ignored globally.
+!example-tutorials/bin/
+example-tutorials/bin/*
+!example-tutorials/bin/data/
+example-tutorials/bin/data/*
+!example-tutorials/bin/data/fonts/
+!example-tutorials/bin/data/fonts/*.ttf
+
 *.vcxproj.user
 example-basic/dll/
