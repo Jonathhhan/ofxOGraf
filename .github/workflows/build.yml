@@ -143,15 +143,31 @@ jobs:
           set -euxo pipefail
           DATA_DIR="${{ env.OF_ROOT }}/addons/ofxOGraf/example-tutorials/bin/data"
           EXAMPLES_DIR="${{ env.OF_ROOT }}/addons/ofxOGraf/examples"
+
+          # Start with a real, clean directory. In particular, do not retain
+          # stale symlinks or generated preload entries from a previous build.
+          rm -rf "$DATA_DIR"
           mkdir -p "$DATA_DIR"
-          cp "$EXAMPLES_DIR/ograf-dev-lower-third.scene.json" "$DATA_DIR/"
-          cp "$EXAMPLES_DIR/ograf-dev-bug.scene.json" "$DATA_DIR/"
-          cp "$EXAMPLES_DIR/ograf-dev-ticker.scene.json" "$DATA_DIR/"
-          cp "$EXAMPLES_DIR/ograf-dev-score-bug.scene.json" "$DATA_DIR/"
-          test -s "$DATA_DIR/ograf-dev-lower-third.scene.json"
-          test -s "$DATA_DIR/ograf-dev-bug.scene.json"
-          test -s "$DATA_DIR/ograf-dev-ticker.scene.json"
-          test -s "$DATA_DIR/ograf-dev-score-bug.scene.json"
+
+          install -m 0644 "$EXAMPLES_DIR/ograf-dev-lower-third.scene.json" "$DATA_DIR/ograf-dev-lower-third.scene.json"
+          install -m 0644 "$EXAMPLES_DIR/ograf-dev-bug.scene.json" "$DATA_DIR/ograf-dev-bug.scene.json"
+          install -m 0644 "$EXAMPLES_DIR/ograf-dev-ticker.scene.json" "$DATA_DIR/ograf-dev-ticker.scene.json"
+          install -m 0644 "$EXAMPLES_DIR/ograf-dev-score-bug.scene.json" "$DATA_DIR/ograf-dev-score-bug.scene.json"
+
+          test -f "$DATA_DIR/ograf-dev-lower-third.scene.json"
+          test -f "$DATA_DIR/ograf-dev-bug.scene.json"
+          test -f "$DATA_DIR/ograf-dev-ticker.scene.json"
+          test -f "$DATA_DIR/ograf-dev-score-bug.scene.json"
+          test ! -L "$DATA_DIR/ograf-dev-lower-third.scene.json"
+          test ! -L "$DATA_DIR/ograf-dev-bug.scene.json"
+          test ! -L "$DATA_DIR/ograf-dev-ticker.scene.json"
+          test ! -L "$DATA_DIR/ograf-dev-score-bug.scene.json"
+
+      - name: Clean tutorial Emscripten output
+        working-directory: ${{ env.OF_ROOT }}/addons/ofxOGraf/example-tutorials
+        run: |
+          set -euxo pipefail
+          rm -rf obj bin/em
 
       - name: Build example-tutorials (Emscripten target)
         working-directory: ${{ env.OF_ROOT }}/addons/ofxOGraf/example-tutorials
