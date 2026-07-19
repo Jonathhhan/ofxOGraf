@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ofMain.h"
+#include "ofxImGui.h"
 #include "ofxOGraf.h"
 #include <array>
 #include <string>
@@ -20,6 +21,7 @@ private:
     };
 
     void loadTutorial(std::size_t index);
+    void drawSelector();
 
     static constexpr int WindowWidth = 1280;
     static constexpr int WindowHeight = 720;
@@ -32,5 +34,6 @@ private:
     std::size_t current = 0;
     ofxOGraf::Graphic graphic;
     ofxOGraf::RenderSurface preview;
+    ofxImGui::Gui gui;
     std::string error;
 };
