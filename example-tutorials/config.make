@@ -10,6 +10,10 @@ PROJECT_LDFLAGS += -sNO_DISABLE_EXCEPTION_CATCHING
 # openFrameworks automatically packages bin/data for Emscripten. Ensure the
 # directory exists and contains the tutorial scenes before file_packager runs.
 ifeq ($(PLATFORM_OS),emscripten)
+# The OF Emscripten link step creates index.js, index.wasm and index.data as one
+# artifact set. Running dependent link/package recipes in parallel can invoke
+# file_packager while another recipe is still writing the same output.
+.NOTPARALLEL:
 $(shell mkdir -p bin/data)
 $(shell cp -f ../examples/ograf-dev-lower-third.scene.json bin/data/)
 $(shell cp -f ../examples/ograf-dev-bug.scene.json bin/data/)
