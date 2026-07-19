@@ -24,7 +24,9 @@ void ofApp::loadTutorial(std::size_t index) {
     }
     current = index;
     error.clear();
+#ifndef __EMSCRIPTEN__
     preview.allocate(graphic.getScene());
+#endif
     graphic.play();
 }
 
@@ -35,8 +37,27 @@ void ofApp::update() {
 void ofApp::draw() {
     ofClear(24, 24, 24, 255);
     if (error.empty()) {
+#ifdef __EMSCRIPTEN__
+        // Drawing through an off-screen ofFbo can yield a complete but blank
+        // framebuffer on some WebGL implementations. The tutorial composition
+        // has the same aspect ratio as the browser canvas, so render it directly
+        // and fit it to the current window instead.
+        const auto& scene = graphic.getScene();
+        const float sceneWidth = static_cast<float>(std::max(1, scene.width));
+        const float sceneHeight = static_cast<float>(std::max(1, scene.height));
+        const float scale = std::min(ofGetWidth() / sceneWidth, ofGetHeight() / sceneHeight);
+        const float offsetX = (ofGetWidth() - sceneWidth * scale) * 0.5f;
+        const float offsetY = (ofGetHeight() - sceneHeight * scale) * 0.5f;
+
+        ofPushMatrix();
+        ofTranslate(offsetX, offsetY);
+        ofScale(scale, scale);
+        graphic.draw();
+        ofPopMatrix();
+#else
         preview.render(graphic);
         preview.drawFit(0, 0, ofGetWidth(), ofGetHeight(), true);
+#endif
     }
 
     constexpr float UiScale = 2.0f;
