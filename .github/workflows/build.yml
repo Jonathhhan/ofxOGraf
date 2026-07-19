@@ -134,15 +134,15 @@ jobs:
             -C "${{ github.workspace }}" -cf - . | tar -C "$DEST" -xf -
           test ! -e "$DEST/.git"
 
-      - name: Install ofxImGui dev branch
+      - name: Install ofxImGui develop branch
         run: |
           set -euxo pipefail
           DEST="${{ env.OF_ROOT }}/addons/ofxImGui"
           rm -rf "$DEST"
-          git clone --depth 1 --branch dev \
+          git clone --depth 1 --branch develop \
             https://github.com/jvcleave/ofxImGui.git "$DEST"
           test -s "$DEST/addon_config.mk"
-          test "$(git -C "$DEST" branch --show-current)" = "dev"
+          test "$(git -C "$DEST" branch --show-current)" = "develop"
           git -C "$DEST" rev-parse HEAD
 
       - name: Build example-basic (OGraf Emscripten target)
