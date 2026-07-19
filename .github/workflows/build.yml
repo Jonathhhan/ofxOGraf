@@ -134,6 +134,17 @@ jobs:
             -C "${{ github.workspace }}" -cf - . | tar -C "$DEST" -xf -
           test ! -e "$DEST/.git"
 
+      - name: Install ofxImGui dev branch
+        run: |
+          set -euxo pipefail
+          DEST="${{ env.OF_ROOT }}/addons/ofxImGui"
+          rm -rf "$DEST"
+          git clone --depth 1 --branch dev \
+            https://github.com/jvcleave/ofxImGui.git "$DEST"
+          test -s "$DEST/addon_config.mk"
+          test "$(git -C "$DEST" branch --show-current)" = "dev"
+          git -C "$DEST" rev-parse HEAD
+
       - name: Build example-basic (OGraf Emscripten target)
         working-directory: ${{ env.OF_ROOT }}/addons/ofxOGraf/example-basic
         run: emmake make -j4 APPNAME=ofxOGraf OGRAF_BUILD=1 PLATFORM_OS=emscripten
