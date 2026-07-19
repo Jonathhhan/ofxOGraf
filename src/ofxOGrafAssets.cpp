@@ -49,7 +49,15 @@ std::string Assets::fontPath(const std::string& postScriptName) const {
             }
         }
     }
+#ifdef __EMSCRIPTEN__
+    // Browser builds cannot access fonts installed on the host computer. An
+    // undeclared PostScript name therefore has no loadable file; return an
+    // empty path so the renderer uses its built-in bitmap fallback instead of
+    // requesting a nonexistent fonts/<PostScriptName>.ttf asset.
+    return "";
+#else
     return "fonts/" + postScriptName + ".ttf";
+#endif
 }
 
 ofTrueTypeFont* Assets::font(const std::string& postScriptName, float size) {
@@ -58,21 +66,23 @@ ofTrueTypeFont* Assets::font(const std::string& postScriptName, float size) {
     const auto existing = fonts.find(key);
     if (existing != fonts.end()) return existing->second.get();
 
-    auto loaded = std::make_unique<ofTrueTypeFont>();
     const std::string path = fontPath(postScriptName);
-    if (unavailableFontPaths.count(path)) return nullptr;
 #ifdef __EMSCRIPTEN__
-    // A full Unicode atlas can exceed WebGL's practical texture limits and
-    // produces corrupted UVs in some browser drivers. The browser renderer
-    // currently draws its ASCII control/template labels as bitmap glyphs;
-    // keep that atlas compact and skip desktop-only contours.
+    // Undeclared fonts intentionally use Renderer::drawText's bitmap fallback.
+    // Do not emit a missing-file warning for a path that was never declared.
+    if (path.empty()) return nullptr;
+#endif
+    if (unavailableFontPaths.count(path)) return nullptr;
+
+    auto loaded = std::make_unique<ofTrueTypeFont>();
+#ifdef __EMSCRIPTEN__
     constexpr bool fullCharacterSet = false;
     constexpr bool makeContours = false;
 #else
     constexpr bool fullCharacterSet = true;
     constexpr bool makeContours = true;
 #endif
-    if (path.empty() || !loaded->load(path, pixelSize, true, fullCharacterSet, makeContours)) {
+    if (!loaded->load(path, pixelSize, true, fullCharacterSet, makeContours)) {
         unavailableFontPaths.insert(path);
         warnOnce("font:" + path, "Font asset unavailable: " + postScriptName + " (expected " + path + ")");
         return nullptr;
