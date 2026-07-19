@@ -1,10 +1,13 @@
 #include "ofApp.h"
 
+#include <algorithm>
+
 void ofApp::setup() {
     ofSetWindowTitle("ofxOGraf - ograf.dev tutorial ports");
     ofSetWindowShape(WindowWidth, WindowHeight);
     ofSetFrameRate(50);
     graphic.setup();
+    gui.setup();
     loadTutorial(0);
 }
 
@@ -34,14 +37,43 @@ void ofApp::update() {
     graphic.update(ofGetLastFrameTime());
 }
 
+void ofApp::drawSelector() {
+    gui.begin();
+    ImGui::SetNextWindowPos(ImVec2(16.0f, 16.0f), ImGuiCond_FirstUseEver);
+    ImGui::SetNextWindowSize(ImVec2(250.0f, 0.0f), ImGuiCond_FirstUseEver);
+
+    if (ImGui::Begin("Tutorials", nullptr, ImGuiWindowFlags_AlwaysAutoResize)) {
+        for (std::size_t index = 0; index < tutorials.size(); ++index) {
+            const bool selected = index == current;
+            if (ImGui::Selectable(tutorials[index].name.c_str(), selected)) {
+                loadTutorial(index);
+            }
+            if (selected) ImGui::SetItemDefaultFocus();
+        }
+
+        ImGui::Separator();
+        if (ImGui::Button(graphic.isPlaying() ? "Restart" : "Play")) {
+            graphic.play();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button(graphic.isPlaying() ? "Pause" : "Resume")) {
+            if (graphic.isPlaying()) graphic.pause();
+            else graphic.resume();
+        }
+
+        if (!error.empty()) {
+            ImGui::Separator();
+            ImGui::TextWrapped("%s", error.c_str());
+        }
+    }
+    ImGui::End();
+    gui.end();
+}
+
 void ofApp::draw() {
     ofClear(24, 24, 24, 255);
     if (error.empty()) {
 #ifdef __EMSCRIPTEN__
-        // Drawing through an off-screen ofFbo can yield a complete but blank
-        // framebuffer on some WebGL implementations. The tutorial composition
-        // has the same aspect ratio as the browser canvas, so render it directly
-        // and fit it to the current window instead.
         const auto& scene = graphic.getScene();
         const float sceneWidth = static_cast<float>(std::max(1, scene.width));
         const float sceneHeight = static_cast<float>(std::max(1, scene.height));
@@ -60,21 +92,7 @@ void ofApp::draw() {
 #endif
     }
 
-    constexpr float UiScale = 2.0f;
-    ofPushStyle();
-    ofPushMatrix();
-    ofScale(UiScale, UiScale);
-    ofSetColor(255);
-    ofDrawBitmapStringHighlight(
-        "1 Lower Third   2 Bug   3 Ticker   4 Score Bug   R Replay\n"
-        "Current: " + tutorials[current].name,
-        12, 18, ofColor(0, 0, 0, 210), ofColor::white);
-    if (!error.empty()) {
-        ofSetColor(255, 90, 90);
-        ofDrawBitmapStringHighlight(error, 12, 48);
-    }
-    ofPopMatrix();
-    ofPopStyle();
+    drawSelector();
 }
 
 void ofApp::keyPressed(int key) {
