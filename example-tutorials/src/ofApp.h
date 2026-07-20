@@ -12,6 +12,8 @@ public:
     void update() override;
     void draw() override;
     void keyPressed(int key) override;
+    void mousePressed(int x, int y, int button) override;
+    void touchDown(ofTouchEventArgs& touch) override;
     void windowResized(int width, int height) override;
 
 private:
@@ -22,6 +24,10 @@ private:
 
     void loadTutorial(std::size_t index);
     void drawSelector();
+#ifdef __EMSCRIPTEN__
+    void drawBrowserSelector();
+    void handleBrowserPointer(float x, float y);
+#endif
 
     static constexpr int WindowWidth = 1280;
     static constexpr int WindowHeight = 720;
