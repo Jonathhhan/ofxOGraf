@@ -202,18 +202,35 @@ jobs:
 
           python3 - <<'PY'
           from pathlib import Path
+          import re
 
           path = Path("${{ github.workspace }}/ograf/tutorials/index.html")
           html = path.read_text(encoding="utf-8")
-          marker = "var Module = {"
-          if marker not in html:
-              raise SystemExit("Could not find Emscripten Module configuration in tutorial index.html")
-          html = html.replace(marker, marker + "\n      requestPointerLock: false,", 1)
+          injection = (
+              "<script>\n"
+              "var Module = typeof Module !== 'undefined' ? Module : {};\n"
+              "Module.requestPointerLock = false;\n"
+              "</script>\n"
+          )
+
+          script_match = re.search(
+              r'<script\b[^>]*\bsrc=["\'][^"\']*index\.js[^"\']*["\'][^>]*>',
+              html,
+              flags=re.IGNORECASE,
+          )
+          if script_match:
+              html = html[:script_match.start()] + injection + html[script_match.start():]
+          elif "</head>" in html.lower():
+              position = html.lower().index("</head>")
+              html = html[:position] + injection + html[position:]
+          else:
+              raise SystemExit("Could not find index.js script or </head> in tutorial index.html")
+
           path.write_text(html, encoding="utf-8")
           PY
 
           test -s "$TARGET_DIR/index.html"
-          grep -q 'requestPointerLock: false' "$TARGET_DIR/index.html"
+          grep -q 'Module.requestPointerLock = false' "$TARGET_DIR/index.html"
           test -s "$TARGET_DIR/index.js"
           test -s "$TARGET_DIR/index.wasm"
           node --check "$TARGET_DIR/index.js"
