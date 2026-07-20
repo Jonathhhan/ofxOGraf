@@ -200,7 +200,20 @@ jobs:
           mkdir -p "$TARGET_DIR"
           cp -a "$SOURCE_DIR"/. "$TARGET_DIR"/
 
+          python3 - <<'PY'
+          from pathlib import Path
+
+          path = Path("${{ github.workspace }}/ograf/tutorials/index.html")
+          html = path.read_text(encoding="utf-8")
+          marker = "var Module = {"
+          if marker not in html:
+              raise SystemExit("Could not find Emscripten Module configuration in tutorial index.html")
+          html = html.replace(marker, marker + "\n      requestPointerLock: false,", 1)
+          path.write_text(html, encoding="utf-8")
+          PY
+
           test -s "$TARGET_DIR/index.html"
+          grep -q 'requestPointerLock: false' "$TARGET_DIR/index.html"
           test -s "$TARGET_DIR/index.js"
           test -s "$TARGET_DIR/index.wasm"
           node --check "$TARGET_DIR/index.js"
