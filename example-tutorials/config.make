@@ -11,6 +11,10 @@ PROJECT_LDFLAGS += -sNO_DISABLE_EXCEPTION_CATCHING
 # directory exists and contains the tutorial scenes and fonts before
 # file_packager runs.
 ifeq ($(PLATFORM_OS),emscripten)
+# Use a custom HTML shell that permits document scrolling, browser zoom and
+# touch pinch-zoom instead of the fixed, overflow-hidden default page.
+PROJECT_LDFLAGS += --shell-file shell.html
+
 # The OF Emscripten link step creates index.js, index.wasm and index.data as one
 # artifact set. Running dependent link/package recipes in parallel can invoke
 # file_packager while another recipe is still writing the same output.
