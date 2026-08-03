@@ -1,0 +1,8 @@
+[
+  {"name":"ascii","text":"Score 42","kinds":[]},
+  {"name":"arabic-rtl","text":"مرحبا بالعالم","kinds":["bidirectional script"]},
+  {"name":"hebrew-rtl","text":"שלום עולם","kinds":["bidirectional script"]},
+  {"name":"devanagari","text":"नमस्ते दुनिया","kinds":["complex script","combining marks"]},
+  {"name":"combining-mark","text":"Café","kinds":["combining marks"]},
+  {"name":"emoji-zwj","text":"Presenter 👩‍🚀","kinds":["emoji sequence"]}
+]

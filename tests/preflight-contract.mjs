@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import {readFile} from "node:fs/promises";
-import {parseProvider, preflightScene} from "../scripts/lib/scene-preflight.mjs";
+import {analyzeTextShaping, parseProvider, preflightScene} from "../scripts/lib/scene-preflight.mjs";
 
 const root = new URL("../", import.meta.url);
 const readJson = async path => JSON.parse(await readFile(new URL(path, root), "utf8"));
@@ -10,6 +10,30 @@ assert.equal(tickerReport.compatible, true);
 assert.equal(tickerReport.fidelity, "tolerant");
 assert.ok(tickerReport.features.some(feature => feature.capability === "layer.text"));
 assert.ok(tickerReport.features.some(feature => feature.capability === "layer.shape"));
+
+const shapingCases = await readJson("tests/fixtures/text-shaping-cases.json");
+for (const fixture of shapingCases) assert.deepEqual(analyzeTextShaping(fixture.text), fixture.kinds, fixture.name);
+
+const complexTextScene = {
+    format: "broadcast-scene",
+    version: "0.2.0",
+    layers: [{type: "text", name: "RTL headline", text: {value: {text: "مرحبا بالعالم"}}}],
+    assets: {fonts: [], images: []},
+    controls: [],
+    compositions: []
+};
+const unsupportedShaping = await preflightScene(complexTextScene, {target: "wasm"});
+assert.equal(unsupportedShaping.compatible, false);
+assert.ok(unsupportedShaping.features.some(feature =>
+    feature.capability === "text.complex-shaping" && feature.status === "extension" &&
+    feature.shapingKinds.includes("bidirectional script")));
+assert.ok(unsupportedShaping.diagnostics.some(diagnostic => diagnostic.code === "capability.extension-required"));
+const shapingProvider = parseProvider("dev.ofxograf.text-shaper@1.0.0:text.complex-shaping");
+const providedShaping = await preflightScene(complexTextScene, {target: "wasm", providers: [shapingProvider]});
+assert.equal(providedShaping.compatible, true);
+complexTextScene.layers[0].fallback = {enabled: true};
+const bakedShaping = await preflightScene(complexTextScene, {target: "wasm"});
+assert.equal(bakedShaping.compatible, true);
 
 const required = await readJson("tests/fixtures/scene-required-extension.json");
 const missingReport = await preflightScene(required, {target: "ograf"});

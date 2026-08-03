@@ -33,7 +33,7 @@
         "matte.alpha": "tolerant",
         "effect.fill-tint": "exact",
         "effect.arbitrary": "baked",
-        "text.complex-shaping": "tolerant",
+        "text.complex-shaping": "extension",
         "css.overlay": "exact",
         "extension.runtime": "extension",
         "controls.structured": "exact"
@@ -52,7 +52,7 @@
         "matte.alpha": "tolerant",
         "effect.fill-tint": "exact",
         "effect.arbitrary": "baked",
-        "text.complex-shaping": "tolerant",
+        "text.complex-shaping": "extension",
         "css.overlay": "exact",
         "extension.runtime": "extension",
         "controls.structured": "exact"

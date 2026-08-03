@@ -21,6 +21,31 @@ function visit(value, callback, path = "") {
   }
 }
 
+const complexTextPatterns = [
+  {kind: "bidirectional script", pattern: /[\p{Script=Arabic}\p{Script=Hebrew}]/u},
+  {kind: "complex script", pattern: /[\p{Script=Devanagari}\p{Script=Bengali}\p{Script=Gurmukhi}\p{Script=Gujarati}\p{Script=Oriya}\p{Script=Tamil}\p{Script=Telugu}\p{Script=Kannada}\p{Script=Malayalam}\p{Script=Sinhala}\p{Script=Thai}\p{Script=Lao}\p{Script=Khmer}\p{Script=Myanmar}]/u},
+  {kind: "combining marks", pattern: /\p{Mark}/u},
+  {kind: "emoji sequence", pattern: /[\p{Extended_Pictographic}\u200d\ufe0f]/u}
+];
+
+export function analyzeTextShaping(text) {
+  if (typeof text !== "string") return [];
+  return complexTextPatterns.filter(({pattern}) => pattern.test(text)).map(({kind}) => kind);
+}
+
+function detectComplexText(layer, path, features) {
+  visit(layer, (object, objectPath) => {
+    for (const [key, value] of Object.entries(object)) {
+      if (key !== "text" || typeof value !== "string") continue;
+      const kinds = analyzeTextShaping(value);
+      if (!kinds.length) continue;
+      add(features, "text.complex-shaping", `${path}${objectPath}/${key}`,
+        `Text requires shaping for ${kinds.join(", ")}`,
+        {fallbackEnabled: layer.fallback?.enabled === true, shapingKinds: kinds});
+    }
+  });
+}
+
 export function detectSceneCapabilities(scene) {
   const features = [];
   add(features, "scene.core", "/", "Broadcast Scene loading and deterministic timeline");
@@ -28,7 +53,10 @@ export function detectSceneCapabilities(scene) {
   layers.forEach((layer, index) => {
     const path = `/layers/${index}`;
     const type = String(layer.type || "unknown").toLowerCase();
-    if (type === "text") add(features, "layer.text", path, "Text rendering");
+    if (type === "text") {
+      add(features, "layer.text", path, "Text rendering");
+      detectComplexText(layer, path, features);
+    }
     else if (type === "shape" || type === "solid") add(features, "layer.shape", path, "Vector/solid rendering");
     else if (type === "image") add(features, "layer.image", path, "Image rendering");
     else if (["precomposition", "precomp", "composition"].includes(type)) add(features, "layer.precomposition", path, "Nested composition rendering");
@@ -87,12 +115,17 @@ export async function preflightScene(scene, {target = "wasm", providers = []} = 
     const status = targetDefinition.capabilities[feature.capability] || "unavailable";
     let available = status === "exact" || status === "tolerant";
     if (status === "baked") available = feature.fallbackEnabled === true;
+    if (status === "extension") {
+      available = feature.fallbackEnabled === true ||
+        [...providerMap.values()].some(provider => provider.capabilities.has(feature.capability));
+    }
     if (!available) diagnostics.push({
       severity: "error",
-      code: status === "baked" ? "capability.bake-required" : "capability.unavailable",
+      code: status === "baked" ? "capability.bake-required" :
+        status === "extension" ? "capability.extension-required" : "capability.unavailable",
       path: feature.path,
       capability: feature.capability,
-      message: `${feature.reason} is ${status} for ${target}${status === "baked" ? " and has no enabled baked fallback" : ""}.`
+      message: `${feature.reason} is ${status} for ${target}${status === "baked" ? " and has no enabled baked fallback" : status === "extension" ? " and has no capable provider or enabled baked fallback" : ""}.`
     });
     return {...feature, status, available};
   });
