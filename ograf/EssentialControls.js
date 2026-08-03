@@ -3,6 +3,11 @@ const HTMLElementBase = globalThis.HTMLElement || class {};
 const clone = value => value === undefined ? undefined : structuredClone(value);
 const isEditableTarget = target => target instanceof HTMLElement &&
     (target.matches("input, textarea, select") || target.isContentEditable);
+const CONTROL_EVENT_TYPES = [
+    "keydown", "keyup",
+    "mousedown", "mouseup", "mousemove", "wheel",
+    "touchstart", "touchend", "touchmove", "touchcancel"
+];
 
 export function normalizeControlType(control = {}) {
     if (Array.isArray(control.options)) return "enum";
@@ -105,10 +110,10 @@ export class OfEssentialControls extends HTMLElementBase {
         this.updateQueue = Promise.resolve();
         this.onReady = event => this.refresh(event.detail?.scene, event.detail?.data);
         this.onData = event => this.applyData(event.detail?.data);
-        // openFrameworks/Emscripten listens for keyboard events on document and
-        // may prevent their defaults. Let editable controls handle the event,
-        // then keep it from reaching the global runtime listener.
-        this.onControlKey = event => {
+        // openFrameworks/Emscripten listens for input-device events on document
+        // and may prevent their defaults. Let editable controls handle them,
+        // then keep them from reaching the global runtime listeners.
+        this.onControlEvent = event => {
             if (event.composedPath().some(isEditableTarget)) event.stopImmediatePropagation();
         };
         if (!this.attachShadow) return;
@@ -147,14 +152,12 @@ export class OfEssentialControls extends HTMLElementBase {
     }
 
     connectedCallback() {
-        document.addEventListener("keydown", this.onControlKey);
-        document.addEventListener("keyup", this.onControlKey);
+        for (const type of CONTROL_EVENT_TYPES) document.addEventListener(type, this.onControlEvent);
         queueMicrotask(() => this.connectTarget());
     }
 
     disconnectedCallback() {
-        document.removeEventListener("keydown", this.onControlKey);
-        document.removeEventListener("keyup", this.onControlKey);
+        for (const type of CONTROL_EVENT_TYPES) document.removeEventListener(type, this.onControlEvent);
         this.bindGraphic(null);
     }
 
@@ -316,6 +319,25 @@ label.textContent = control.name;
             input.value = value ?? control.min;
             const output = document.createElement("output");
             output.value = input.value;
+            const updateFromPointer = event => {
+                const bounds = input.getBoundingClientRect();
+                const minimum = Number(input.min);
+                const maximum = Number(input.max);
+                const ratio = Math.max(0, Math.min(1, (event.clientX - bounds.left) / bounds.width));
+                const raw = minimum + ratio * (maximum - minimum);
+                const step = input.step === "any" ? 0 : Number(input.step);
+                const value = step > 0 ? minimum + Math.round((raw - minimum) / step) * step : raw;
+                input.value = String(value);
+                output.value = input.value;
+                this.commit(control, coerceControlValue(control, input.value));
+            };
+            input.addEventListener("pointerdown", event => {
+                input.setPointerCapture?.(event.pointerId);
+                updateFromPointer(event);
+            });
+            input.addEventListener("pointermove", event => {
+                if (input.hasPointerCapture?.(event.pointerId)) updateFromPointer(event);
+            });
             input.addEventListener("input", () => {
                 output.value = input.value;
                 this.commit(control, coerceControlValue(control, input.value));
