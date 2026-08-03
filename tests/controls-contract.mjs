@@ -58,6 +58,8 @@ assert.match(wrapper, /ograf-data-change/);
 assert.match(htmlControls, /"mousedown", "mouseup", "mousemove", "wheel"/);
 assert.match(htmlControls, /"touchstart", "touchend", "touchmove", "touchcancel"/);
 assert.match(htmlControls, /document\.addEventListener\(type, this\.onControlEvent\)/);
+assert.match(htmlControls, /window\.addEventListener\(type, this\.onControlEvent, true\)/);
+assert.match(htmlControls, /target\.showPicker\?\.\(\)/);
 assert.match(htmlControls, /event\.composedPath\(\)\.some\(isEditableTarget\)/);
 assert.match(htmlControls, /event\.stopImmediatePropagation\(\)/);
 assert.match(htmlControls, /input\.setPointerCapture\?\.\(event\.pointerId\)/);

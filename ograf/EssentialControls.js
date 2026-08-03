@@ -3,8 +3,8 @@ const HTMLElementBase = globalThis.HTMLElement || class {};
 const clone = value => value === undefined ? undefined : structuredClone(value);
 const isEditableTarget = target => target instanceof HTMLElement &&
     (target.matches("input, textarea, select") || target.isContentEditable);
-const CONTROL_EVENT_TYPES = [
-    "keydown", "keyup",
+const CONTROL_KEY_EVENT_TYPES = ["keydown", "keyup"];
+const CONTROL_POINTER_EVENT_TYPES = [
     "mousedown", "mouseup", "mousemove", "wheel",
     "touchstart", "touchend", "touchmove", "touchcancel"
 ];
@@ -110,9 +110,9 @@ export class OfEssentialControls extends HTMLElementBase {
         this.updateQueue = Promise.resolve();
         this.onReady = event => this.refresh(event.detail?.scene, event.detail?.data);
         this.onData = event => this.applyData(event.detail?.data);
-        // openFrameworks/Emscripten listens for input-device events on document
-        // and may prevent their defaults. Let editable controls handle them,
-        // then keep them from reaching the global runtime listeners.
+        // openFrameworks/Emscripten installs global input-device listeners and
+        // may prevent native editor defaults. Stop keyboard events after the
+        // editor and pointer-derived mouse/touch events before the runtime.
         this.onControlEvent = event => {
             if (event.composedPath().some(isEditableTarget)) event.stopImmediatePropagation();
         };
@@ -146,18 +146,25 @@ export class OfEssentialControls extends HTMLElementBase {
           <header><h2>Essential Graphics</h2><button id="reset" type="button">Reset</button></header>
           <div id="actions" aria-label="Template playback"></div><div id="fields"></div><div id="status" role="status" aria-live="polite"></div>`;
         this.shadowRoot.getElementById("reset").addEventListener("click", () => this.resetDefaults());
+        this.shadowRoot.addEventListener("pointerdown", event => {
+            const target = event.composedPath().find(isEditableTarget);
+            target?.focus?.();
+            if (target?.matches?.("select, input[type=color]")) target.showPicker?.();
+        });
         this.shadowRoot.addEventListener("focusout", () => queueMicrotask(() => {
             if (!this.shadowRoot.activeElement) this.renderFields();
         }));
     }
 
     connectedCallback() {
-        for (const type of CONTROL_EVENT_TYPES) document.addEventListener(type, this.onControlEvent);
+        for (const type of CONTROL_KEY_EVENT_TYPES) document.addEventListener(type, this.onControlEvent);
+        for (const type of CONTROL_POINTER_EVENT_TYPES) window.addEventListener(type, this.onControlEvent, true);
         queueMicrotask(() => this.connectTarget());
     }
 
     disconnectedCallback() {
-        for (const type of CONTROL_EVENT_TYPES) document.removeEventListener(type, this.onControlEvent);
+        for (const type of CONTROL_KEY_EVENT_TYPES) document.removeEventListener(type, this.onControlEvent);
+        for (const type of CONTROL_POINTER_EVENT_TYPES) window.removeEventListener(type, this.onControlEvent, true);
         this.bindGraphic(null);
     }
 
