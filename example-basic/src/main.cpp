@@ -289,6 +289,15 @@ std::string renderFrameDiagnostics() {
     return appInstance ? appInstance->renderFrameDiagnostics() : std::string(R"({"error":"Application is not ready."})");
 }
 
+#ifdef __EMSCRIPTEN__
+emscripten::val renderFrameRgba() {
+    if (!appInstance) return emscripten::val::undefined();
+    const ofPixels pixels = appInstance->readFramePixels();
+    const auto view = emscripten::val(emscripten::typed_memory_view(pixels.size(), pixels.getData()));
+    return emscripten::val::global("Uint8Array").new_(view);
+}
+#endif
+
 bool isActionComplete(const std::string& action) {
     return graphic() && graphic()->isActionComplete(action);
 }
@@ -352,6 +361,7 @@ EMSCRIPTEN_BINDINGS(ofx_ograf_bridge) {
     emscripten::function("stopGraphic", &stopGraphic);
     emscripten::function("goToTime", &goToTime);
     emscripten::function("renderFrameDiagnostics", &renderFrameDiagnostics);
+    emscripten::function("renderFrameRgba", &renderFrameRgba);
     emscripten::function("isActionComplete", &isActionComplete);
     emscripten::function("getLastError", &getLastError);
     emscripten::function("getGraphicData", &getGraphicData);

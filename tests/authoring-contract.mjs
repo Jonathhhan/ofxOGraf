@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 
 const root = new URL("../", import.meta.url);
-const [header, implementation, loader, renderSurface, example, basicMain, imguiExample, imguiMain, schemaText, wrapper, renderer, assetsHeader, assetsImplementation, wasmFrameContract] = await Promise.all([
+const [header, implementation, loader, renderSurface, example, basicMain, imguiExample, imguiMain, schemaText, wrapper, renderer, assetsHeader, assetsImplementation, wasmFrameContract, frameManifestText] = await Promise.all([
     readFile(new URL("src/ofxOGrafAuthoring.h", root), "utf8"),
     readFile(new URL("src/ofxOGrafAuthoring.cpp", root), "utf8"),
     readFile(new URL("src/ofxOGrafSceneLoader.cpp", root), "utf8"),
@@ -16,9 +16,11 @@ const [header, implementation, loader, renderSurface, example, basicMain, imguiE
     readFile(new URL("src/ofxOGrafRendererShapes.cpp", root), "utf8"),
     readFile(new URL("src/ofxOGrafAssets.h", root), "utf8"),
     readFile(new URL("src/ofxOGrafAssets.cpp", root), "utf8"),
-    readFile(new URL("tests/wasm-frame-determinism.html", root), "utf8")
+    readFile(new URL("tests/wasm-frame-determinism.html", root), "utf8"),
+    readFile(new URL("tests/conformance/frames.json", root), "utf8")
 ]);
 const schema = JSON.parse(schemaText);
+const frameManifest = JSON.parse(frameManifestText);
 
 for (const token of [
     "SceneBuilder", "CompositionBuilder", "TextLayerBuilder", "ShapeLayerBuilder",
@@ -86,8 +88,15 @@ assert.match(basicMain, /--frame/);
 
 assert.match(example, /renderFrameDiagnostics/);
 assert.match(basicMain, /emscripten::function\("renderFrameDiagnostics"/);
+assert.match(basicMain, /emscripten::function\("renderFrameRgba"/);
 assert.match(wasmFrameContract, /backwardStable/);
 assert.match(wasmFrameContract, /reloadStable/);
+assert.match(wasmFrameContract, /conformance\/frames\.json/);
+assert.match(wasmFrameContract, /renderFrameRgba/);
+assert.match(wasmFrameContract, /pixelConformant/);
+assert.match(wasmFrameContract, /differentPixels/);
+assert.equal(frameManifest.schemaVersion, "1.0.0");
+assert.ok(frameManifest.fixtures.some(fixture => fixture.targets.includes("native") && fixture.targets.includes("wasm")));
 
 assert.match(wasmFrameContract, /lifecycleStable/);
 assert.match(wasmFrameContract, /module\.playGraphic/);

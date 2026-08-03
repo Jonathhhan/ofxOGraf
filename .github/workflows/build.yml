@@ -180,6 +180,7 @@ jobs:
           sed -i "s#\"./dist/ofxOGraf.js\"#\"./dist/$JS_NAME\"#" "${{ github.workspace }}/ograf/OfBroadcastGraphic.js"
           sed -i "s#./dist/ofxOGraf.wasm#./dist/$WASM_NAME#g" "${{ github.workspace }}/ograf/OfBroadcastGraphic.js"
           sed -i "s#./dist/ofxOGraf.data#./dist/$DATA_NAME#g" "${{ github.workspace }}/ograf/OfBroadcastGraphic.js"
+          sed -i "s/__OFXOGRAF_BUILD_VERSION__/${VERSION}/g" "${{ github.workspace }}/ograf/index.html"
 
           test -s "$DIST_DIR/$JS_NAME"
           test -s "$DIST_DIR/$WASM_NAME"
@@ -188,6 +189,8 @@ jobs:
           node --check "${{ github.workspace }}/ograf/OfBroadcastGraphic.js"
           xxd -l 4 -p "$DIST_DIR/$WASM_NAME" | grep -q '^0061736d$'
           grep -q "$JS_NAME" "${{ github.workspace }}/ograf/OfBroadcastGraphic.js"
+          grep -q "const packagedBuildVersion = \"${VERSION}\"" "${{ github.workspace }}/ograf/index.html"
+          ! grep -q "__OFXOGRAF_BUILD_VERSION__" "${{ github.workspace }}/ograf/index.html"
           ls -lh "$DIST_DIR"
 
       - name: Stage and validate tutorial site

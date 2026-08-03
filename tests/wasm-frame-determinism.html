@@ -4,8 +4,6 @@
 <canvas id="canvas" width="1280" height="720" hidden></canvas>
 <pre id="result">RUNNING</pre>
 <script type="module">
-import createOfxOGrafModule from "../example-basic/bin/em/ofxOGraf/index.js";
-
 const result = document.getElementById("result");
 const waitFor = async predicate => {
   for (let attempt = 0; attempt < 200; ++attempt) {
@@ -18,42 +16,98 @@ const capture = (module, milliseconds) => {
   module.goToTime(milliseconds);
   return JSON.parse(module.renderFrameDiagnostics());
 };
+const loadGoldenPixels = async path => {
+  const response = await fetch(`../${path}`);
+  if (!response.ok) throw new Error(`Could not load golden frame ${path}: HTTP ${response.status}`);
+  const bitmap = await createImageBitmap(await response.blob());
+  const canvas = document.createElement("canvas");
+  canvas.width = bitmap.width;
+  canvas.height = bitmap.height;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  context.clearRect(0, 0, bitmap.width, bitmap.height);
+  context.drawImage(bitmap, 0, 0);
+  const pixels = context.getImageData(0, 0, bitmap.width, bitmap.height).data;
+  bitmap.close();
+  return { width: canvas.width, height: canvas.height, pixels };
+};
+const comparePixels = (actual, golden, tolerance) => {
+  if (actual.length !== golden.length) throw new Error("RGBA buffer size differs from golden frame");
+  let differentPixels = 0;
+  let maximumDifference = 0;
+  for (let offset = 0; offset < actual.length; offset += 4) {
+    if (actual[offset + 3] === 0 && golden[offset + 3] === 0) continue;
+    let pixelDifference = 0;
+    for (let channel = 0; channel < 4; ++channel) {
+      pixelDifference = Math.max(pixelDifference, Math.abs(actual[offset + channel] - golden[offset + channel]));
+    }
+    maximumDifference = Math.max(maximumDifference, pixelDifference);
+    if (pixelDifference > tolerance) ++differentPixels;
+  }
+  return { differentPixels, maximumDifference };
+};
 
 try {
+  const buildVersion = Date.now();
+  const { default: createOfxOGrafModule } = await import(`../example-basic/bin/em/ofxOGraf/index.js?v=${buildVersion}`);
+  const manifest = await (await fetch("./conformance/frames.json")).json();
+  if (manifest.schemaVersion !== "1.0.0" || !manifest.fixtures?.length) {
+    throw new Error("Invalid or empty frame conformance manifest");
+  }
   const module = await createOfxOGrafModule({
     canvas: document.getElementById("canvas"),
-    locateFile: file => `../example-basic/bin/em/ofxOGraf/${file}`
+    locateFile: file => `../example-basic/bin/em/ofxOGraf/${file}?v=${buildVersion}`
   });
   await waitFor(() => module.isRuntimeReady());
 
-  const scene = await (await fetch("../example-basic/bin/data/scene.json")).text();
-  if (!module.loadGraphic(scene)) throw new Error(module.getLastError());
+  const fixtureResults = [];
+  for (const fixture of manifest.fixtures.filter(value => value.targets.includes("wasm"))) {
+    if (fixture.source.type !== "scene") throw new Error(`${fixture.id}: WASM fixtures require a scene source`);
+    const scene = await (await fetch(`../${fixture.source.path}`)).text();
+    if (!module.loadGraphic(scene)) throw new Error(`${fixture.id}: ${module.getLastError()}`);
+    const captureResults = [];
+    for (const definition of fixture.captures) {
+      const milliseconds = definition.timeSeconds * 1000;
+      const fresh = capture(module, milliseconds);
+      const wasmPixels = module.renderFrameRgba();
+      const golden = await loadGoldenPixels(definition.golden);
+      const pixelComparison = comparePixels(wasmPixels, golden.pixels, definition.tolerance);
+      capture(module, milliseconds + 1000);
+      const backward = capture(module, milliseconds);
+      if (!module.loadGraphic(scene)) throw new Error(`${fixture.id}: ${module.getLastError()}`);
+      const reloaded = capture(module, milliseconds);
 
-  const fresh = capture(module, 500);
-  capture(module, 1500);
-  const backward = capture(module, 500);
-  if (!module.loadGraphic(scene)) throw new Error(module.getLastError());
-  const reloaded = capture(module, 500);
+      const lifecycleHashes = [];
+      for (let cycle = 0; cycle < 5; ++cycle) {
+        if (!module.loadGraphic(scene)) throw new Error(`${fixture.id}: ${module.getLastError()}`);
+        module.playGraphic(0, false);
+        lifecycleHashes.push(capture(module, milliseconds).hash);
+        module.stopGraphic(true);
+      }
 
-  const lifecycleHashes = [];
-  for (let cycle = 0; cycle < 5; ++cycle) {
-    if (!module.loadGraphic(scene)) throw new Error(module.getLastError());
-    module.playGraphic(0, false);
-    lifecycleHashes.push(capture(module, 500).hash);
-    module.stopGraphic(true);
+      const dimensionsMatch = fresh.width === definition.width && fresh.height === definition.height;
+      const goldenDimensionsMatch = golden.width === definition.width && golden.height === definition.height;
+      const alphaPresent = !definition.requireAlpha
+        || (fresh.transparent > 0 && (fresh.translucent + fresh.opaque) > 0);
+      const pixelConformant = pixelComparison.differentPixels <= definition.maxDifferentPixels;
+      const backwardStable = backward.hash === fresh.hash;
+      const reloadStable = reloaded.hash === fresh.hash;
+      const lifecycleStable = lifecycleHashes.every(hash => hash === fresh.hash);
+      captureResults.push({
+        timeSeconds: definition.timeSeconds,
+        passed: dimensionsMatch && goldenDimensionsMatch && alphaPresent && pixelConformant
+          && backwardStable && reloadStable && lifecycleStable,
+        dimensionsMatch, goldenDimensionsMatch, alphaPresent, pixelConformant,
+        backwardStable, reloadStable, lifecycleStable,
+        pixelComparison, lifecycleHashes, fresh, backward, reloaded
+      });
+    }
+    fixtureResults.push({ id: fixture.id, features: fixture.features, captures: captureResults });
   }
 
-  const frameIsRgba = fresh.width === 1920 && fresh.height === 1080
-    && fresh.transparent > 0 && (fresh.translucent + fresh.opaque) > 0;
-  const backwardStable = backward.hash === fresh.hash;
-  const reloadStable = reloaded.hash === fresh.hash;
-  const lifecycleStable = lifecycleHashes.every(hash => hash === fresh.hash);
-  const passed = frameIsRgba && backwardStable && reloadStable && lifecycleStable;
+  const passed = fixtureResults.length > 0
+    && fixtureResults.every(fixture => fixture.captures.every(value => value.passed));
   result.dataset.status = passed ? "pass" : "fail";
-  result.textContent = JSON.stringify({
-    passed, frameIsRgba, backwardStable, reloadStable, lifecycleStable,
-    lifecycleHashes, fresh, backward, reloaded
-  }, null, 2);
+  result.textContent = JSON.stringify({ passed, schemaVersion: manifest.schemaVersion, fixtures: fixtureResults }, null, 2);
 } catch (error) {
   result.dataset.status = "error";
   result.textContent = JSON.stringify({passed: false, error: String(error)}, null, 2);

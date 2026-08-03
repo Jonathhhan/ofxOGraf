@@ -64,6 +64,8 @@ assert.match(wrapper, /this\.appendChild\(this\.canvas\)/);
 assert.match(preview, /showStatus/);
 assert.match(preview, /Preview ready/);
 assert.match(preview, /playNamedAction/);
+assert.match(preview, /__OFXOGRAF_BUILD_VERSION__/);
+assert.match(preview, /template-definition.*buildVersion/);
 const alignment = ografDescriptor.controls.find(value => value.id === "alignment");
 assert.deepEqual(alignment?.options?.map(option => option.value), ["left", "center", "right"]);
 assert.deepEqual(manifest.schema.properties.alignment.enum, ["left", "center", "right"]);

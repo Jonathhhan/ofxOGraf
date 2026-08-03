@@ -153,9 +153,13 @@ void ofApp::windowResized(int width, int height) {
     }
 }
 
-std::string ofApp::renderFrameDiagnostics() {
+ofPixels ofApp::readFramePixels() {
     preview.render(broadcastGraphic);
-    const ofPixels pixels = preview.readPixels();
+    return preview.readPixels();
+}
+
+std::string ofApp::renderFrameDiagnostics() {
+    const ofPixels pixels = readFramePixels();
     std::uint64_t hash = 1469598103934665603ULL;
     std::uint64_t transparent = 0;
     std::uint64_t translucent = 0;

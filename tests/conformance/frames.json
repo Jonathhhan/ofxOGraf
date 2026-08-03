@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "1.0.0",
+  "fixtures": [
+    {
+      "id": "native-authoring-lower-third",
+      "targets": ["native"],
+      "source": { "type": "built-in" },
+      "features": ["authoring-0.3", "bezier", "shape", "text", "alpha"],
+      "captures": [
+        {
+          "timeSeconds": 0.5,
+          "golden": "tests/golden/lower-third-0.5.png",
+          "width": 1920,
+          "height": 1080,
+          "tolerance": 2,
+          "maxDifferentPixels": 2500,
+          "requireAlpha": true
+        }
+      ]
+    },
+    {
+      "id": "legacy-scene-lower-third",
+      "targets": ["native", "wasm"],
+      "source": { "type": "scene", "path": "examples/lower-third.scene.json" },
+      "features": ["migration-0.1", "text", "absolute-time", "alpha"],
+      "captures": [
+        {
+          "timeSeconds": 0.5,
+          "golden": "tests/golden/legacy-scene-lower-third-0.5.png",
+          "width": 1920,
+          "height": 1080,
+          "tolerance": 2,
+          "maxDifferentPixels": 2500,
+          "requireAlpha": true
+        }
+      ]
+    }
+  ]
+}

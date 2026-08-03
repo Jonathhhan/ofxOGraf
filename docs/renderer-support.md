@@ -12,6 +12,20 @@ The loader supports authored Broadcast Scene 0.1.x, 0.2.x, and 0.3.x documents. 
 
 See [scene-compatibility.md](scene-compatibility.md) for the compatibility and migration contract.
 
+## Renderer conformance
+
+`tests/conformance/frames.json` is the shared, versioned inventory of reference scenes, capture
+times, target runtimes, feature labels, dimensions, and pixel tolerances. The native golden-frame
+contract consumes every fixture declaring the `native` target. The WASM conformance page consumes
+the same scene fixtures declaring the `wasm` target, exports its rendered RGBA buffer, compares it
+with the native golden using the fixture's tolerance, and verifies identical hashes after backward
+seeking, scene reload, and repeated play/stop cycles.
+
+The pixel comparison establishes tolerant native/WASM visual conformance for shared fixtures. The
+hash checks separately prove repeatability inside WASM; they do not replace the cross-runtime pixel
+comparison. Tolerances remain fixture-specific because GPU rasterization and font antialiasing can
+differ without changing layout or visible content.
+
 
 The 0.2 pipeline uses three fidelity modes:
 

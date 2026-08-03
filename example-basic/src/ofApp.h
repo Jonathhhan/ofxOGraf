@@ -20,6 +20,7 @@ public:
     std::string codeTemplateLastError() const;
     std::string codeTemplateAbiFingerprint(const std::string& factoryId) const;
     void useSceneGraphic();
+    ofPixels readFramePixels();
     std::string renderFrameDiagnostics();
 
 
