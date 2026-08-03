@@ -99,6 +99,7 @@ After copying the rendered sequence into the package, set `enabled` to `true`. T
 ## Fidelity boundaries
 
 - `ofTrueTypeFont` uses FreeType outlines and metrics, but exact AE paragraph shaping may still differ for complex scripts, variable fonts or AE-specific text engines. A HarfBuzz backend can be registered as a custom text-layer renderer when exact shaping is required.
+- `Renderer::diagnostics()` exposes stable, once-per-scene text diagnostic codes: `text.font-unavailable`, `text.shaping-unsupported`, and `text.overflow`. Authors can opt into deterministic overflow checks with positive `boxWidth` and/or `boxHeight` values on the evaluated text document. These checks report measured and available pixel bounds; they do not silently resize or truncate text.
 - Merge Paths uses tessellator winding modes and is not a byte-for-byte clone of every AE boolean edge case.
 - The built-in track matte is alpha/stencil based; luma mattes should use an extension or bake fallback.
 - 3D transforms are supported, but AE cameras, lights, Cinema 4D and plugin renderers require a dedicated extension or bake fallback.

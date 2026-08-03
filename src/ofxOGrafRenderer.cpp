@@ -43,6 +43,8 @@ void Renderer::setup() {
 void Renderer::setScene(const Scene& scene) {
     rootScene = scene;
     assets.configure(scene.raw);
+    diagnosticKeys.clear();
+    renderDiagnostics.clear();
     cacheCompositions();
     ready = true;
 }
@@ -53,6 +55,14 @@ void Renderer::setData(const ofJson& value) {
 
 Extensions& Renderer::extensions() { return extensionRegistry; }
 const std::vector<std::string>& Renderer::assetWarnings() const { return assets.warnings(); }
+const std::vector<RenderDiagnostic>& Renderer::diagnostics() const { return renderDiagnostics; }
+
+void Renderer::diagnoseOnce(const std::string& key, const std::string& code,
+                            const Layer& layer, const std::string& message) {
+    if (!diagnosticKeys.insert(key).second) return;
+    renderDiagnostics.push_back({code, layer.name, message});
+    ofLogWarning("ofxOGraf") << "[" << code << "] Layer '" << layer.name << "': " << message;
+}
 
 void Renderer::cacheCompositions() {
     compositions.clear();
@@ -283,20 +293,21 @@ void Renderer::drawText(const Layer& layer, double time) {
     const float size = value.value("fontSize", 32.0f);
     const std::string fontName = value.value("font", value.value("fontFamily", ""));
     ofTrueTypeFont* font = assets.font(fontName, size);
+    if (!font) {
+        diagnoseOnce("text.font-unavailable:" + layer.name + "@" + fontName,
+                     "text.font-unavailable", layer,
+                     "Font '" + fontName + "' is unavailable; bitmap fallback metrics are not layout-compatible. Bundle the declared font asset.");
+    }
 #ifdef __EMSCRIPTEN__
     // The Emscripten font atlas covers ASCII only. Non-ASCII characters render
     // as boxes; warn once per unique layer so authors can detect the issue.
     {
-        const std::string warnKey = layer.name + "@" + fontName;
-        if (warnedNonAscii.find(warnKey) == warnedNonAscii.end()) {
-            bool hasNonAscii = false;
-            for (unsigned char c : text) { if (c > 127) { hasNonAscii = true; break; } }
-            if (hasNonAscii) {
-                warnedNonAscii.insert(warnKey);
-                ofLogWarning("ofxOGraf") << "Layer '" << layer.name << "': text contains non-ASCII characters"
-                    " that will render as boxes on Emscripten (font '" << fontName << "')."
-                    " Pre-bake or use ASCII-only text for WebGL targets.";
-            }
+        bool hasNonAscii = false;
+        for (unsigned char c : text) { if (c > 127) { hasNonAscii = true; break; } }
+        if (hasNonAscii) {
+            diagnoseOnce("text.shaping-unsupported:" + layer.name + "@" + fontName,
+                         "text.shaping-unsupported", layer,
+                         "Non-ASCII text is unsupported by the current Emscripten atlas for font '" + fontName + "'. Pre-bake the layer or use an installed shaping extension.");
         }
     }
 #endif
@@ -310,6 +321,24 @@ void Renderer::drawText(const Layer& layer, double time) {
     const float tracking = value.value("tracking", 0.0f) * size / 1000.0f;
     const std::string justification = value.value("justification", "LEFT_JUSTIFY");
     const auto lines = ofSplitString(text, "\r", false, false);
+
+    float measuredWidth = 0.0f;
+    for (const auto& line : lines) {
+        float lineWidth = font ? font->stringWidth(line) : static_cast<float>(line.size() * 8);
+        if (tracking != 0.0f) lineWidth += std::max(0, static_cast<int>(ofUTF8Length(line)) - 1) * tracking;
+        measuredWidth = std::max(measuredWidth, lineWidth);
+    }
+    const float measuredHeight = lines.empty() ? 0.0f : size + static_cast<float>(lines.size() - 1) * leading;
+    const float boxWidth = value.value("boxWidth", 0.0f);
+    const float boxHeight = value.value("boxHeight", 0.0f);
+    if ((boxWidth > 0.0f && measuredWidth > boxWidth) || (boxHeight > 0.0f && measuredHeight > boxHeight)) {
+        std::ostringstream message;
+        message << std::fixed << std::setprecision(2)
+                << "Measured " << measuredWidth << "x" << measuredHeight
+                << " px exceeds text box " << boxWidth << "x" << boxHeight
+                << " px. Shorten the text, enlarge the box, or apply an explicit fit policy.";
+        diagnoseOnce("text.overflow:" + layer.name, "text.overflow", layer, message.str());
+    }
 
     float y = value.value("baselineShift", 0.0f);
     for (const auto& line : lines) {

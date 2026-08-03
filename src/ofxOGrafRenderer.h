@@ -6,8 +6,15 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace ofxOGraf {
+
+struct RenderDiagnostic {
+    std::string code;
+    std::string layer;
+    std::string message;
+};
 
 class Renderer {
 public:
@@ -18,6 +25,7 @@ public:
 
     Extensions& extensions();
     const std::vector<std::string>& assetWarnings() const;
+    const std::vector<RenderDiagnostic>& diagnostics() const;
 
 private:
     struct Style {
@@ -40,7 +48,8 @@ private:
     std::unordered_map<std::string, Scene> compositions;
     std::set<std::string> warnedEffects;
     std::set<std::string> warnedStencilLayers;
-    std::set<std::string> warnedNonAscii;
+    std::set<std::string> diagnosticKeys;
+    std::vector<RenderDiagnostic> renderDiagnostics;
     bool ready = false;
     bool hasColorOverride = false;
     ofFloatColor colorOverride = ofFloatColor::white;
@@ -80,6 +89,8 @@ private:
     static glm::vec3 vector3(const ofJson& value, glm::vec3 fallback = glm::vec3(0));
     static ofFloatColor color(const ofJson& value, float alpha = 1.0f);
     static std::string framePath(const ofJson& fallback, double time, double defaultFrameRate);
+    void diagnoseOnce(const std::string& key, const std::string& code,
+                      const Layer& layer, const std::string& message);
 };
 
 } // namespace ofxOGraf
