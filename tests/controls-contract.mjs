@@ -64,4 +64,7 @@ assert.match(htmlControls, /event\.composedPath\(\)\.some\(isEditableTarget\)/);
 assert.match(htmlControls, /event\.stopImmediatePropagation\(\)/);
 assert.match(htmlControls, /input\.setPointerCapture\?\.\(event\.pointerId\)/);
 assert.match(htmlControls, /\(event\.clientX - bounds\.left\) \/ bounds\.width/);
+assert.match(htmlControls, /trigger\.setAttribute\("aria-haspopup", "listbox"\)/);
+assert.match(htmlControls, /menu\.hidden = !menu\.hidden/);
+assert.match(htmlControls, /this\.commit\(control, clone\(optionValue\)\)/);
 console.log("Validated shared HTML/ofxImGui Essential Graphics controls contract.");

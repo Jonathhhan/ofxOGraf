@@ -138,7 +138,14 @@ export class OfEssentialControls extends HTMLElementBase {
             input[type=range] { padding:0; accent-color:#5ba6ff; }
             textarea { min-height:78px; resize:vertical; }
             output { min-width:48px; text-align:right; font-variant-numeric:tabular-nums; }
-.vector { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+            .vector { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:6px; }
+            .enum { display:grid; gap:4px; }
+            .enum-trigger { width:100%; display:flex; justify-content:space-between; padding:7px 8px; text-align:left; }
+            .enum-trigger::after { content:"▾"; color:#8e96a5; }
+            .enum-menu { display:grid; gap:2px; padding:4px; border:1px solid #414754; border-radius:5px; background:#20242c; }
+            .enum-menu[hidden] { display:none; }
+            .enum-option { width:100%; border:0; padding:7px 8px; text-align:left; background:transparent; }
+            .enum-option[aria-selected=true] { background:#34465e; }
             .description { color:#8e96a5; font-size:12px; }
             #status { padding:0 16px 14px; color:#8e96a5; min-height:18px; }
             .empty { color:#8e96a5; }
@@ -277,19 +284,44 @@ label.textContent = control.name;
         if (description) field.appendChild(description);
 
         if (control.type === "enum") {
-            input = document.createElement("select");
+            input = document.createElement("div");
+            input.className = "enum";
+            const trigger = document.createElement("button");
+            trigger.type = "button";
+            trigger.className = "enum-trigger";
+            trigger.setAttribute("aria-label", control.name);
+            trigger.setAttribute("aria-haspopup", "listbox");
+            trigger.setAttribute("aria-expanded", "false");
+            const menu = document.createElement("div");
+            menu.className = "enum-menu";
+            menu.setAttribute("role", "listbox");
+            menu.hidden = true;
             for (const [index, option] of control.options.entries()) {
-                const element = document.createElement("option");
                 const optionValue = typeof option === "object" ? option.value : option;
-                element.value = String(index);
-                element.textContent = typeof option === "object" ? option.label || option.name || String(optionValue) : String(option);
-                element.selected = JSON.stringify(optionValue) === JSON.stringify(value);
-                input.appendChild(element);
+                const optionLabel = typeof option === "object" ? option.label || option.name || String(optionValue) : String(option);
+                const selected = JSON.stringify(optionValue) === JSON.stringify(value);
+                const element = document.createElement("button");
+                element.type = "button";
+                element.className = "enum-option";
+                element.dataset.optionIndex = String(index);
+                element.setAttribute("role", "option");
+                element.setAttribute("aria-selected", String(selected));
+                element.textContent = optionLabel;
+                if (selected) trigger.textContent = optionLabel;
+                element.addEventListener("click", () => {
+                    trigger.textContent = optionLabel;
+                    trigger.setAttribute("aria-expanded", "false");
+                    for (const candidate of menu.children) candidate.setAttribute("aria-selected", String(candidate === element));
+                    menu.hidden = true;
+                    this.commit(control, clone(optionValue));
+                });
+                menu.appendChild(element);
             }
-            input.addEventListener("change", () => {
-                const option = control.options[Number(input.value)];
-                this.commit(control, clone(typeof option === "object" ? option.value : option));
+            trigger.addEventListener("click", () => {
+                menu.hidden = !menu.hidden;
+                trigger.setAttribute("aria-expanded", String(!menu.hidden));
             });
+            input.append(trigger, menu);
         } else if (control.type === "color") {
             input = document.createElement("input");
             input.type = "color";
