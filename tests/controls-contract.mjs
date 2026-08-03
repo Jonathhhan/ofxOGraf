@@ -41,6 +41,7 @@ assert.deepEqual(normalizeActions([
 const root = new URL("../", import.meta.url);
 const imgui = await readFile(new URL("src/ofxOGrafImGuiControls.cpp", root), "utf8");
 const wrapper = await readFile(new URL("ograf/OfBroadcastGraphic.js", root), "utf8");
+const htmlControls = await readFile(new URL("ograf/EssentialControls.js", root), "utf8");
 assert.match(imgui, /ofxAddons_ENABLE_IMGUI/);
 assert.match(imgui, /Controls::defaultData/);
 assert.match(imgui, /ImGuiColorEditFlags_AlphaBar/);
@@ -54,4 +55,7 @@ assert.match(renderer, /colorAlpha \* alpha/);
 assert.match(renderer, /glBlendFuncSeparate\(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA, GL_ONE, GL_ONE_MINUS_SRC_ALPHA\)/);
 assert.match(wrapper, /ograf-ready/);
 assert.match(wrapper, /ograf-data-change/);
+assert.match(htmlControls, /document\.addEventListener\("keydown", this\.onControlKey\)/);
+assert.match(htmlControls, /event\.composedPath\(\)\.some\(isEditableTarget\)/);
+assert.match(htmlControls, /event\.stopImmediatePropagation\(\)/);
 console.log("Validated shared HTML/ofxImGui Essential Graphics controls contract.");

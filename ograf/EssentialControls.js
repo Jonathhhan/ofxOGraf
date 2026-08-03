@@ -1,6 +1,8 @@
 const HTMLElementBase = globalThis.HTMLElement || class {};
 
 const clone = value => value === undefined ? undefined : structuredClone(value);
+const isEditableTarget = target => target instanceof HTMLElement &&
+    (target.matches("input, textarea, select") || target.isContentEditable);
 
 export function normalizeControlType(control = {}) {
     if (Array.isArray(control.options)) return "enum";
@@ -103,6 +105,12 @@ export class OfEssentialControls extends HTMLElementBase {
         this.updateQueue = Promise.resolve();
         this.onReady = event => this.refresh(event.detail?.scene, event.detail?.data);
         this.onData = event => this.applyData(event.detail?.data);
+        // openFrameworks/Emscripten listens for keyboard events on document and
+        // may prevent their defaults. Let editable controls handle the event,
+        // then keep it from reaching the global runtime listener.
+        this.onControlKey = event => {
+            if (event.composedPath().some(isEditableTarget)) event.stopImmediatePropagation();
+        };
         if (!this.attachShadow) return;
         this.attachShadow({ mode: "open" }).innerHTML = `
           <style>
@@ -139,10 +147,14 @@ export class OfEssentialControls extends HTMLElementBase {
     }
 
     connectedCallback() {
+        document.addEventListener("keydown", this.onControlKey);
+        document.addEventListener("keyup", this.onControlKey);
         queueMicrotask(() => this.connectTarget());
     }
 
     disconnectedCallback() {
+        document.removeEventListener("keydown", this.onControlKey);
+        document.removeEventListener("keyup", this.onControlKey);
         this.bindGraphic(null);
     }
 
