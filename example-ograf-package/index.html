@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ofxOGraf canonical package example</title>
+    <style>
+        :root { color-scheme: dark; font-family: system-ui, sans-serif; }
+        body { margin: 0; background: #111827; color: #e5e7eb; }
+        main { display: grid; grid-template-rows: minmax(0, 1fr) auto; min-height: 100vh; }
+        #stage { display: grid; place-items: center; min-height: 0; padding: 24px; }
+        #stage > * { width: min(100%, 1280px); aspect-ratio: 16 / 9; background: transparent; }
+        aside { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 16px; padding: 16px 24px; background: #0b1020; border-top: 1px solid #26324a; }
+        h1 { margin: 0 0 6px; font-size: 18px; }
+        p { margin: 0; color: #9ca3af; }
+        #status[data-state="pass"] { color: #86efac; }
+        #status[data-state="fail"] { color: #fca5a5; }
+        button { align-self: center; padding: 10px 16px; border: 0; border-radius: 6px; background: #2563eb; color: white; font: inherit; cursor: pointer; }
+        button:disabled { opacity: 0.55; cursor: wait; }
+        pre { grid-column: 1 / -1; max-height: 150px; overflow: auto; margin: 0; color: #cbd5e1; white-space: pre-wrap; }
+    </style>
+</head>
+<body>
+<main>
+    <section id="stage" aria-label="OGraf output"></section>
+    <aside>
+        <div>
+            <h1>Canonical C++ → WASM → OGraf lifecycle</h1>
+            <p id="status" data-state="running">Starting…</p>
+        </div>
+        <button id="run" type="button" disabled>Run again</button>
+        <pre id="log" aria-live="polite"></pre>
+    </aside>
+</main>
+<script type="module" src="./main.js"></script>
+</body>
+</html>

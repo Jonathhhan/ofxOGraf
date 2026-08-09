@@ -44,6 +44,7 @@ jobs:
           node tests/golden-frame-contract.mjs
           node scripts/validate-template-definition.mjs
           node tests/code-template-delivery-contract.mjs
+          node tests/ograf-package-example-contract.mjs
           node tests/package-contract.mjs
           node tests/package-integrity-contract.mjs
           node tests/scene-migration-contract.mjs
@@ -277,6 +278,42 @@ jobs:
           if [ -f tutorials/index.data ]; then
             curl -sfI http://127.0.0.1:8080/tutorials/index.data
           fi
+
+      - name: Install Chromium lifecycle test
+        run: |
+          npm ci --prefix tests/browser
+          npx --prefix tests/browser playwright install --with-deps chromium
+
+      - name: Run canonical OGraf lifecycle in Chromium
+        run: |
+          set -euxo pipefail
+          python3 -m http.server 8080 --bind 127.0.0.1 --directory "${{ github.workspace }}" > /tmp/ofxograf-browser-server.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" 2>/dev/null || true' EXIT
+
+          READY=0
+          for i in $(seq 1 20); do
+            if curl -sf http://127.0.0.1:8080/example-ograf-package/ >/dev/null; then
+              READY=1
+              break
+            fi
+            sleep 1
+          done
+          if [ "$READY" -ne 1 ]; then
+            cat /tmp/ofxograf-browser-server.log
+            exit 1
+          fi
+
+          npm test --prefix tests/browser
+
+      - name: Upload Chromium failure evidence
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ograf-lifecycle-browser-results
+          path: tests/browser/test-results/
+          if-no-files-found: ignore
+          retention-days: 7
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3

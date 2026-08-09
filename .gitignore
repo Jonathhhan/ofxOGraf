@@ -2,6 +2,7 @@ build/
 bin/
 obj/
 .DS_Store
+node_modules/
 ograf/dist/*.data
 ograf/dist/*.js
 ograf/dist/*.wasm
