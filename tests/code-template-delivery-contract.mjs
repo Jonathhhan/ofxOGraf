@@ -46,7 +46,7 @@ assert.match(wrapper, /Code template ABI mismatch/);
 assert.match(entry, /playCodeTemplate\("in", skipAnimation\)/);
 assert.match(entry, /playCodeTemplate\("out", skipAnimation\)/);
 assert.match(entry, /get codeTemplateId\(\)[\s\S]*return "native-lower-third"/);
-assert.match(entry, /get definitionUrl\(\)[\s\S]*return "\.\/template-definition\.json"/);
+assert.match(entry, /get definitionUrl\(\)[\s\S]*new URL\("\.\/template-definition\.json", import\.meta\.url\)\.href/);
 assert.doesNotMatch(entry, /setAttribute\(/);
 const manifest = JSON.parse(manifestText);
 assert.equal(manifest.main, "./NativeLowerThirdGraphic.js");

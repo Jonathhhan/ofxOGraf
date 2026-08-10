@@ -6,7 +6,7 @@ export default class NativeLowerThirdGraphic extends OfBroadcastGraphic {
     }
 
     get definitionUrl() {
-        return "./template-definition.json";
+        return new URL("./template-definition.json", import.meta.url).href;
     }
 
     // Keep the OGraf lifecycle explicit on the package entry point; the
