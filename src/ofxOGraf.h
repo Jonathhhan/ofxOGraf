@@ -1,6 +1,7 @@
 #pragma once
 
 #include "ofxOGrafGraphic.h"
+#include "ofxOGrafHarfBuzz.h"
 #include "ofxOGrafRenderSurface.h"
 #include "ofxOGrafCodeTemplateRegistry.h"
 #include "ofxOGrafAuthoring.h"

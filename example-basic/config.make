@@ -22,3 +22,14 @@ endif
 ifeq ($(OGRAF_TEST),1)
 PROJECT_LDFLAGS += -sASSERTIONS=1
 endif
+
+# Keep the browser HarfBuzz fixture and its redistributable CI font fallback
+# inside Emscripten's packaged data. Local projects may provide their own
+# ArialMT-compatible files; GitHub's Ubuntu runner supplies DejaVu Sans.
+ifeq ($(PLATFORM_OS),emscripten)
+$(shell mkdir -p bin/data/fonts)
+$(shell cp -f ../tests/fixtures/harfbuzz-arabic.scene.json bin/data/)
+$(shell test -s bin/data/fonts/ArialMT.ttf || \
+    cp -f /usr/share/fonts/truetype/dejavu/DejaVuSans.ttf bin/data/fonts/ArialMT.ttf)
+$(if $(wildcard bin/data/fonts/ArialMT.ttf),,$(error Missing bin/data/fonts/ArialMT.ttf))
+endif

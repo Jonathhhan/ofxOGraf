@@ -20,6 +20,7 @@ $(shell cp -f ../examples/ograf-dev-lower-third.scene.json bin/data/)
 $(shell cp -f ../examples/ograf-dev-bug.scene.json bin/data/)
 $(shell cp -f ../examples/ograf-dev-ticker.scene.json bin/data/)
 $(shell cp -f ../examples/ograf-dev-score-bug.scene.json bin/data/)
+$(shell cp -f ../tests/fixtures/harfbuzz-arabic.scene.json bin/data/)
 
 # The imported scenes request the PostScript names ArialMT and Arial-BoldMT.
 # Keep project-provided files when present. GitHub's Ubuntu runner includes

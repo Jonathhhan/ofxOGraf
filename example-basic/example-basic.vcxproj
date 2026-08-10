@@ -82,7 +82,7 @@
 			<PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			<RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
 			<WarningLevel>Level3</WarningLevel>
-			<AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);src;..\src</AdditionalIncludeDirectories>
+			<AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);src;..\src;..\libs\harfbuzz\src</AdditionalIncludeDirectories>
 			<CompileAs>CompileAsCpp</CompileAs>
 			<MultiProcessorCompilation>true</MultiProcessorCompilation>
 			<ObjectFileName>$(IntDir)\Build\%(RelativeDir)\$(Configuration)\</ObjectFileName>
@@ -127,7 +127,7 @@
 			<PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
 			<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
 			<WarningLevel>Level3</WarningLevel>
-			<AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);src;..\src</AdditionalIncludeDirectories>
+			<AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);src;..\src;..\libs\harfbuzz\src</AdditionalIncludeDirectories>
 			<CompileAs>CompileAsCpp</CompileAs>
 			<ObjectFileName>$(IntDir)\Build\%(RelativeDir)\$(Configuration)\</ObjectFileName>
 			<LanguageStandard>stdcpplatest</LanguageStandard>
@@ -236,6 +236,8 @@
 		<ClCompile Include="..\examples\native-authoring\NativeLowerThird.cpp" />
 		<ClCompile Include="..\src\ofxOGrafExtensions.cpp" />
 		<ClCompile Include="..\src\ofxOGrafGraphic.cpp" />
+		<ClCompile Include="..\src\ofxOGrafHarfBuzz.cpp" />
+		<ClCompile Include="..\src\ofxOGrafHarfBuzzAmalgamation.cpp" />
 		<ClCompile Include="..\src\ofxOGrafImGuiControls.cpp" />
 		<ClCompile Include="..\src\ofxOGrafRenderer.cpp" />
 		<ClCompile Include="..\src\ofxOGrafRendererShapes.cpp" />

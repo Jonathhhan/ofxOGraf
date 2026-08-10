@@ -4,7 +4,7 @@ This document turns the long-term direction of `ofxOGraf` into ordered, independ
 
 ## Product promise
 
-An `ofxOGraf` graphic should remain portable, deterministic, inspectable, and recoverable regardless of how it was authored or whether it runs natively, in WebAssembly, or inside an OGraf renderer.
+An `ofxOGraf` graphic should remain portable, deterministic, inspectable, and recoverable regardless of how it was authored or whether it runs natively, in WebAssembly, or inside an OGraf Host.
 
 ## Working rules
 
@@ -43,6 +43,8 @@ node tests/package-contract.mjs
 node tests/package-integrity-contract.mjs
 node tests/preflight-contract.mjs
 node tests/structured-controls-contract.mjs
+node tests/harfbuzz-source-contract.mjs
+node tests/harfbuzz-shaping-contract.mjs
 node tests/scene-migration-contract.mjs
 node --check ograf/OfBroadcastGraphic.js
 node --check ograf/EssentialControls.js
@@ -173,7 +175,7 @@ Tasks:
 - Generate a package bill of materials with licenses and provenance.
 - Add path normalization, duplicate detection, size limits, and offline validation.
 - Design optional signing and verification without making a vendor-specific trust system part of the renderer.
-- Test packages with representative OGraf renderers.
+- Test packages with representative OGraf Hosts.
 
 Acceptance criteria:
 

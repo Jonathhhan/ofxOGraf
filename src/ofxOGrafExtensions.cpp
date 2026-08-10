@@ -1,5 +1,6 @@
 #include "ofxOGrafExtensions.h"
 #include <sstream>
+#include <stdexcept>
 
 namespace ofxOGraf {
 
@@ -9,6 +10,13 @@ void Extensions::registerLayerRenderer(const std::string& type, LayerHandler han
 
 void Extensions::registerEffectRenderer(const std::string& matchName, EffectHandler handler) {
     effectHandlers[matchName] = std::move(handler);
+}
+
+void Extensions::registerTextLayoutProvider(const std::string& id, const std::string& version,
+                                            TextLayoutHandler handler) {
+    if (!handler) throw std::invalid_argument("text layout provider handler must be callable");
+    textLayoutHandler = std::move(handler);
+    registerProvider(id, version, {"text.complex-shaping"});
 }
 
 
@@ -32,7 +40,9 @@ std::string Extensions::validateRequired(const ofJson& document) const {
         }
         for (const auto& capabilityValue : requirement.value("capabilities", ofJson::array())) {
             const std::string capability = capabilityValue.get<std::string>();
-            if (!provider->second.capabilities.count(capability)) {
+            const bool executableTextProvider = capability != "text.complex-shaping" ||
+                                                static_cast<bool>(textLayoutHandler);
+            if (!provider->second.capabilities.count(capability) || !executableTextProvider) {
                 return "[scene.extension.capability] Required capability is unavailable: " +
                        id + "/" + capability;
             }
@@ -49,6 +59,11 @@ bool Extensions::drawLayer(const Layer& layer, double time, const ofJson& data) 
 bool Extensions::applyEffect(const ofJson& effect, double time) const {
     const auto found = effectHandlers.find(effect.value("matchName", ""));
     return found != effectHandlers.end() && found->second(effect, time);
+}
+
+bool Extensions::drawText(const Layer& layer, const ofJson& evaluatedText,
+                          const std::string& text, double time, const ofJson& data) const {
+    return textLayoutHandler && textLayoutHandler(layer, evaluatedText, text, time, data);
 }
 
 } // namespace ofxOGraf

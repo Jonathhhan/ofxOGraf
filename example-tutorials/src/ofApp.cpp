@@ -7,6 +7,11 @@ void ofApp::setup() {
     ofSetWindowShape(WindowWidth, WindowHeight);
     ofSetFrameRate(50);
     graphic.setup();
+    graphic.extensions().registerTextLayoutProvider(
+        "dev.ofxograf.harfbuzz", "14.3.0",
+        ofxOGraf::HarfBuzzShaper::makeTextLayoutHandler([](const std::string& fontName) {
+            return ofToDataPath("fonts/" + fontName + ".ttf", true);
+        }));
 #ifndef __EMSCRIPTEN__
     gui.setup();
 #endif
@@ -180,7 +185,7 @@ void ofApp::draw() {
 }
 
 void ofApp::keyPressed(int key) {
-    if (key >= '1' && key <= '4') {
+    if (key >= '1' && key <= '5') {
         loadTutorial(static_cast<std::size_t>(key - '1'));
     } else if (key == 'r' || key == 'R') {
         loadTutorial(current);

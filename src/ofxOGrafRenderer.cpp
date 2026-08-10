@@ -290,6 +290,10 @@ void Renderer::drawText(const Layer& layer, double time) {
         }
     }
 
+    // A registered provider receives the evaluated document and resolved live
+    // text. Returning false preserves the built-in tolerant renderer as fallback.
+    if (extensionRegistry.drawText(layer, value, text, time, data)) return;
+
     const float size = value.value("fontSize", 32.0f);
     const std::string fontName = value.value("font", value.value("fontFamily", ""));
     ofTrueTypeFont* font = assets.font(fontName, size);

@@ -79,10 +79,10 @@
 		<ClCompile>
 			<Optimization>Disabled</Optimization>
 			<BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
-			<PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<PreprocessorDefinitions>%(PreprocessorDefinitions);ofxAddons_ENABLE_IMGUI;OFXIMGUI_GLFW_EVENTS_REPLACE_OF_CALLBACKS=1;OFXIMGUI_GLFW_FIX_MULTICONTEXT_PRIMARY_VP=0;OFXIMGUI_GLFW_FIX_MULTICONTEXT_SECONDARY_VP=1</PreprocessorDefinitions>
 			<RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
 			<WarningLevel>Level3</WarningLevel>
-			<AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);src;..\src</AdditionalIncludeDirectories>
+			<AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);src;..\src;..\libs\harfbuzz\src;..\..\ofxImGui\src;..\..\ofxImGui\libs;..\..\ofxImGui\libs\imgui;..\..\ofxImGui\libs\imgui\backends;..\..\ofxImGui\libs\imgui\extras;..\..\ofxImGui\libs\imgui\src</AdditionalIncludeDirectories>
 			<CompileAs>CompileAsCpp</CompileAs>
 			<MultiProcessorCompilation>true</MultiProcessorCompilation>
 			<ObjectFileName>$(IntDir)\Build\%(RelativeDir)\$(Configuration)\</ObjectFileName>
@@ -124,10 +124,10 @@
 	<ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64' or '$(Configuration)|$(Platform)'=='Release|ARM64' or '$(Configuration)|$(Platform)'=='Release|ARM64EC'">
 		<ClCompile>
 			<WholeProgramOptimization>false</WholeProgramOptimization>
-			<PreprocessorDefinitions>%(PreprocessorDefinitions)</PreprocessorDefinitions>
+			<PreprocessorDefinitions>%(PreprocessorDefinitions);ofxAddons_ENABLE_IMGUI;OFXIMGUI_GLFW_EVENTS_REPLACE_OF_CALLBACKS=1;OFXIMGUI_GLFW_FIX_MULTICONTEXT_PRIMARY_VP=0;OFXIMGUI_GLFW_FIX_MULTICONTEXT_SECONDARY_VP=1</PreprocessorDefinitions>
 			<RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
 			<WarningLevel>Level3</WarningLevel>
-			<AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);src;..\src</AdditionalIncludeDirectories>
+			<AdditionalIncludeDirectories>%(AdditionalIncludeDirectories);src;..\src;..\libs\harfbuzz\src;..\..\ofxImGui\src;..\..\ofxImGui\libs;..\..\ofxImGui\libs\imgui;..\..\ofxImGui\libs\imgui\backends;..\..\ofxImGui\libs\imgui\extras;..\..\ofxImGui\libs\imgui\src</AdditionalIncludeDirectories>
 			<CompileAs>CompileAsCpp</CompileAs>
 			<ObjectFileName>$(IntDir)\Build\%(RelativeDir)\$(Configuration)\</ObjectFileName>
 			<LanguageStandard>stdcpplatest</LanguageStandard>
@@ -234,6 +234,25 @@
 	<ItemGroup>
 		<ClCompile Include="src\main.cpp" />
 		<ClCompile Include="src\ofApp.cpp" />
+		<ClCompile Include="..\..\ofxImGui\src\BaseEngine.cpp" />
+		<ClCompile Include="..\..\ofxImGui\src\DefaultTheme.cpp" />
+		<ClCompile Include="..\..\ofxImGui\src\EngineGLFW.cpp" />
+		<ClCompile Include="..\..\ofxImGui\src\EngineOpenFrameworks.cpp" />
+		<ClCompile Include="..\..\ofxImGui\src\EngineOpenGLES.cpp" />
+		<ClCompile Include="..\..\ofxImGui\src\Gui.cpp" />
+		<ClCompile Include="..\..\ofxImGui\src\GuiEventHelper.cpp" />
+		<ClCompile Include="..\..\ofxImGui\src\ImHelpers.cpp" />
+		<ClCompile Include="..\..\ofxImGui\src\ofxImGuiLoggerChannel.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\backends\imgui_impl_glfw.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\backends\imgui_impl_glfw_context_support.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\backends\imgui_impl_opengl2.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\backends\imgui_impl_opengl3.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\extras\imgui_stdlib.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\src\imgui.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\src\imgui_demo.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\src\imgui_draw.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\src\imgui_tables.cpp" />
+		<ClCompile Include="..\..\ofxImGui\libs\imgui\src\imgui_widgets.cpp" />
 		<ClCompile Include="..\src\ofxOGrafAssets.cpp" />
 		<ClCompile Include="..\src\ofxOGrafControls.cpp" />
 		<ClCompile Include="..\src\ofxOGrafAuthoring.cpp" />
@@ -241,6 +260,8 @@
 		<ClCompile Include="..\src\ofxOGrafCodeTemplateRegistry.cpp" />
 		<ClCompile Include="..\src\ofxOGrafExtensions.cpp" />
 		<ClCompile Include="..\src\ofxOGrafGraphic.cpp" />
+		<ClCompile Include="..\src\ofxOGrafHarfBuzz.cpp" />
+		<ClCompile Include="..\src\ofxOGrafHarfBuzzAmalgamation.cpp" />
 		<ClCompile Include="..\src\ofxOGrafImGuiControls.cpp" />
 		<ClCompile Include="..\src\ofxOGrafRenderer.cpp" />
 		<ClCompile Include="..\src\ofxOGrafRendererShapes.cpp" />
@@ -258,6 +279,7 @@
 		<ClInclude Include="..\src\ofxOGrafControls.h" />
 		<ClInclude Include="..\src\ofxOGrafExtensions.h" />
 		<ClInclude Include="..\src\ofxOGrafGraphic.h" />
+		<ClInclude Include="..\src\ofxOGrafHarfBuzz.h" />
 		<ClInclude Include="..\src\ofxOGrafImGuiControls.h" />
 		<ClInclude Include="..\src\ofxOGrafRenderer.h" />
 		<ClInclude Include="..\src\ofxOGrafScene.h" />

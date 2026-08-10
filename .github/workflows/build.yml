@@ -51,6 +51,8 @@ jobs:
           node tests/preflight-contract.mjs
           node tests/structured-controls-contract.mjs
           node tests/text-layout-contract.mjs
+          node tests/harfbuzz-source-contract.mjs
+          node tests/harfbuzz-shaping-contract.mjs
           node --check ograf/OfBroadcastGraphic.js
           node --check ograf/EssentialControls.js
           node --check ograf/TemplateAbi.js

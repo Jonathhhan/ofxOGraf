@@ -25,6 +25,12 @@
 		<ClCompile Include="..\src\ofxOGrafExtensions.cpp">
 			<Filter>addons\ofxOGraf\src</Filter>
 		</ClCompile>
+		<ClCompile Include="..\src\ofxOGrafHarfBuzz.cpp">
+			<Filter>addons\ofxOGraf\src</Filter>
+		</ClCompile>
+		<ClCompile Include="..\src\ofxOGrafHarfBuzzAmalgamation.cpp">
+			<Filter>addons\ofxOGraf\src</Filter>
+		</ClCompile>
 		<ClCompile Include="..\src\ofxOGrafGraphic.cpp">
 			<Filter>addons\ofxOGraf\src</Filter>
 		</ClCompile>
@@ -84,6 +90,9 @@
 			<Filter>addons\ofxOGraf\src</Filter>
 		</ClInclude>
 		<ClInclude Include="..\src\ofxOGrafExtensions.h">
+			<Filter>addons\ofxOGraf\src</Filter>
+		</ClInclude>
+		<ClInclude Include="..\src\ofxOGrafHarfBuzz.h">
 			<Filter>addons\ofxOGraf\src</Filter>
 		</ClInclude>
 		<ClInclude Include="..\src\ofxOGrafGraphic.h">

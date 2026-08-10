@@ -1,0 +1,9 @@
+{
+  "name": "HarfBuzz",
+  "version": "14.3.0",
+  "source": "https://github.com/harfbuzz/harfbuzz/releases/download/14.3.0/harfbuzz-14.3.0.tar.xz",
+  "archiveSha256": "16070d77cfc4ba1f1e7327e83bf9b3f55898081cabdb94e56a33e04fc8874eae",
+  "upstreamPath": "src",
+  "entryPoint": "src/harfbuzz.cc",
+  "license": "Old MIT"
+}

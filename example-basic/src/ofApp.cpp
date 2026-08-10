@@ -5,6 +5,10 @@
 #include <sstream>
 #include <utility>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten/val.h>
+#endif
+
 ofApp::ofApp(std::string outputPath, double outputTime, std::string inputScenePath)
     : frameOutputPath(std::move(outputPath))
     , scenePath(std::move(inputScenePath))
@@ -14,11 +18,29 @@ void ofApp::setup() {
     ofSetFrameRate(50);
     ofSetWindowShape(WindowWidth, WindowHeight);
     broadcastGraphic.setup();
+    broadcastGraphic.extensions().registerTextLayoutProvider(
+        "dev.ofxograf.harfbuzz", "14.3.0",
+        ofxOGraf::HarfBuzzShaper::makeTextLayoutHandler([](const std::string& fontName) {
+            return ofToDataPath("fonts/" + fontName + ".ttf", true);
+        }));
     ofxOGraf::examples::registerNativeLowerThird(codeTemplateRegistry);
+
+#ifdef __EMSCRIPTEN__
+    bool harfbuzzBrowserTest = false;
+    const std::string query = emscripten::val::global("window")["location"]["search"].as<std::string>();
+    if (query.find("harfbuzz-test=1") != std::string::npos) {
+        harfbuzzBrowserTest = true;
+        scenePath = "harfbuzz-arabic.scene.json";
+    }
+#endif
 
     if (!scenePath.empty()) {
         broadcastGraphic.loadJson(ofBufferFromFile(scenePath).getText());
         preview.allocate(broadcastGraphic.getScene());
+#ifdef __EMSCRIPTEN__
+        if (harfbuzzBrowserTest) broadcastGraphic.setTime(1.0);
+        else
+#endif
         if (frameOutputPath.empty()) broadcastGraphic.play();
         else broadcastGraphic.setTime(frameTime);
         return;
