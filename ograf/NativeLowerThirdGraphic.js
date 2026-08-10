@@ -1,10 +1,12 @@
 import OfBroadcastGraphic from "./OfBroadcastGraphic.js";
 
 export default class NativeLowerThirdGraphic extends OfBroadcastGraphic {
-    constructor() {
-        super();
-        this.setAttribute("code-template", "native-lower-third");
-        this.setAttribute("template-definition", "./template-definition.json");
+    get codeTemplateId() {
+        return "native-lower-third";
+    }
+
+    get definitionUrl() {
+        return "./template-definition.json";
     }
 
     // Keep the OGraf lifecycle explicit on the package entry point; the

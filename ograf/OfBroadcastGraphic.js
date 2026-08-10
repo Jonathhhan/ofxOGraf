@@ -21,17 +21,33 @@ export default class OfBroadcastGraphic extends HTMLElement {
         this.canvas.width = 1920;
         this.canvas.height = 1080;
         this.canvas.style.cssText = "display:block;width:100%;height:100%;background:transparent";
-        this.style.position ||= "relative";
-        this.style.overflow ||= "hidden";
-        this.appendChild(this.canvas);
         this.cssTextOverlay = new CssTextOverlay(this);
     }
 
-    async load({ data = {}, renderType = "realtime", renderCharacteristics = {} } = {}) {
-        if (this.module) await this.dispose({});
-        const templateId = this.getAttribute("code-template");
-        const sceneUrl = templateId ? (this.getAttribute("template-definition") || "./template-definition.json") :
+    connectedCallback() {
+        this.ensureHostDom();
+    }
+
+    ensureHostDom() {
+        this.style.position ||= "relative";
+        this.style.overflow ||= "hidden";
+        if (this.canvas.parentNode !== this) this.prepend(this.canvas);
+    }
+
+    get codeTemplateId() {
+        return this.getAttribute("code-template");
+    }
+
+    get definitionUrl() {
+        return this.codeTemplateId ? (this.getAttribute("template-definition") || "./template-definition.json") :
             (this.getAttribute("scene") || "./scene.json");
+    }
+
+    async load({ data = {}, renderType = "realtime", renderCharacteristics = {} } = {}) {
+        this.ensureHostDom();
+        if (this.module) await this.dispose({});
+        const templateId = this.codeTemplateId;
+        const sceneUrl = this.definitionUrl;
         const response = await fetch(sceneUrl);
         if (!response.ok) return { statusCode: response.status, statusMessage: `Could not load ${sceneUrl}` };
         const scene = await response.json();

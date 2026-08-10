@@ -35,6 +35,9 @@ assert.match(registry, /abiFingerprint/);
 
 assert.match(wrapper, /code-template/);
 assert.match(wrapper, /template-definition/);
+assert.match(wrapper, /connectedCallback\(\)[\s\S]*this\.ensureHostDom\(\)/);
+assert.match(wrapper, /async load[\s\S]*this\.ensureHostDom\(\)/);
+assert.doesNotMatch(wrapper, /constructor\(\)[\s\S]*this\.appendChild\(this\.canvas\)/);
 assert.match(wrapper, /loadCodeTemplate/);
 assert.match(wrapper, /isCodeTemplateActionComplete/);
 assert.match(wrapper, /playNamedAction/);
@@ -42,6 +45,9 @@ assert.match(wrapper, /templateAbiFingerprint/);
 assert.match(wrapper, /Code template ABI mismatch/);
 assert.match(entry, /playCodeTemplate\("in", skipAnimation\)/);
 assert.match(entry, /playCodeTemplate\("out", skipAnimation\)/);
+assert.match(entry, /get codeTemplateId\(\)[\s\S]*return "native-lower-third"/);
+assert.match(entry, /get definitionUrl\(\)[\s\S]*return "\.\/template-definition\.json"/);
+assert.doesNotMatch(entry, /setAttribute\(/);
 const manifest = JSON.parse(manifestText);
 assert.equal(manifest.main, "./NativeLowerThirdGraphic.js");
 assert.deepEqual(manifest.actionDurations, [
@@ -60,7 +66,7 @@ assert.match(wrapper, /negotiateTemplateCapabilities/);
 assert.match(wrapper, /Renderer capabilities unavailable/);
 assert.match(wrapper, /document\.querySelector\("#canvas"\)/);
 assert.match(wrapper, /this\.canvas\.id = "canvas"/);
-assert.match(wrapper, /this\.appendChild\(this\.canvas\)/);
+assert.match(wrapper, /if \(this\.canvas\.parentNode !== this\) this\.prepend\(this\.canvas\)/);
 assert.match(preview, /showStatus/);
 assert.match(preview, /Preview ready/);
 assert.match(preview, /playNamedAction/);

@@ -20,6 +20,7 @@ assert.match(harness, /import NativeLowerThirdGraphic from "\.\.\/ograf\/NativeL
 assert.match(harness, /window\.__ofxOGrafExampleResult/);
 assert.match(harness, /state: "pass"/);
 assert.match(harness, /state: "fail"/);
+assert.match(harness, /document\.createElement\(elementName\)/);
 
 const lifecycle = ["load", "playAction", "updateAction", "stopAction", "dispose"];
 let previous = -1;
