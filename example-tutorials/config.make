@@ -36,3 +36,8 @@ endif
 # The tutorial has no Embind API. openFrameworks enables EMBIND_AOT globally,
 # which currently crashes Emscripten's signature generator for this target.
 PROJECT_LDFLAGS += -sEMBIND_AOT=0
+
+# openFrameworks links browser apps as MAIN_MODULE. The bundled legacy
+# ofxEmscripten video JS library omits the signature metadata required when
+# its delete callback is registered in the Wasm function table.
+PROJECT_LDFLAGS += --js-library ./s.js
