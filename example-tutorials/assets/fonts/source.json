@@ -1,0 +1,21 @@
+{
+  "repository": "https://github.com/google/fonts",
+  "commit": "038b637da7b3fd956a4ed93ffc607c3d5e4ce172",
+  "license": "SIL Open Font License 1.1",
+  "fonts": [
+    {
+      "file": "NotoSansHebrew.ttf",
+      "upstreamPath": "ofl/notosanshebrew/NotoSansHebrew[wdth,wght].ttf",
+      "gitBlobSha": "f31f73b8be8086692ff0156544f80975640e5a42",
+      "sha256": "7ef36a2c3593758cdb622e1bdef4f84523e92fbc3ccc667438dd80ff54c2de88",
+      "licenseFile": "OFL-NotoSansHebrew.txt"
+    },
+    {
+      "file": "NotoSansDevanagari.ttf",
+      "upstreamPath": "ofl/notosansdevanagari/NotoSansDevanagari[wdth,wght].ttf",
+      "gitBlobSha": "e703d5282088c4b7787b1a4c5f057cf18f0998d6",
+      "sha256": "9ce7b04f60e363d8870e5997744cf85cf69d38a4d7d129d364d92a3b14b461d7",
+      "licenseFile": "OFL-NotoSansDevanagari.txt"
+    }
+  ]
+}

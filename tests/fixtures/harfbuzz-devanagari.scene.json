@@ -1,0 +1,45 @@
+{
+  "format": "broadcast-scene",
+  "version": "0.1.0",
+  "composition": {
+    "width": 1920,
+    "height": 1080,
+    "duration": 500,
+    "frameRate": 50
+  },
+  "layers": [
+    {
+      "index": 1,
+      "name": "Devanagari headline",
+      "type": "text",
+      "enabled": true,
+      "inPoint": 0,
+      "outPoint": 500,
+      "text": {
+        "name": "Source Text",
+        "matchName": "ADBE Text Document",
+        "value": {
+          "text": "नमस्ते दुनिया",
+          "font": "NotoSansDevanagari",
+          "fontSize": 96,
+          "direction": "ltr",
+          "script": "Deva",
+          "language": "hi",
+          "justification": "CENTER_JUSTIFY",
+          "fillColor": [1, 1, 1, 1],
+          "applyFill": true
+        },
+        "keyframes": []
+      },
+      "transform": {
+        "name": "Transform",
+        "matchName": "ADBE Transform Group",
+        "children": [
+          { "name": "Position", "matchName": "ADBE Position", "value": [960, 560], "keyframes": [] },
+          { "name": "Opacity", "matchName": "ADBE Opacity", "value": 100, "keyframes": [] }
+        ]
+      }
+    }
+  ],
+  "controls": []
+}

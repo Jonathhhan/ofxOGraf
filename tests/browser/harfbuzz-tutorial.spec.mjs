@@ -15,30 +15,38 @@ function countBrightPixels(image, region) {
     return count;
 }
 
-test("tutorial renders the Arabic HarfBuzz scene", async ({ page }) => {
-    test.setTimeout(45_000);
-    const browserErrors = [];
-    const shapingFailures = [];
-    page.on("console", message => {
-        const text = message.text();
-        if (message.type() === "error") browserErrors.push(text);
-        if (text.includes("ofxOGraf.HarfBuzz") ||
-            text.includes("Arabic headline") && text.includes("text.shaping-unsupported")) {
-            shapingFailures.push(text);
-        }
+const shapingCases = [
+    { tutorial: "arabic", script: "Arabic", layer: "Arabic headline" },
+    { tutorial: "hebrew", script: "Hebrew", layer: "Hebrew headline" },
+    { tutorial: "devanagari", script: "Devanagari", layer: "Devanagari headline" }
+];
+
+for (const shapingCase of shapingCases) {
+    test(`tutorial renders the ${shapingCase.script} HarfBuzz scene`, async ({ page }) => {
+        test.setTimeout(45_000);
+        const browserErrors = [];
+        const shapingFailures = [];
+        page.on("console", message => {
+            const text = message.text();
+            if (message.type() === "error") browserErrors.push(text);
+            if (text.includes("ofxOGraf.HarfBuzz") ||
+                text.includes(shapingCase.layer) && text.includes("text.shaping-unsupported")) {
+                shapingFailures.push(text);
+            }
+        });
+        page.on("pageerror", error => browserErrors.push(error.message));
+
+        const tutorialPath = process.env.OFXOGRAF_TUTORIAL_PATH ?? "/ograf/tutorials/";
+        await page.goto(`${tutorialPath}?tutorial=${shapingCase.tutorial}`, { waitUntil: "load" });
+        await page.waitForTimeout(10_000);
+
+        // Every white headline lands outside the selector around viewport
+        // x=320..840, y=380..540. Inspect compositor pixels so a compiled but
+        // blank HarfBuzz renderer cannot pass merely because its files exist.
+        const image = PNG.sync.read(await page.screenshot());
+        expect(countBrightPixels(image, { x: 320, y: 380, width: 520, height: 160 })).toBeGreaterThan(500);
+
+        expect(shapingFailures).toEqual([]);
+        expect(browserErrors).toEqual([]);
     });
-    page.on("pageerror", error => browserErrors.push(error.message));
-
-    const tutorialPath = process.env.OFXOGRAF_TUTORIAL_PATH ?? "/ograf/tutorials/";
-    await page.goto(`${tutorialPath}?tutorial=harfbuzz`, { waitUntil: "load" });
-    await page.waitForTimeout(10_000);
-
-    // The white Arabic headline lands outside the selector around viewport
-    // x=320..840, y=380..540. Inspect compositor pixels so a compiled but
-    // blank HarfBuzz renderer cannot pass merely because its files exist.
-    const image = PNG.sync.read(await page.screenshot());
-    expect(countBrightPixels(image, { x: 320, y: 380, width: 520, height: 160 })).toBeGreaterThan(500);
-
-    expect(shapingFailures).toEqual([]);
-    expect(browserErrors).toEqual([]);
-});
+}

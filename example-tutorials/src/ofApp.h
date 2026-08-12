@@ -31,12 +31,14 @@ private:
 
     static constexpr int WindowWidth = 1280;
     static constexpr int WindowHeight = 720;
-    std::array<Tutorial, 5> tutorials{{
+    std::array<Tutorial, 7> tutorials{{
         {"Lower Third", "ograf-dev-lower-third.scene.json"},
         {"Corner Bug / LIVE", "ograf-dev-bug.scene.json"},
         {"News Ticker", "ograf-dev-ticker.scene.json"},
         {"Score Bug", "ograf-dev-score-bug.scene.json"},
-        {"Arabic RTL (HarfBuzz)", "harfbuzz-arabic.scene.json"}
+        {"HarfBuzz: Arabic (RTL)", "harfbuzz-arabic.scene.json"},
+        {"HarfBuzz: Hebrew (RTL)", "harfbuzz-hebrew.scene.json"},
+        {"HarfBuzz: Devanagari (LTR)", "harfbuzz-devanagari.scene.json"}
     }};
     std::size_t current = 0;
     ofxOGraf::Graphic graphic;

@@ -7,7 +7,16 @@
 
 EM_JS(int, requestedTutorialIndex, (), {
     const requested = new URLSearchParams(globalThis.location.search).get("tutorial");
-    return requested === "harfbuzz" || requested === "5" ? 4 : 0;
+    const tutorials = {
+        harfbuzz: 4,
+        arabic: 4,
+        hebrew: 5,
+        devanagari: 6,
+        5: 4,
+        6: 5,
+        7: 6
+    };
+    return tutorials[requested] ?? 0;
 });
 #endif
 
@@ -198,7 +207,7 @@ void ofApp::draw() {
 }
 
 void ofApp::keyPressed(int key) {
-    if (key >= '1' && key <= '5') {
+    if (key >= '1' && key <= '7') {
         loadTutorial(static_cast<std::size_t>(key - '1'));
     } else if (key == 'r' || key == 'R') {
         loadTutorial(current);

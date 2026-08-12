@@ -1,0 +1,45 @@
+{
+  "format": "broadcast-scene",
+  "version": "0.1.0",
+  "composition": {
+    "width": 1920,
+    "height": 1080,
+    "duration": 500,
+    "frameRate": 50
+  },
+  "layers": [
+    {
+      "index": 1,
+      "name": "Hebrew headline",
+      "type": "text",
+      "enabled": true,
+      "inPoint": 0,
+      "outPoint": 500,
+      "text": {
+        "name": "Source Text",
+        "matchName": "ADBE Text Document",
+        "value": {
+          "text": "שלום עולם",
+          "font": "NotoSansHebrew",
+          "fontSize": 96,
+          "direction": "rtl",
+          "script": "Hebr",
+          "language": "he",
+          "justification": "RIGHT_JUSTIFY",
+          "fillColor": [1, 1, 1, 1],
+          "applyFill": true
+        },
+        "keyframes": []
+      },
+      "transform": {
+        "name": "Transform",
+        "matchName": "ADBE Transform Group",
+        "children": [
+          { "name": "Position", "matchName": "ADBE Position", "value": [1100, 560], "keyframes": [] },
+          { "name": "Opacity", "matchName": "ADBE Opacity", "value": 100, "keyframes": [] }
+        ]
+      }
+    }
+  ],
+  "controls": []
+}

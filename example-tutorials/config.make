@@ -21,6 +21,13 @@ $(shell cp -f ../examples/ograf-dev-bug.scene.json bin/data/)
 $(shell cp -f ../examples/ograf-dev-ticker.scene.json bin/data/)
 $(shell cp -f ../examples/ograf-dev-score-bug.scene.json bin/data/)
 $(shell cp -f ../tests/fixtures/harfbuzz-arabic.scene.json bin/data/)
+$(shell cp -f ../tests/fixtures/harfbuzz-hebrew.scene.json bin/data/)
+$(shell cp -f ../tests/fixtures/harfbuzz-devanagari.scene.json bin/data/)
+$(shell cp -f assets/fonts/NotoSansHebrew.ttf bin/data/fonts/)
+$(shell cp -f assets/fonts/NotoSansDevanagari.ttf bin/data/fonts/)
+$(shell cp -f assets/fonts/OFL-NotoSansHebrew.txt bin/data/fonts/)
+$(shell cp -f assets/fonts/OFL-NotoSansDevanagari.txt bin/data/fonts/)
+$(shell cp -f assets/fonts/source.json bin/data/fonts/)
 
 # The imported scenes request the PostScript names ArialMT and Arial-BoldMT.
 # Keep project-provided files when present. GitHub's Ubuntu runner includes
@@ -31,6 +38,11 @@ $(shell test -s bin/data/fonts/Arial-BoldMT.ttf || \
     cp -f /usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf bin/data/fonts/Arial-BoldMT.ttf)
 $(if $(wildcard bin/data/fonts/ArialMT.ttf),,$(error Missing bin/data/fonts/ArialMT.ttf))
 $(if $(wildcard bin/data/fonts/Arial-BoldMT.ttf),,$(error Missing bin/data/fonts/Arial-BoldMT.ttf))
+$(if $(wildcard bin/data/fonts/NotoSansHebrew.ttf),,$(error Missing bin/data/fonts/NotoSansHebrew.ttf))
+$(if $(wildcard bin/data/fonts/NotoSansDevanagari.ttf),,$(error Missing bin/data/fonts/NotoSansDevanagari.ttf))
+$(if $(wildcard bin/data/fonts/OFL-NotoSansHebrew.txt),,$(error Missing Noto Sans Hebrew license))
+$(if $(wildcard bin/data/fonts/OFL-NotoSansDevanagari.txt),,$(error Missing Noto Sans Devanagari license))
+$(if $(wildcard bin/data/fonts/source.json),,$(error Missing Noto font provenance))
 endif
 
 # The tutorial has no Embind API. openFrameworks enables EMBIND_AOT globally,
