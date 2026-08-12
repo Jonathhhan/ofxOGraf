@@ -2,6 +2,15 @@
 
 #include <algorithm>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten/em_js.h>
+
+EM_JS(int, requestedTutorialIndex, (), {
+    const requested = new URLSearchParams(globalThis.location.search).get("tutorial");
+    return requested === "harfbuzz" || requested === "5" ? 4 : 0;
+});
+#endif
+
 void ofApp::setup() {
     ofSetWindowTitle("ofxOGraf - ograf.dev tutorial ports");
     ofSetWindowShape(WindowWidth, WindowHeight);
@@ -15,7 +24,11 @@ void ofApp::setup() {
 #ifndef __EMSCRIPTEN__
     gui.setup();
 #endif
+#ifdef __EMSCRIPTEN__
+    loadTutorial(static_cast<std::size_t>(requestedTutorialIndex()));
+#else
     loadTutorial(0);
+#endif
 }
 
 void ofApp::loadTutorial(std::size_t index) {

@@ -2,13 +2,13 @@ import { defineConfig } from "@playwright/test";
 
 export default defineConfig({
     testDir: ".",
-    testMatch: "ograf-package-lifecycle.spec.mjs",
+    testMatch: "*.spec.mjs",
     timeout: 30_000,
     retries: 0,
     workers: 1,
     reporter: "line",
     use: {
-        baseURL: "http://127.0.0.1:8080",
+        baseURL: process.env.OFXOGRAF_BASE_URL ?? "http://127.0.0.1:8080",
         browserName: "chromium",
         headless: true,
         screenshot: "only-on-failure",
