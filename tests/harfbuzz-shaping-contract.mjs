@@ -65,7 +65,10 @@ assert.match(tutorialConfig, /NotoSansHebrew\.ttf/);
 assert.match(tutorialConfig, /NotoSansDevanagari\.ttf/);
 assert.match(tutorialConfig, /OFL-NotoSansHebrew\.txt/);
 assert.match(tutorialConfig, /OFL-NotoSansDevanagari\.txt/);
-assert.equal(fontSource.commit, "038b637da7b3fd956a4ed93ffc607c3d5e4ce172");
+assert.equal(fontSource.fonts.find(font => font.file === "NotoSansHebrew.ttf")?.commit,
+  "038b637da7b3fd956a4ed93ffc607c3d5e4ce172");
+assert.equal(fontSource.fonts.find(font => font.file === "NotoSansDevanagari.ttf")?.release,
+  "NotoSansDevanagari-v2.006");
 for (const font of fontSource.fonts) {
   const bytes = await readFile(new URL(`example-tutorials/assets/fonts/${font.file}`, root));
   assert.equal(createHash("sha256").update(bytes).digest("hex"), font.sha256, `${font.file} checksum`);

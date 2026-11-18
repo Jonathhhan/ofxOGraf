@@ -8,7 +8,7 @@ Direct authoring does not make the OGraf manifest or operator controls C++-speci
 C++ template declaration
         |
         +-- native preview + optional ofxImGui controls
-        +-- Emscripten/WebAssembly renderer
+        +-- ofxOGraf Scene Renderer in WebAssembly/WebGL
         +-- TemplateDefinition JSON
                 |
                 +-- OGraf manifest data schema
@@ -23,7 +23,7 @@ The canonical descriptor fixture is `examples/native-authoring/lower-third.templ
 
 ### SceneBuilder
 
-Use `SceneBuilder` when the graphic can be expressed with the portable scene renderer. The initial API covers text and shape layers, transforms, stable control bindings, assets, actions, provenance, and extension payloads. Masks, precompositions, and additional effects extend the same neutral model incrementally. C++ constructs a Broadcast Scene document instead of drawing directly.
+Use `SceneBuilder` when the graphic can be expressed with the portable ofxOGraf Scene Renderer. The initial API covers text and shape layers, transforms, stable control bindings, assets, actions, provenance, and extension payloads. Masks, precompositions, and additional effects extend the same neutral model incrementally. C++ constructs a Broadcast Scene document instead of drawing directly.
 
 This is the more portable option. Native and WASM use the same scene evaluation path, so deterministic seeking and pixel comparison are easier. It is also appropriate when a template might later be generated from After Effects or another design tool.
 

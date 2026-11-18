@@ -1,6 +1,6 @@
 # Testing with SuperFlyTV's OGraf server
 
-The [SuperFlyTV OGraf Simple Rendering System](https://github.com/SuperFlyTV/ograf-server) is a useful integration target for this addon. It provides a browser renderer, ZIP upload endpoint, and controller UI. Its repository explicitly describes the Server/Control API as unstable, so `ofxOGraf` only targets the stable Graphics v1 interface.
+The [SuperFlyTV OGraf Simple Rendering System](https://github.com/SuperFlyTV/ograf-server) is a useful OGraf Host and integration target for this addon. It provides a browser-based rendering surface, ZIP upload endpoint, and controller UI. Its repository explicitly describes the Server/Control API as unstable, so `ofxOGraf` only targets the stable Graphics v1 interface.
 
 ## Important compatibility conventions
 
@@ -8,7 +8,7 @@ The [SuperFlyTV OGraf Simple Rendering System](https://github.com/SuperFlyTV/ogr
 - Keep `graphic.ograf.json` at the ZIP root for the simplest layout.
 - The manifest `main` path is loaded with a dynamic JavaScript `import()`.
 - `main` must default-export the custom-element class.
-- Do not register that class from the module. The server renderer registers it using the manifest `id` as the custom-element name.
+- Do not register that class from the module. The OGraf Host registers it using the manifest `id` as the custom-element name.
 - The manifest `id` must therefore be a valid lowercase custom-element name containing a hyphen. The included `com.jonathan-frank.ofx-ograf-broadcast-graphic` id satisfies this requirement.
 - The WASM, generated JS, scene, fonts, images, and other runtime assets must all be inside the ZIP.
 
@@ -39,7 +39,7 @@ yarn build
 yarn dev
 ```
 
-The main application is normally at `http://localhost:8080` and the controller at `http://localhost:8082`. Use **Upload Graphic** in the controller and select the generated ZIP. The renderer currently invokes real-time `load`, `playAction`, `updateAction`, `stopAction`, `customAction`, and `dispose`; it does not exercise the non-real-time methods.
+The main application is normally at `http://localhost:8080` and the controller at `http://localhost:8082`. Use **Upload Graphic** in the controller and select the generated ZIP. The OGraf Host currently invokes real-time `load`, `playAction`, `updateAction`, `stopAction`, `customAction`, and `dispose`; it does not exercise the non-real-time methods.
 
 ## Scope boundary
 

@@ -1,6 +1,6 @@
 # ofxOGraf
 
-`ofxOGraf` is a tool-neutral openFrameworks authoring and runtime addon for portable broadcast graphics. Templates can be created directly with `SceneBuilder` or `CodeTemplate`; After Effects is an optional importer.
+`ofxOGraf` is an openFrameworks/C++ authoring and runtime bridge for delivering native graphics as EBU OGraf v1 packages. It compiles the ofxOGraf Scene Renderer to WebAssembly/WebGL and exposes it through the OGraf Web Component lifecycle. Templates can be created directly with `SceneBuilder` or `CodeTemplate`; After Effects is an optional importer.
 
 ```text
 After Effects composition
@@ -9,10 +9,16 @@ Broadcast Scene JSON
         ↓ ofxOGraf
 openFrameworks (native or Emscripten/WebAssembly)
         ↓ OfBroadcastGraphic.js
-EBU OGraf v1 renderer
+EBU OGraf v1 package loaded by an OGraf Host
 ```
 
 The existing AE path is not a binary `.mogrt` converter: it imports AE's scriptable scene model. Native scenes use the neutral Broadcast Scene 0.3 model, while unsupported source-specific features remain extensions or deterministic baked-frame fallbacks.
+
+## Scope and non-goals
+
+The addon's primary use case is preserving an openFrameworks/C++ graphics workflow while making its output deployable in an OGraf system. It is not a replacement for HTML, CSS, or JavaScript authoring, and it is not a general-purpose browser or renderer for arbitrary third-party OGraf packages.
+
+Projects that do not require openFrameworks, native C++ rendering, or shared native/WASM behavior should normally implement OGraf graphics directly with web technologies. The Broadcast Scene model, After Effects import, and native reconstruction renderer are optional layers around the core C++ to WebAssembly to OGraf bridge.
 
 ## What is included
 
@@ -24,11 +30,13 @@ The existing AE path is not a binary `.mogrt` converter: it imports AE's scripta
 - `ofxOGraf::RenderSurface`: fixed-resolution RGBA rendering, texture/FBO access, and aspect-fitted premultiplied-alpha native previews.
 - `scripts/validate-template-definition.mjs`: native/WASM/OGraf descriptor and declared-asset validator.
 - `scripts/verify-ograf-package.ps1` and `docs/package-integrity.md`: reproducible ZIP, SHA-256 allowlist, BOM, provenance, offline policy, and deployment verification.
+- `docs/production-template-contract.md`: the minimum identity, render, typography, control, validation, and delivery contract for production templates.
 - `docs/native-authoring.md`: direct openFrameworks authoring, delivery, and deterministic-runtime guide.
 - `docs/css-text-overlays.md`: optional descriptor-driven HTML/CSS typography above compiled C++/WebGL templates.
 - `schema/broadcast-scene-0.2.schema.json`: expanded neutral interchange format; the original 0.1 schema remains for compatibility.
 - `src/`: openFrameworks addon with deterministic timeline evaluation, asset caching, recursive scene rendering, renderer-extension hooks, AE-style 2D/3D transforms, a neutral controls API, and an optional ofxImGui adapter.
 - `example-basic/`: dependency-free native/Emscripten example and embind lifecycle bridge.
+- `example-ograf-package/`: canonical browser harness that executes `load`, `playAction`, `updateAction`, `stopAction`, and `dispose` against the real compiled CodeTemplate runtime.
 - `example-imgui/`: native inspector example that opts into ofxImGui through its own `addons.make`.
 - `ograf/EssentialControls.js`: reusable HTML control panel generated from the same neutral `scene.controls` model.
 - `ograf/`: OGraf v1 Web Component, manifest, real-time lifecycle, deterministic seeking, and scheduled non-real-time actions.
@@ -38,7 +46,7 @@ The existing AE path is not a binary `.mogrt` converter: it imports AE's scripta
 - `docs/future-proof-agent-plan.md`: ordered roadmap and execution contract for coding agents.
 - `docs/scene-compatibility.md`: supported scene versions, migration guarantees, and the process for adding future schemas.
 
-## Renderer scope
+## Scene Renderer scope
 
 Implemented:
 
@@ -114,7 +122,7 @@ Create a server-ready ZIP after the Emscripten artifacts exist:
 scripts\package-ograf.ps1
 ```
 
-The packager validates the manifest and referenced runtime files, generates `package-integrity.json` and `package-bom.json`, enforces offline assets, and creates a deterministic archive. Verify the delivered artifact with `scripts\verify-ograf-package.ps1 build\ofxOGraf-graphic.zip`. For integration steps and the renderer conventions discovered in SuperFlyTV's implementation, see `docs/testing-with-ograf-server.md`.
+The packager validates the manifest and referenced runtime files, generates `package-integrity.json` and `package-bom.json`, enforces offline assets, and creates a deterministic archive. Verify the delivered artifact with `scripts\verify-ograf-package.ps1 build\ofxOGraf-graphic.zip`. For integration steps and the host conventions discovered in SuperFlyTV's implementation, see `docs/testing-with-ograf-server.md`.
 
 For a `CodeTemplate`, pass its serialized descriptor and asset root explicitly:
 
@@ -142,6 +150,7 @@ node tests/css-text-overlay-contract.mjs
 node tests/golden-frame-contract.mjs
 node scripts/validate-template-definition.mjs
 node tests/code-template-delivery-contract.mjs
+node tests/ograf-package-example-contract.mjs
 node tests/package-contract.mjs
 node tests/package-integrity-contract.mjs
 node tests/scene-migration-contract.mjs

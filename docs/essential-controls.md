@@ -38,7 +38,7 @@ Import the reusable Web Component next to an OGraf graphic:
 
 The panel generates text, multiline text, checkbox, numeric, slider, color, vector and option controls. Changes use the standard OGraf `updateAction()` lifecycle. Add the `animate` attribute when updates should not set `skipAnimation`.
 
-The component is intended for preview and operator applications. The OGraf renderer imports only `OfBroadcastGraphic.js`, so the control panel is not drawn into program output.
+The component is intended for preview and operator applications. The OGraf Host imports only `OfBroadcastGraphic.js`, so the control panel is not drawn into program output.
 
 ## Native ofxImGui inspector
 
